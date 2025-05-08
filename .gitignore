@@ -6,6 +6,7 @@
 /web
 /worker
 /dist
+/logs
 *.DS_Store
 npm-debug.log
 yarn-error.log
@@ -60,8 +61,6 @@ ios/.xcode.env.local
 
 # Android/IntelliJ
 #
-build/
-.idea
 .gradle
 local.properties
 *.iml
@@ -73,8 +72,6 @@ local.properties
 # node.js
 #
 node_modules/
-npm-debug.log
-yarn-error.log
 
 # fastlane
 #

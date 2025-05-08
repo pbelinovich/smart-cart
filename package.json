@@ -9,7 +9,9 @@
     "lint": "eslint ./src",
     "prettier": "prettier --config ./.prettierrc.js --write \"./src/**/*.{ts,tsx}\" \"!./src/**/*.d.ts\"",
     "build": "cross-env npm run lint && cross-env NODE_ENV=PRODUCTION META_MODE=only_dts webpack --progress",
-    "prepublishOnly": "cross-env META_MODE=only_dts npm run build"
+    "prepublishOnly": "cross-env META_MODE=only_dts npm run build",
+    "ravendb:up": "docker-compose up -d",
+    "ravendb:down": "docker-compose down"
   },
   "engines": {
     "node": "^18"
@@ -56,8 +58,10 @@
   },
   "dependencies": {
     "compression": "1.7.4",
+    "dayjs": "1.11.7",
     "express": "^5.1.0",
     "express-requests-logger": "4.0.0",
+    "joi": "17.13.3",
     "morgan": "1.10.0",
     "node-loader": "2.0.0",
     "ravendb": "5.4.3",

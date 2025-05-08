@@ -1,7 +1,13 @@
-import { asd } from './some/tools'
-import { someFunc } from './external'
+import 'xregexp'
+import { initMainThread } from './main-thread'
+import { ServerParams } from './types'
 
-export * from './external'
-export * from './some/tools'
+export { publicHttpApi } from './api'
 
-export const zzz1 = asd({ qwe: someFunc('qwe') })
+const port = process.env.PORT
+
+const params: ServerParams = {
+  port: port || '5010',
+}
+
+initMainThread(params)

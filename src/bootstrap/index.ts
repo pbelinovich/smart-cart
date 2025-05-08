@@ -1,1 +1,1 @@
-export * from './some-func'
+export * from './application'

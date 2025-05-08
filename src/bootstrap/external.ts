@@ -1,4 +1,3 @@
 export * from '../foundation'
-export * from '../repositories'
 export * from '../bussines-logic'
-export * from '../bootstrap'
+export * from '../repositories'
