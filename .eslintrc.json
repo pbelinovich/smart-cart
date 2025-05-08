@@ -1,6 +1,10 @@
 {
-  "extends": ["./configs/.eslintrc.json"],
-  "plugins": ["import"],
+  "extends": [
+    "./configs/.eslintrc.json"
+  ],
+  "plugins": [
+    "import"
+  ],
   "env": {
     "node": true,
     "browser": true
@@ -11,16 +15,20 @@
       "error",
       {
         "patterns": [
-          "**/foundation/**",
-          "**/foundation",
           "**/bootstrap/**",
           "**/bootstrap",
           "**/bussines-logic**",
           "**/bussines-logic",
+          "**/foundation/**",
+          "**/foundation",
+          "**/processes/**",
+          "**/processes",
           "**/repositories/**",
           "**/repositories",
           "**/server/**",
-          "**/server"
+          "**/server",
+          "**/shared/**",
+          "**/shared"
         ],
         "paths": [
           "path",
@@ -34,7 +42,9 @@
   },
   "overrides": [
     {
-      "files": ["**/external.ts"],
+      "files": [
+        "**/external.ts"
+      ],
       "rules": {
         "no-restricted-imports": "off"
       }

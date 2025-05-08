@@ -34,7 +34,8 @@ const getDefaultConfig = (options = {}) => {
   // Если в node_modules, сделай три шага вверх из node_modules/@platform/tools
   const entry = path.resolve(
     __dirname,
-    (__dirname.indexOf('node_modules') !== -1 ? '../../../../' : '') + (options.entry || 'src/index.tsx')
+    (__dirname.indexOf('node_modules') !== -1 ? '../../../../' : __dirname.indexOf('configs') !== -1 ? '../' : '') +
+      (options.entry || 'src/index.tsx')
   )
   const distFolder = options.outputFolder || './dist'
   const allowTsInNodeModules = options.allowTsInNodeModules || false

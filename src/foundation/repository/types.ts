@@ -1,5 +1,5 @@
 import * as stream from 'readable-stream'
-import { IPathGenerator } from '../../shared/path-generator'
+import { IPathGenerator } from '@shared'
 
 export interface IEntity {
   id: string

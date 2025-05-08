@@ -1,5 +1,5 @@
 import { IQueryBuilder, OrderDirection, QueryFiltersGetter, QueryMiddleware, QueryPathGetter } from '../types'
-import { pathGenerator } from '../../../shared/path-generator'
+import { pathGenerator } from '@shared'
 import { filterBuilder } from '../common'
 import { entityToDTO } from '../tools'
 import { IDocumentQuery, OrderingType, QueryStatistics } from 'ravendb'

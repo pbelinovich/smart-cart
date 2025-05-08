@@ -1,4 +1,4 @@
-import { snapshot } from '../../shared/object-utils'
+import { snapshot } from '@shared'
 
 export const entityToDTO = <T extends { [key: string]: any }>(entity: T): T => {
   const keys = Object.keys(entity) as (keyof T)[]

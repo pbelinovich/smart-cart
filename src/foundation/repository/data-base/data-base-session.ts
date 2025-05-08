@@ -1,7 +1,7 @@
 import { Session } from '../common'
 import { ISession, CreateSessionParams } from '../types'
 import { DocumentStore, IDocumentQuery, IDocumentSession } from 'ravendb'
-import { snapshot } from '../../../shared/object-utils'
+import { snapshot } from '@shared'
 
 export class DataBaseSession extends Session implements ISession<IDocumentQuery<any>> {
   private ravenDBSession: IDocumentSession | null = null

@@ -1,15 +1,7 @@
-import {
-  OperationExecutor,
-  ExecutorTransactionFactory,
-  IOperationExecutor,
-  IReadOperationContext,
-  IWriteOperationContext,
-  DataBaseEvent,
-  IStorageManager,
-  IQueryableRepo,
-} from './external'
+import { IReadOperationContext, IWriteOperationContext, DataBaseEvent, IStorageManager, IQueryableRepo } from './external'
 import { ReposFactory } from './repos-factory'
 import { StoragesFactory } from './storages-factory'
+import { ExecutorTransactionFactory, IOperationExecutor, OperationExecutor } from '@shared'
 
 export interface IAppExecutors {
   readExecutor: IOperationExecutor<IReadOperationContext>

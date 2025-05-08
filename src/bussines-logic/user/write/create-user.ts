@@ -2,7 +2,7 @@ import { IUserEntity } from '../../types'
 import { buildWriteOperation } from '../../common/write'
 import { uniqueEntity } from '../../common/guardians'
 import { getUserByTelegramId } from '../read'
-import { dateTime } from '../../../shared/date-time'
+import { dateTime } from '@shared'
 
 export interface ICreateUserParams {
   telegramId: number

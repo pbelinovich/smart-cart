@@ -1,4 +1,4 @@
-import { pathGenerator } from '../../../shared/path-generator'
+import { pathGenerator } from '@shared'
 import { filterBuilder } from '../common'
 import { entityToDTO } from '../tools'
 import { MemoryQuery } from './memory-query'

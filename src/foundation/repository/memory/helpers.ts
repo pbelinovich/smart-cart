@@ -1,7 +1,6 @@
 import { FilterInfo } from '../types'
 import isEqual from 'react-fast-compare'
-import { dateTime } from '../../../shared/date-time'
-import { getStateByPath, NOT_FOUND } from '../../../shared/object-utils'
+import { dateTime, getStateByPath, NOT_FOUND } from '@shared'
 
 const filterFuncs: { [key: string]: (expVal: any) => (actualVal: any) => boolean } = {
   contains: (expectedVal: any) => (actualVal: string) => {

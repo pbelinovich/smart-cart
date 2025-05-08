@@ -1,5 +1,5 @@
-import { OperationGuardian } from '../../types'
 import { EntityIsNotUniqueError } from '../errors'
+import { OperationGuardian } from '@shared'
 
 export const uniqueEntity = <TContext, TParams>(
   checker: (context: TContext, params: TParams) => Promise<number | object | null>

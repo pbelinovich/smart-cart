@@ -3,11 +3,11 @@ import cors from 'cors'
 import express from 'express'
 import http from 'node:http'
 import { setupHTTPApi } from './api'
-import { logError, logInfo, IApp } from './external'
-import { ServerParams } from './types'
+import { logError, logInfo } from './external'
+import { SetupAndRunServerParams } from './types'
 import { morganMiddleware } from './middlewares'
 
-export const setupAndRunServer = (params: ServerParams, app: IApp) => {
+export const setupAndRunServer = ({ serverParams, app, process }: SetupAndRunServerParams) => {
   const serverApp = express()
 
   serverApp.use(compression())
@@ -25,10 +25,14 @@ export const setupAndRunServer = (params: ServerParams, app: IApp) => {
   // initialize a simple http server
   const server = http.createServer(serverApp)
 
-  setupHTTPApi(serverApp, app)
+  setupHTTPApi({
+    expressApp: serverApp,
+    app,
+    process,
+  })
 
   // start our server
-  const port = params.port
+  const port = serverParams.port
 
   server
     .listen(port, () => {

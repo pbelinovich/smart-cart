@@ -1,5 +1,5 @@
 import { IEntity, INonUpdatableRepo, EntityEvent, ISession } from '../types'
-import { guid, snapshot } from '../../../shared/object-utils'
+import { guid, snapshot } from '@shared'
 import { entityToDTO } from '../tools'
 import { AbstractReadonlyRepo } from './abstract-readonly-repo'
 

@@ -2,7 +2,10 @@
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "lib": ["es6", "es2016.array.include"],
+    "lib": [
+      "es6",
+      "es2016.array.include"
+    ],
     "noImplicitAny": true,
     "removeComments": false,
     "moduleResolution": "node",
@@ -20,7 +23,18 @@
     "experimentalDecorators": true,
     "resolveJsonModule": true,
     "baseUrl": "",
-    "paths": {}
+    "paths": {
+      "@shared": [
+        "./src/shared"
+      ]
+    }
   },
-  "exclude": ["node_modules", "web", "server", "common", "worker", "src/dev/mobile"],
+  "exclude": [
+    "node_modules",
+    "web",
+    "server",
+    "common",
+    "worker",
+    "src/dev/mobile"
+  ]
 }

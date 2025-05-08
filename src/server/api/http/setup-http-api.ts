@@ -1,14 +1,7 @@
-import { Express } from 'express'
 import { publicHttpApi } from './api'
-import {
-  EntityNotFoundError,
-  IApp,
-  OperationExecutionError,
-  appendApiDomainToExpress,
-  defaultErrorMapper,
-  logError,
-  EntityIsNotUniqueError,
-} from '../../external'
+import { OperationExecutionError } from '@shared'
+import { EntityNotFoundError, appendApiDomainToExpress, defaultErrorMapper, logError, EntityIsNotUniqueError } from '../../external'
+import { SetupHttpApiParams } from './types'
 
 const errorMapper = (errorIn: any) => {
   let error = errorIn
@@ -40,7 +33,7 @@ const errorMapper = (errorIn: any) => {
   return defaultErrorMapper(error)
 }
 
-export const setupHTTPApi = (expressApp: Express, app: IApp) => {
+export const setupHTTPApi = ({ expressApp, app, process }: SetupHttpApiParams) => {
   appendApiDomainToExpress({
     expressApp,
     api: publicHttpApi,
@@ -49,6 +42,7 @@ export const setupHTTPApi = (expressApp: Express, app: IApp) => {
       const executors = app.getExecutors({})
 
       return {
+        process,
         readExecutor: executors.readExecutor,
         writeExecutor: executors.writeExecutor,
       }

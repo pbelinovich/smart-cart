@@ -1,4 +1,5 @@
-import { IUserEntity, IReadOnlyRepo, IUpdatableRepo, IOperation, IOperationExecutor } from './external'
+import { IUserEntity, IReadOnlyRepo, IUpdatableRepo } from './external'
+import { IOperation, IOperationExecutor } from '@shared'
 
 export {
   FilterInfo,
@@ -7,8 +8,6 @@ export {
   IUserEntity,
   IReadOnlyRepo,
   IUpdatableRepo,
-  IOperation,
-  OperationGuardian,
   QueryFiltersGetter,
   IQueryableRepo,
   IQueryBuilder,
