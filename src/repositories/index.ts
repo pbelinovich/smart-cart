@@ -1,2 +1,3 @@
+export * from './outside'
+export * from './inside'
 export * from './types'
-export * from './user-repo'

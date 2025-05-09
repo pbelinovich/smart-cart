@@ -1,4 +1,4 @@
-import { buildReadOperation } from '../../common/read'
+import { buildReadOperation } from '../../../common/read'
 
 export interface IGetUserByTelegramIdParams {
   telegramId: number

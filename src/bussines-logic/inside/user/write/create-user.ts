@@ -1,6 +1,6 @@
-import { IUserEntity } from '../../types'
-import { buildWriteOperation } from '../../common/write'
-import { uniqueEntity } from '../../common/guardians'
+import { IUserEntity } from '../../../types'
+import { buildWriteOperation } from '../../../common/write'
+import { uniqueEntity } from '../../../common/guardians'
 import { getUserByTelegramId } from '../read'
 import { dateTime } from '@shared'
 

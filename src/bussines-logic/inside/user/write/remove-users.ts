@@ -1,4 +1,4 @@
-import { buildWriteOperation } from '../../common/write'
+import { buildWriteOperation } from '../../../common/write'
 
 export interface IRemoveUsersParams {
   ids: string[]

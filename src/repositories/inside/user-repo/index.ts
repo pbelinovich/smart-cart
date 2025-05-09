@@ -1,5 +1,8 @@
-import { IUserEntity, DataBaseSession, IUpdatableRepo } from './types'
-import { DataBaseUpdatableRepo, IQueryBuilder } from './external'
+import { IUserEntity } from './types'
+import { DataBaseSession, IUpdatableRepo } from '../../types'
+import { DataBaseUpdatableRepo, IQueryBuilder } from '../../external'
+
+export * from './types'
 
 export class UserRepo extends DataBaseUpdatableRepo<IUserEntity> implements IUpdatableRepo<IUserEntity> {
   constructor(dbSession: DataBaseSession) {

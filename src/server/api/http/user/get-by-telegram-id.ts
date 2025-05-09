@@ -4,6 +4,9 @@ import { getUserByTelegramId, IGetUserByTelegramIdParams } from '../../../extern
 
 const schema = joi.object<IGetUserByTelegramIdParams>({ telegramId: joi.number().required() })
 
-export const getByTelegramId = buildPublicHandler(schema, (params, { readExecutor }) => {
+export const getByTelegramId = buildPublicHandler(schema, async (params, { readExecutor, process }) => {
+  const res = await process.request('stringToFoodList', 'молоко нормальное, хлеб и яйца самые дешевые, туалетная бумага zewa')
+  console.log('!!res', res)
+
   return readExecutor.execute(getUserByTelegramId, params)
 })
