@@ -1,9 +1,5 @@
 import { IEntity } from '../../external'
-
-export interface IUserAddressCoordinates {
-  latitude: number
-  longitude: number
-}
+import { ICoordinates } from '../../types'
 
 export interface IUserAddressEntity extends IEntity {
   userId: string
@@ -13,5 +9,5 @@ export interface IUserAddressEntity extends IEntity {
   city: string
   street: string
   apartment: string
-  coordinates: IUserAddressCoordinates
+  coordinates: ICoordinates
 }

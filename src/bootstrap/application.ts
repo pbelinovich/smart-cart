@@ -1,5 +1,6 @@
-import { IReadOperationContext, IWriteOperationContext, DataBaseEvent, IStorageManager, IQueryableRepo } from './external'
+import { IReadOperationContext, IWriteOperationContext, DataBaseEvent, IStorageManager, IQueryableRepo, IMarketplace } from './external'
 import { ReposFactory } from './repos-factory'
+import { ExternalReposFactory } from './external-repos-factory'
 import { StoragesFactory } from './storages-factory'
 import { ExecutorTransactionFactory, IOperationExecutor, OperationExecutor } from '@shared'
 
@@ -12,14 +13,20 @@ export interface IAppExecutorsGetterParams {
   onUseReadRepo?: (repo: IQueryableRepo<any>) => void
 }
 
+export interface IAppExternal {
+  igooodsMarketplaceRepo: IMarketplace
+}
+
 export interface IApp {
   getExecutors: (params: IAppExecutorsGetterParams) => IAppExecutors
   database: IStorageManager<any, DataBaseEvent>
   memoryStorage: IStorageManager<any, DataBaseEvent>
+  external: IAppExternal
 }
 
 export const getAppInstance = (): IApp => {
   const storagesFactory = new StoragesFactory()
+  const externalReposFactory = new ExternalReposFactory()
 
   const database = storagesFactory.initDatabase()
   const memoryStorage = storagesFactory.initMemoryStorage()
@@ -39,9 +46,17 @@ export const getAppInstance = (): IApp => {
 
         return {
           context: {
+            get authRepo() {
+              onGetRepo(readReposFactory.authRepo)
+              return readReposFactory.authRepo
+            },
             get userRepo() {
               onGetRepo(readReposFactory.userRepo)
               return readReposFactory.userRepo
+            },
+            get userAddressRepo() {
+              onGetRepo(readReposFactory.userAddressRepo)
+              return readReposFactory.userAddressRepo
             },
           },
           finishTransaction: () => Promise.resolve(undefined),
@@ -63,8 +78,14 @@ export const getAppInstance = (): IApp => {
         return {
           context: {
             readExecutor,
+            get authRepo() {
+              return writeReposFactory.authRepo
+            },
             get userRepo() {
               return writeReposFactory.userRepo
+            },
+            get userAddressRepo() {
+              return writeReposFactory.userAddressRepo
             },
           },
           finishTransaction: async () => {
@@ -91,6 +112,12 @@ export const getAppInstance = (): IApp => {
 
     database,
     memoryStorage,
+
+    external: {
+      get igooodsMarketplaceRepo() {
+        return externalReposFactory.igooodsMarketplaceRepo
+      },
+    },
   }
 }
 

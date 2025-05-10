@@ -45,6 +45,7 @@ export const setupHTTPApi = ({ expressApp, app, process }: SetupHttpApiParams) =
         process,
         readExecutor: executors.readExecutor,
         writeExecutor: executors.writeExecutor,
+        external: app.external,
       }
     },
     errorMapper,

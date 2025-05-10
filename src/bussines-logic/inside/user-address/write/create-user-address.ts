@@ -1,4 +1,4 @@
-import { IUserAddressCoordinates, IUserAddressEntity } from '../../../types'
+import { ICoordinates, IUserAddressEntity } from '../../../types'
 import { buildWriteOperation } from '../../../common/write'
 import { relatedEntitiesExist } from '../../../common/guardians'
 import { dateTime } from '@shared'
@@ -10,7 +10,7 @@ export interface ICreateUserAddressParams {
   city: string
   street: string
   apartment: string
-  coordinates: IUserAddressCoordinates
+  coordinates: ICoordinates
 }
 
 export const createUserAddress = buildWriteOperation(

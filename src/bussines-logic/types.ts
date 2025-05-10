@@ -1,4 +1,4 @@
-import { IUserEntity, IReadOnlyRepo, IUpdatableRepo, IUserAddressEntity } from './external'
+import { IUserEntity, IReadOnlyRepo, IUpdatableRepo, IUserAddressEntity, IAuthEntity } from './external'
 import { IOperation, IOperationExecutor } from '@shared'
 
 export {
@@ -6,7 +6,7 @@ export {
   EntityEvent,
   IEntity,
   IUserEntity,
-  IUserAddressCoordinates,
+  ICoordinates,
   IUserAddressEntity,
   IReadOnlyRepo,
   IUpdatableRepo,
@@ -16,12 +16,14 @@ export {
 } from './external'
 
 export interface IReadOperationContext {
+  authRepo: IReadOnlyRepo<IAuthEntity>
   userRepo: IReadOnlyRepo<IUserEntity>
   userAddressRepo: IReadOnlyRepo<IUserAddressEntity>
 }
 
 export interface IWriteOperationContext {
   readExecutor: IOperationExecutor<IReadOperationContext>
+  authRepo: IUpdatableRepo<IAuthEntity>
   userRepo: IUpdatableRepo<IUserEntity>
   userAddressRepo: IUpdatableRepo<IUserAddressEntity>
 }

@@ -11,6 +11,22 @@ export type DataBaseEvent = {
   event: UserEntityEvents
 }
 
-export type ProcessNames = 'stringToFoodList'
+export type ProcessNames = 'parseProducts'
 export type ProcessMessages = 'dbEvent'
 export type ProcessCommunicator = MessagesBasedCommunicator<ProcessNames, ProcessMessages>
+
+export type UserPriceCategory = 'cheapest' | 'popular' | 'mostExpensive'
+
+export interface IUserProduct {
+  name: string
+  quantity: number
+  priceCategory: UserPriceCategory
+}
+
+export interface ICoordinates {
+  latitude: number
+  longitude: number
+}
+
+export type Marketplace = 'igooods'
+export type AuthData = { [key: string]: any }

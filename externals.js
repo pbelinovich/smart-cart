@@ -5,4 +5,10 @@ module.exports = [
     }
     callback()
   },
+  function (_, request, callback) {
+    if (/^puppeteer.*/.test(request)) {
+      return callback(null, request)
+    }
+    callback()
+  },
 ]

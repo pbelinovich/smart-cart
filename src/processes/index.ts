@@ -1,7 +1,7 @@
 import { parentPort } from 'node:worker_threads'
 import { getAppInstance, IApp, ProcessMessages, ProcessNames } from './external'
 import { MessagesBasedCommunicator } from '@shared'
-import { stringToFoodList } from './string-to-food-list'
+import { parseProducts } from './parse-products'
 
 if (!parentPort) {
   throw new Error('This file should be run as a child process of server!')
@@ -23,7 +23,7 @@ appInstance.database.subscribe(event => {
 })
 
 const processesMap: { [key in ProcessNames]: (appInstance: IApp) => (data: any) => any } = {
-  stringToFoodList,
+  parseProducts,
 }
 
 Object.keys(processesMap).forEach(key => {

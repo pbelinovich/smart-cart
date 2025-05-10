@@ -1,1 +1,1 @@
-export * from './get-user-address-by-user-id'
+export * from './get-user-address-by-id'
