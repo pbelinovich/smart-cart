@@ -14,6 +14,7 @@ export interface IAppExecutorsGetterParams {
 }
 
 export interface IAppExternal {
+  edadealMarketplaceRepo: IMarketplace
   igooodsMarketplaceRepo: IMarketplace
 }
 
@@ -114,6 +115,9 @@ export const getAppInstance = (): IApp => {
     memoryStorage,
 
     external: {
+      get edadealMarketplaceRepo() {
+        return externalReposFactory.edadealMarketplaceRepo
+      },
       get igooodsMarketplaceRepo() {
         return externalReposFactory.igooodsMarketplaceRepo
       },

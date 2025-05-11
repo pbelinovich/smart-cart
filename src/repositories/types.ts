@@ -19,7 +19,7 @@ export type UserPriceCategory = 'cheapest' | 'popular' | 'mostExpensive'
 
 export interface IUserProduct {
   name: string
-  quantity: number
+  quantity: string
   priceCategory: UserPriceCategory
 }
 

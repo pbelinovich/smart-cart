@@ -8,6 +8,7 @@ import {
   getUserById,
   IUserProduct,
   Marketplace,
+  updateAuth,
   updateUser,
 } from '../../../external'
 
@@ -31,7 +32,7 @@ const schema = joi.object<IGetCartsParams>({
 })
 
 export const getCarts = buildPublicHandler(schema, async (params, { process, readExecutor, writeExecutor, external }) => {
-  const marketplaceRepo = external.igooodsMarketplaceRepo
+  /* const marketplaceRepo = external.igooodsMarketplaceRepo
 
   let user = await readExecutor.execute(getUserById, { id: params.userId })
   let userAddress
@@ -45,8 +46,8 @@ export const getCarts = buildPublicHandler(schema, async (params, { process, rea
       street: 'Asd',
       apartment: '10',
       coordinates: {
-        latitude: 55.7558,
-        longitude: 37.6173,
+        latitude: 30.3123585,
+        longitude: 59.9595541,
       },
     })
 
@@ -59,29 +60,38 @@ export const getCarts = buildPublicHandler(schema, async (params, { process, rea
 
   console.log('!!auth', auth)
 
-  if (!auth) {
-    // const authData = await marketplaceRepo.getAuthData()
-    const authData = {
-      id: 347548450,
-      token: 'EPn2s9qdzYz_SCNCvnMX',
-    }
+  // if (!auth) {
+  const authData = await marketplaceRepo.getAuthData()
 
-    if (!authData) {
-      throw new Error(`Cannot authorize on ${params.marketplace} marketplace`)
-    }
+  if (!authData) {
+    throw new Error(`Cannot authorize on ${params.marketplace} marketplace`)
+  }
 
+  if (auth) {
+    auth = await writeExecutor.execute(updateAuth, {
+      id: auth.id,
+      userId: user.id,
+      marketplace: params.marketplace,
+      authData,
+    })
+  } else {
     auth = await writeExecutor.execute(createAuth, {
       userId: user.id,
       marketplace: params.marketplace,
       authData,
     })
-
-    console.log('!!auth2', auth)
   }
 
-  const userProducts = await process.request<IUserProduct[]>('parseProducts', params.query)
+  console.log('!!auth2', auth)
+  // }
 
-  console.log('!!userProducts', userProducts)
+  //  const userProducts = await process.request<IUserProduct[]>('parseProducts', params.query)
 
-  return marketplaceRepo.getCarts({ auth, userAddress, userProducts })
+  // console.log('!!userProducts', userProducts)
+
+  return marketplaceRepo.getCarts({
+    auth,
+    userAddress,
+    userProducts: [{ name: 'молоко', quantity: 1, priceCategory: 'popular' }],
+  }) */
 })

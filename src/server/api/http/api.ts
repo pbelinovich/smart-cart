@@ -1,7 +1,7 @@
 import { buildPublicDomain } from './builder'
 import * as userHandlers from './user'
-// import * as userAddressHandlers from './user-address'
-import * as marketplaceHandlers from './marketplace'
+import * as edadealHandlers from './edadeal'
+import * as igooodsHandlers from './igooods'
 
 export const publicHttpApi = buildPublicDomain({
   user: {
@@ -14,15 +14,20 @@ export const publicHttpApi = buildPublicDomain({
   },
   userAddress: {
     GET: {
-      byTelegramId: userHandlers.getByTelegramId,
+      // byTelegramId: userHandlers.getByTelegramId,
     },
     POST: {
-      create: userHandlers.create,
+      // create: userHandlers.create,
     },
   },
-  marketplace: {
+  edadeal: {
     POST: {
-      getCarts: marketplaceHandlers.getCarts,
+      getCarts: edadealHandlers.getCarts,
+    },
+  },
+  igooods: {
+    POST: {
+      getCarts: igooodsHandlers.getCarts,
     },
   },
 })

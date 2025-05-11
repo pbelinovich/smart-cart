@@ -1,5 +1,5 @@
-import { AuthData, IUserProduct } from '../types'
-import { IAuthEntity, IUserAddressEntity } from '../inside'
+import { IUserProduct } from '../types'
+import { IUserAddressEntity } from '../inside'
 
 export interface ICity {
   id: string
@@ -24,14 +24,16 @@ export interface ICart {
   totalPrice: number
 }
 
+export type CartsMap = { [shopId: string]: ICart }
+
 export interface IGetCartsParams {
-  auth: IAuthEntity
-  userAddress: IUserAddressEntity
+  // auth: IAuthEntity
+  userAddress?: IUserAddressEntity
   userProducts: IUserProduct[]
 }
 
 export interface IMarketplace {
-  getAuthData: () => Promise<AuthData | undefined>
-  getCities: () => Promise<ICity[]>
+  // getAuthData: () => Promise<AuthData | undefined>
+  // getCities: () => Promise<ICity[]>
   getCarts: (params: IGetCartsParams) => Promise<ICart[]>
 }

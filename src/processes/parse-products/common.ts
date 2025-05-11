@@ -9,7 +9,7 @@ const priceCategoryMap: { [key in UserPriceCategory]: true } = {
 
 const productSchema = joi.object<IUserProduct>({
   name: joi.string().required(),
-  quantity: joi.number().required(),
+  quantity: joi.string().required(),
   priceCategory: joi
     .string()
     .valid(...Object.keys(priceCategoryMap))

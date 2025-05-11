@@ -1,7 +1,14 @@
 import puppeteer from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
-import { Browser, Page } from 'puppeteer'
+import { Browser, Page, ResourceType } from 'puppeteer'
 import { IBrowserConfig } from './types'
+
+const blockedResourcesMap: { [key in ResourceType]?: true } = {
+  image: true,
+  stylesheet: true,
+  font: true,
+  media: true,
+}
 
 export class BrowserService {
   private browser: Browser | null = null
@@ -18,10 +25,7 @@ export class BrowserService {
 
     await this.page.setRequestInterception(true)
 
-    this.page.on('request', req => {
-      const blockedResources = ['image', 'stylesheet', 'font', 'media']
-      blockedResources.includes(req.resourceType()) ? req.abort() : req.continue()
-    })
+    this.page.on('request', req => (blockedResourcesMap[req.resourceType()] ? req.abort() : req.continue()))
   }
 
   getPage = () => {
@@ -44,7 +48,7 @@ export class BrowserService {
         '--disable-infobars',
         `--window-size=${this.config.viewport.width},${this.config.viewport.height}`,
         '--disable-features=IsolateOrigins,site-per-process',
-        '--proxy-server=http://80.73.89.126:65056',
+        // '--proxy-server=http://46.172.36.213:8080',
       ],
     })
 
@@ -65,10 +69,10 @@ export class BrowserService {
     this.page = null
   }
 
-  navigate = async (url: string) => {
+  navigate = (url: string) => {
     if (!this.page) throw new Error('Page not initialized')
 
-    await this.page.goto(url, {
+    return this.page.goto(url, {
       waitUntil: 'domcontentloaded',
       timeout: 15000,
     })
