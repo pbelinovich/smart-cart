@@ -51,7 +51,7 @@ module.exports = [
       __filename: false,
     },
     optimization: {
-      minimize: false,
+      minimize: process.env.NODE_ENV === 'PRODUCTION',
     },
   },
   {
@@ -61,7 +61,7 @@ module.exports = [
       __filename: false,
     },
     optimization: {
-      minimize: false,
+      minimize: process.env.NODE_ENV === 'PRODUCTION',
     },
   },
 ]
