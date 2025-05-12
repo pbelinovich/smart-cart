@@ -3,7 +3,7 @@ import { DataBaseEvent, DataBaseManager, MemoryStorage, MemoryStorageManager } f
 
 export class StoragesFactory {
   initDatabase = () => {
-    const storage = new DocumentStore('http://localhost:8081', 'smart-cart-db')
+    const storage = new DocumentStore('http://127.0.0.1:8081', 'smart-cart-db')
     storage.initialize()
     return new DataBaseManager<DataBaseEvent>(storage)
   }
