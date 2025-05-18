@@ -1,4 +1,12 @@
-import { IUserEntity, IReadOnlyRepo, IUpdatableRepo, IUserAddressEntity, IAuthEntity } from './external'
+import {
+  IUserEntity,
+  IReadOnlyRepo,
+  IUpdatableRepo,
+  IAIProductsListEntity,
+  IMarketplaceProductEntity,
+  IProductEntity,
+  IProductsRequestEntity,
+} from './external'
 import { IOperation, IOperationExecutor } from '@shared'
 
 export {
@@ -7,7 +15,6 @@ export {
   IEntity,
   IUserEntity,
   ICoordinates,
-  IUserAddressEntity,
   IReadOnlyRepo,
   IUpdatableRepo,
   QueryFiltersGetter,
@@ -16,16 +23,21 @@ export {
 } from './external'
 
 export interface IReadOperationContext {
-  authRepo: IReadOnlyRepo<IAuthEntity>
+  aiProductsListRepo: IReadOnlyRepo<IAIProductsListEntity>
+  marketplaceProductRepo: IReadOnlyRepo<IMarketplaceProductEntity>
+  productRepo: IReadOnlyRepo<IProductEntity>
+  productsRequestRepo: IReadOnlyRepo<IProductsRequestEntity>
   userRepo: IReadOnlyRepo<IUserEntity>
-  userAddressRepo: IReadOnlyRepo<IUserAddressEntity>
 }
 
 export interface IWriteOperationContext {
-  readExecutor: IOperationExecutor<IReadOperationContext>
-  authRepo: IUpdatableRepo<IAuthEntity>
+  aiProductsListRepo: IUpdatableRepo<IAIProductsListEntity>
+  marketplaceProductRepo: IUpdatableRepo<IMarketplaceProductEntity>
+  productRepo: IUpdatableRepo<IProductEntity>
+  productsRequestRepo: IUpdatableRepo<IProductsRequestEntity>
   userRepo: IUpdatableRepo<IUserEntity>
-  userAddressRepo: IUpdatableRepo<IUserAddressEntity>
+
+  readExecutor: IOperationExecutor<IReadOperationContext>
 }
 
 export interface IReadOperation<TParams, TResult> extends IOperation<IReadOperationContext, TParams, TResult> {}

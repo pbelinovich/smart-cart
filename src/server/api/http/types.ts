@@ -1,11 +1,11 @@
-import { IApp, IAppExecutors, IAppExternal, ProcessCommunicator } from '../../external'
+import { IApp, IAppExecutors, IAppMarketplaces, ProcessCommunicator } from '../../external'
 import { Express } from 'express'
 
 export type PublicHandlersContext = {
   process: ProcessCommunicator
   readExecutor: IAppExecutors['readExecutor']
   writeExecutor: IAppExecutors['writeExecutor']
-  external: IAppExternal
+  external: IAppMarketplaces
 }
 
 export type SetupHttpApiParams = {

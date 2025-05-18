@@ -1,18 +1,52 @@
-import { UserRepo, DataBaseSession, MemorySession, UserAddressRepo, AuthRepo } from './external'
+import {
+  UserRepo,
+  DataBaseSession,
+  MemorySession,
+  AIProductsListRepo,
+  MarketplaceProductsRepo,
+  ProductRepo,
+  ProductsRequestRepo,
+} from './external'
 
 export class ReposFactory {
   constructor(private _dbSession: DataBaseSession, private _memorySession: MemorySession) {}
 
-  private _auth: AuthRepo | undefined
+  private _aiProductsListRepo: AIProductsListRepo | undefined
+  private _marketplaceProductRepo: MarketplaceProductsRepo | undefined
+  private _productRepo: ProductRepo | undefined
+  private _productsRequestRepo: ProductsRequestRepo | undefined
   private _user: UserRepo | undefined
-  private _userAddress: UserAddressRepo | undefined
 
-  get authRepo() {
-    if (!this._auth) {
-      this._auth = new AuthRepo(this._dbSession)
+  get aiProductsListRepo() {
+    if (!this._aiProductsListRepo) {
+      this._aiProductsListRepo = new AIProductsListRepo(this._dbSession)
     }
 
-    return this._auth!
+    return this._aiProductsListRepo!
+  }
+
+  get marketplaceProductRepo() {
+    if (!this._marketplaceProductRepo) {
+      this._marketplaceProductRepo = new MarketplaceProductsRepo(this._dbSession)
+    }
+
+    return this._marketplaceProductRepo!
+  }
+
+  get productRepo() {
+    if (!this._productRepo) {
+      this._productRepo = new ProductRepo(this._dbSession)
+    }
+
+    return this._productRepo!
+  }
+
+  get productsRequestRepo() {
+    if (!this._productsRequestRepo) {
+      this._productsRequestRepo = new ProductsRequestRepo(this._dbSession)
+    }
+
+    return this._productsRequestRepo!
   }
 
   get userRepo() {
@@ -21,13 +55,5 @@ export class ReposFactory {
     }
 
     return this._user!
-  }
-
-  get userAddressRepo() {
-    if (!this._userAddress) {
-      this._userAddress = new UserAddressRepo(this._dbSession)
-    }
-
-    return this._userAddress!
   }
 }

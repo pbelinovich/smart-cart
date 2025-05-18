@@ -6,7 +6,7 @@ import {
   getAuthByUserId,
   getUserAddressById,
   getUserById,
-  IUserProduct,
+  IAIProduct,
   Marketplace,
   updateAuth,
   updateUser,

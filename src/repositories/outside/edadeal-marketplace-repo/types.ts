@@ -1,5 +1,6 @@
 import { Method } from 'axios'
-import { IUserAddressEntity } from '../../inside'
+import { SocksProxyAgent } from 'socks-proxy-agent'
+import { IFingerprint } from '@shared'
 
 export type EdadealGroupBy = 'meta' | 'sku' | 'sku_or_meta' | 'all_sku_or_meta'
 export type EdadealSort =
@@ -93,10 +94,13 @@ export interface IEdadealGetProductsRequestParams {
 }
 
 export interface IEdadealRequestParams<TParams> {
+  index: number
   method?: Method
   url: string
   data: TParams
-  userAddress?: IUserAddressEntity
+  // userAddress?: IUserAddressEntity
+  proxy?: SocksProxyAgent
+  fingerprint: IFingerprint
 }
 
 export interface IEdadealShopInfo {

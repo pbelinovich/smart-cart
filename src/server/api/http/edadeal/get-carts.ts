@@ -1,6 +1,6 @@
 import joi from 'joi'
 import { buildPublicHandler } from '../builder'
-import { getUserById, IUserAddressEntity, IUserProduct } from '../../../external'
+import { getUserById, IAIProduct } from '../../../external'
 
 export interface IGetCartsParams {
   userId: string
@@ -12,34 +12,57 @@ const schema = joi.object<IGetCartsParams>({
   query: joi.string().required(),
 })
 
-export const getCarts = buildPublicHandler(schema, async (params, { process, readExecutor, external }) => {
-  const marketplaceRepo = external.edadealMarketplaceRepo
+const userProducts: IAIProduct[] = [
+  { name: 'Сметана', quantity: '1', priceCategory: 'mostExpensive' },
+  { name: 'Батон', quantity: '1', priceCategory: 'mostExpensive' },
+  {
+    name: 'молоко',
+    quantity: '1',
+    priceCategory: 'popular',
+  },
+  { name: 'туалетная бумага zewa', quantity: '1', priceCategory: 'cheapest' },
+  {
+    name: 'яйца',
+    quantity: '6',
+    priceCategory: 'popular',
+  },
+  {
+    name: 'сыр',
+    quantity: '1',
+    priceCategory: 'popular',
+  },
+  {
+    name: 'чипсы',
+    quantity: '1',
+    priceCategory: 'popular',
+  },
+  { name: 'картошка 1кг', quantity: '1', priceCategory: 'cheapest' },
+  {
+    name: 'йогурт',
+    quantity: '1',
+    priceCategory: 'popular',
+  },
+]
+
+export const getCarts = buildPublicHandler(schema, async (params, { process, readExecutor, writeExecutor, external }) => {
   const user = await readExecutor.execute(getUserById, { id: params.userId })
+  // const cartsRequest = await writeExecutor.execute(createCartsRequest, { userId: user.id, query: params.query })
+  // const userProducts = await process.request<IUserProduct[]>('parseProducts', params.query)
 
-  let userAddress: IUserAddressEntity | undefined
+  // console.log('!!userProducts', JSON.stringify(userProducts))
 
-  if (!user.actualUserAddressId) {
-    /* userAddress = await writeExecutor.execute(createUserAddress, {
-      userId: user.id,
-      country: 'Russia',
-      region: 'Moscow',
-      city: 'Moscow',
-      street: 'Asd',
-      apartment: '10',
-      coordinates: {
-        latitude: 30.3123585,
-        longitude: 59.9595541,
-      },
-    })
-
-    user = await writeExecutor.execute(updateUser, { id: user.id, actualUserAddressId: userAddress.id }) */
-  } else {
-    // userAddress = await readExecutor.execute(getUserAddressById, { id: user.actualUserAddressId! })
+  if (!userProducts.length) {
+    return []
   }
 
-  const userProducts = await process.request<IUserProduct[]>('parseProducts', params.query)
+  // await writeExecutor.execute(createAiProducts, { cartsRequestId: cartsRequest.id, userProducts })
 
-  console.log('!!userProducts', JSON.stringify(userProducts, null, 2))
+  // const { carts, responses } = await external.edadealMarketplaceRepo.getCarts({ userProducts })
 
-  return marketplaceRepo.getCarts({ userAddress, userProducts })
+  await Promise.all([
+    // writeExecutor.execute(createCarts, { cartsRequestId: cartsRequest.id, carts }),
+    // writeExecutor.execute(createEdadealResponses, { cartsRequestId: cartsRequest.id, responses }),
+  ])
+
+  // return carts
 })

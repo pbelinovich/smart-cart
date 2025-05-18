@@ -1,6 +1,6 @@
 import { EntityEvent } from './external'
 import { MessagesBasedCommunicator } from '@shared'
-import { IUserEntity } from './inside'
+import { IUserEntity } from './internal'
 
 export { EntityEvent, IEntity, DataBaseSession, IUpdatableRepo, INonUpdatableRepo } from './external'
 
@@ -15,12 +15,12 @@ export type ProcessNames = 'parseProducts'
 export type ProcessMessages = 'dbEvent'
 export type ProcessCommunicator = MessagesBasedCommunicator<ProcessNames, ProcessMessages>
 
-export type UserPriceCategory = 'cheapest' | 'popular' | 'mostExpensive'
+export type PriceCategory = 'cheapest' | 'popular' | 'mostExpensive'
 
-export interface IUserProduct {
+export interface IAIProduct {
   name: string
   quantity: string
-  priceCategory: UserPriceCategory
+  priceCategory: PriceCategory
 }
 
 export interface ICoordinates {
@@ -28,5 +28,52 @@ export interface ICoordinates {
   longitude: number
 }
 
-export type Marketplace = 'igooods'
-export type AuthData = { [key: string]: any }
+export type Marketplace = 'igooods' | 'edadeal'
+
+export interface ICity {
+  id: string
+  name: string
+  coordinates: ICoordinates
+}
+
+export interface IShop {
+  id: string
+  marketplaceId: string
+  name: string
+}
+
+export interface IProduct {
+  name: string
+  quantity: number
+  price: number
+}
+
+export interface ICart {
+  shopId: string
+  shopName: string
+  products: IProduct[]
+  totalPrice: number
+}
+
+export type CartsMap = { [shopId: string]: ICart }
+
+export interface IGetCartsParams {
+  // auth: IAuthEntity
+  // userAddress?: IUserAddressEntity
+  userProducts: IAIProduct[]
+}
+
+export interface IMarketplace<T> {
+  // getAuthData: () => Promise<AuthData | undefined>
+  // getCities: () => Promise<ICity[]>
+  getCarts: (params: IGetCartsParams) => Promise<{ carts: ICart[]; responses: T[] }>
+}
+
+export interface IMarketplaceRepo<TSearchParams, TSearchResult> {
+  search: (params: TSearchParams) => Promise<TSearchResult>
+}
+
+export interface IFetchEdadealProductsParams {
+  productsRequestId: string
+  product: IAIProduct
+}

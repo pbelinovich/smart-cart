@@ -26,6 +26,7 @@
     "@babel/preset-typescript": "7.21.0",
     "@babel/runtime": "^7.27.0",
     "@types/compression": "1.7.2",
+    "@types/cookie-parser": "^1.4.8",
     "@types/cors": "2.8.13",
     "@types/debug": "^4.1.12",
     "@types/express": "4.17.17",
@@ -62,6 +63,7 @@
   "dependencies": {
     "axios": "^1.9.0",
     "compression": "1.7.4",
+    "cookie-parser": "^1.4.7",
     "dayjs": "1.11.7",
     "debug": "^4.4.0",
     "express": "^5.1.0",
@@ -72,10 +74,12 @@
     "node-loader": "2.0.0",
     "puppeteer": "^24.8.2",
     "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-session": "^1.0.1",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "puppeteer-proxy": "^1.0.3",
     "ravendb": "5.4.3",
     "react-fast-compare": "^3.2.2",
+    "socks-proxy-agent": "^8.0.5",
     "winston": "3.10.0"
   },
   "author": "pbelinovich",

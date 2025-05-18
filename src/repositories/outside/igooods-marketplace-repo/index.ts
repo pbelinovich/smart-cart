@@ -1,7 +1,7 @@
 // import axios from 'axios'
 // import { logError } from '../../external'
 // import { fingerprintGenerator } from '@shared'
-import { ICart, IMarketplace } from '../types'
+import { ICart, IMarketplace } from '../../types'
 /* import { SSRScraper } from './ssr-scraper'
 import { DEFAULT_REQUEST_HEADERS, getProductsUrl, getShopsUrl, MAIN_URL, PRICE_CATEGORY_TO_SORT_FIELDS_MAP } from './common'
 import {
@@ -304,8 +304,8 @@ import { IAuthEntity } from '../../inside' */
   }
 } */
 
-export class IgooodsMarketplaceRepo implements IMarketplace {
-  getCarts = (): Promise<ICart[]> => {
-    return Promise.resolve([])
+export class IgooodsMarketplaceRepo implements IMarketplace<any> {
+  getCarts = () => {
+    return Promise.resolve({ carts: [], responses: [] })
   }
 }

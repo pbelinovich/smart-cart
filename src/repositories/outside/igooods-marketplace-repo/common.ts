@@ -1,5 +1,5 @@
 import { RawAxiosRequestHeaders } from 'axios'
-import { UserPriceCategory } from '../../types'
+import { PriceCategory } from '../../types'
 import { IIgooodsSort, IIgooodsSortOrder } from './types'
 
 const API_VERSION = 'v10'
@@ -23,7 +23,7 @@ export const getShopsUrl = (apiVersion: string = API_VERSION) => `${MAIN_URL}/ap
 export const getProductsUrl = (shopId: string, apiVersion: string = API_VERSION) => `${getShopsUrl(apiVersion)}/${shopId}/products/search`
 
 export const PRICE_CATEGORY_TO_SORT_FIELDS_MAP: {
-  [key in UserPriceCategory]: { sort: IIgooodsSort; sortOrder: IIgooodsSortOrder }
+  [key in PriceCategory]: { sort: IIgooodsSort; sortOrder: IIgooodsSortOrder }
 } = {
   cheapest: {
     sort: 'price',

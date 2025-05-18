@@ -1,4 +1,5 @@
 import compression from 'compression'
+import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express from 'express'
 import http from 'node:http'
@@ -11,6 +12,7 @@ export const setupAndRunServer = ({ serverParams, app, process }: SetupAndRunSer
   const serverApp = express()
 
   serverApp.use(compression())
+  serverApp.use(cookieParser())
   serverApp.use(express.json())
   serverApp.use(cors())
   serverApp.use(morganMiddleware)

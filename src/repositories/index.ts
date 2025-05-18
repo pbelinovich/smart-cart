@@ -1,3 +1,3 @@
-export * from './outside'
-export * from './inside'
+export * from './internal'
+export * from './marketplaces'
 export * from './types'

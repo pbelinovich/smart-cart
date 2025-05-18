@@ -1,4 +1,4 @@
-import { IAuthEntity, IUserAddressEntity } from '../../inside'
+import { IAuthEntity, IUserAddressEntity } from '../../internal'
 
 export type IIgooodsSort = 'popularity' | 'price'
 export type IIgooodsSortOrder = 'asc' | 'desc'
