@@ -11,9 +11,6 @@ export const initMainThread = (serverParams: ServerParams) => {
   appInstance.database.subscribe(eventBus.sendEvent)
   appInstance.memoryStorage.subscribe(eventBus.sendEvent)
 
-  setupAndRunServer({
-    serverParams,
-    app: appInstance,
-    process: initProcesses({ eventBus }),
-  })
+  setupAndRunServer({ serverParams, app: appInstance })
+  initProcesses({ eventBus })
 }

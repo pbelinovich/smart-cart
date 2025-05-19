@@ -1,34 +1,18 @@
-import { parentPort } from 'node:worker_threads'
-import { getAppInstance, IApp, ProcessMessages, ProcessNames } from './external'
-import { MessagesBasedCommunicator } from '@shared'
 import { parseProducts } from './parse-products'
+import { fetchEdadealProducts } from './fetch-edadeal-products'
+import { finishFetchEdadealProducts } from './finish-fetch-edadeal-products'
+import { ProcessNames } from './external'
+import { communicator, processInitData } from './common'
 
-if (!parentPort) {
-  throw new Error('This file should be run as a child process of server!')
-}
-
-const appInstance = getAppInstance()
-
-const communicator = new MessagesBasedCommunicator<ProcessNames, ProcessMessages>({
-  postMessage: message => parentPort!.postMessage(message),
-  onReceiveMessage: callback => {
-    parentPort!.on('message', val => {
-      callback(val)
-    })
-  },
-})
-
-appInstance.database.subscribe(event => {
-  communicator.send('dbEvent', event)
-})
-
-const processesMap: { [key in ProcessNames]: (appInstance: IApp) => (data: any) => any } = {
+const processesMap: { [key in ProcessNames]: (params: any) => any } = {
   parseProducts,
+  fetchEdadealProducts,
+  finishFetchEdadealProducts,
 }
 
-Object.keys(processesMap).forEach(key => {
-  const processName = key as ProcessNames
-  const handler = processesMap[processName](appInstance)
+const processesMapKeys = Object.keys(processesMap) as ProcessNames[]
+const targetProcessName = processesMapKeys.find(key => processInitData.processName === key)
 
-  communicator.setRequestHandler(processName, handler)
-})
+if (targetProcessName) {
+  communicator.setRequestHandler(targetProcessName, processesMap[targetProcessName])
+}

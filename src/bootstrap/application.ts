@@ -1,8 +1,8 @@
-import { IReadOperationContext, IWriteOperationContext, DataBaseEvent, IStorageManager, IQueryableRepo, EdadealRepo } from './external'
+import { IReadOperationContext, IWriteOperationContext, DataBaseEvent, IStorageManager, IQueryableRepo } from './external'
 import { ReposFactory } from './repos-factory'
-import { MarketplaceReposFactory } from './marketplace-repos-factory'
 import { StoragesFactory } from './storages-factory'
 import { ExecutorTransactionFactory, IOperationExecutor, OperationExecutor } from '@shared'
+import { ExternalReposFactory } from './external-repos-factory'
 
 export interface IAppExecutors {
   readExecutor: IOperationExecutor<IReadOperationContext>
@@ -10,29 +10,25 @@ export interface IAppExecutors {
 }
 
 export interface IAppExecutorsGetterParams {
+  proxy?: string
   onUseReadRepo?: (repo: IQueryableRepo<any>) => void
-}
-
-export interface IAppMarketplaces {
-  edadealRepo: EdadealRepo
 }
 
 export interface IApp {
   getExecutors: (params: IAppExecutorsGetterParams) => IAppExecutors
   database: IStorageManager<any, DataBaseEvent>
   memoryStorage: IStorageManager<any, DataBaseEvent>
-  marketplaces: IAppMarketplaces
 }
 
 export const getAppInstance = (): IApp => {
   const storagesFactory = new StoragesFactory()
-  const externalReposFactory = new MarketplaceReposFactory()
 
   const database = storagesFactory.initDatabase()
   const memoryStorage = storagesFactory.initMemoryStorage()
 
   return {
     getExecutors: params => {
+      const externalReposFactory = new ExternalReposFactory(params.proxy)
       const onGetRepo = params.onUseReadRepo || (() => undefined)
 
       const readExecutorTransactionFactory: ExecutorTransactionFactory<IReadOperationContext> = () => {
@@ -65,6 +61,12 @@ export const getAppInstance = (): IApp => {
             get userRepo() {
               onGetRepo(readReposFactory.userRepo)
               return readReposFactory.userRepo
+            },
+            get mistralRepo() {
+              return externalReposFactory.mistralRepo
+            },
+            get edadealRepo() {
+              return externalReposFactory.edadealRepo
             },
           },
           finishTransaction: () => Promise.resolve(undefined),
@@ -101,6 +103,12 @@ export const getAppInstance = (): IApp => {
             get userRepo() {
               return writeReposFactory.userRepo
             },
+            get mistralRepo() {
+              return externalReposFactory.mistralRepo
+            },
+            get edadealRepo() {
+              return externalReposFactory.edadealRepo
+            },
           },
           finishTransaction: async () => {
             await writeDatabaseSession.saveChanges()
@@ -126,12 +134,6 @@ export const getAppInstance = (): IApp => {
 
     database,
     memoryStorage,
-
-    marketplaces: {
-      get edadealRepo() {
-        return externalReposFactory.edadealRepo
-      },
-    },
   }
 }
 

@@ -33,7 +33,7 @@ const errorMapper = (errorIn: any) => {
   return defaultErrorMapper(error)
 }
 
-export const setupHTTPApi = ({ expressApp, app, process }: SetupHttpApiParams) => {
+export const setupHTTPApi = ({ expressApp, app }: SetupHttpApiParams) => {
   appendApiDomainToExpress({
     expressApp,
     api: publicHttpApi,
@@ -42,10 +42,8 @@ export const setupHTTPApi = ({ expressApp, app, process }: SetupHttpApiParams) =
       const executors = app.getExecutors({})
 
       return {
-        process,
         readExecutor: executors.readExecutor,
         writeExecutor: executors.writeExecutor,
-        external: app.marketplaces,
       }
     },
     errorMapper,

@@ -1,4 +1,4 @@
-import { IEventBus, DataBaseEvent, IApp, ProcessCommunicator } from './external'
+import { IEventBus, DataBaseEvent, IApp } from './external'
 
 export type ServerParams = {
   port: string
@@ -11,5 +11,4 @@ export type InitProcessesParams = {
 export type SetupAndRunServerParams = {
   serverParams: ServerParams
   app: IApp
-  process: ProcessCommunicator
 }

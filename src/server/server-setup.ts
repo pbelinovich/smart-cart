@@ -8,7 +8,7 @@ import { logError, logInfo } from './external'
 import { SetupAndRunServerParams } from './types'
 import { morganMiddleware } from './middlewares'
 
-export const setupAndRunServer = ({ serverParams, app, process }: SetupAndRunServerParams) => {
+export const setupAndRunServer = ({ serverParams, app }: SetupAndRunServerParams) => {
   const serverApp = express()
 
   serverApp.use(compression())
@@ -27,11 +27,7 @@ export const setupAndRunServer = ({ serverParams, app, process }: SetupAndRunSer
   // initialize a simple http server
   const server = http.createServer(serverApp)
 
-  setupHTTPApi({
-    expressApp: serverApp,
-    app,
-    process,
-  })
+  setupHTTPApi({ expressApp: serverApp, app })
 
   // start our server
   const port = serverParams.port

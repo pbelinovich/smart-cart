@@ -1,9 +1,63 @@
 import https, { RequestOptions } from 'node:https'
-import http from 'node:http'
+import http, { Agent } from 'node:http'
 import { decompressResponse, isHttps } from './helpers'
-import { IMarketplaceRequestParams } from './types'
+import { IMarketplaceRequestParams, QueryObject } from './types'
+import { fingerprintGenerator } from '@shared'
+import { SocksProxyAgent } from 'socks-proxy-agent'
 
 export abstract class MarketplaceRepo {
+  private readonly agent: Agent | undefined
+  protected fingerprint = fingerprintGenerator()
+
+  protected constructor(proxy?: string) {
+    if (proxy) {
+      this.agent = new SocksProxyAgent(proxy)
+    }
+
+    setInterval(() => {
+      this.fingerprint = fingerprintGenerator()
+    }, 1000 * 60 * 30)
+  }
+
+  private objectToQueryString = (obj: QueryObject, prefix: string = ''): string => {
+    const queryParts: string[] = []
+
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        const value = obj[key]
+        const fullKey = prefix ? `${prefix}[${key}]` : key
+
+        if (value === null || value === undefined) {
+          continue
+        } else if (Array.isArray(value)) {
+          value.forEach(item => {
+            if (item !== null && item !== undefined) {
+              if (typeof item === 'object' && !Array.isArray(item)) {
+                // Обработка массива объектов
+                const nestedQuery = this.objectToQueryString(item, fullKey)
+                if (nestedQuery) {
+                  queryParts.push(nestedQuery)
+                }
+              } else {
+                queryParts.push(`${encodeURIComponent(fullKey)}=${encodeURIComponent(String(item))}`)
+              }
+            }
+          })
+        } else if (typeof value === 'object') {
+          // Рекурсивный вызов для вложенных объектов
+          const nestedQuery = this.objectToQueryString(value as QueryObject, fullKey)
+          if (nestedQuery) {
+            queryParts.push(nestedQuery)
+          }
+        } else {
+          queryParts.push(`${encodeURIComponent(fullKey)}=${encodeURIComponent(String(value))}`)
+        }
+      }
+    }
+
+    return queryParts.join('&')
+  }
+
   protected request = <TData extends { [key: string]: any }, TResult>(p: IMarketplaceRequestParams<TData>) => {
     let timeout = false
 
@@ -14,15 +68,7 @@ export abstract class MarketplaceRepo {
       let path = url.pathname
 
       if (p.method === 'GET') {
-        const params = new URLSearchParams(
-          Object.keys(p.data).reduce<{ [key: string]: string }>((acc, key) => {
-            if (typeof p.data[key].toString === 'function') {
-              acc[key] = p.data[key].toString()
-            }
-
-            return acc
-          }, {})
-        )
+        const params = this.objectToQueryString(p.data)
 
         if (params) {
           path += '?' + params.toString()
@@ -41,7 +87,7 @@ export abstract class MarketplaceRepo {
           'Content-Type': 'application/json',
           ...p.headers,
         },
-        agent: p.agent,
+        agent: this.agent,
         timeout: p.timeout || 15000,
       }
 

@@ -1,4 +1,4 @@
-import { ICity } from '../../types'
+import { ICoordinates } from '../../types'
 
 export type EdadealGroupBy = 'meta' | 'sku' | 'sku_or_meta' | 'all_sku_or_meta'
 export type EdadealSort =
@@ -19,10 +19,16 @@ export interface IEdadealPartner {
   primaryColor: string
 }
 
-export interface IEdadealPriceValue {
-  type: 'value'
-  value: number
-}
+export type EdadealPriceValue =
+  | {
+      type: 'value'
+      value: number
+    }
+  | {
+      type: 'range'
+      from: number
+      to: number
+    }
 
 export interface IEdadealPriceMeta {
   currency: string
@@ -31,7 +37,7 @@ export interface IEdadealPriceMeta {
 }
 
 export interface IEdadealPrice {
-  value: IEdadealPriceValue
+  value: EdadealPriceValue
   meta: IEdadealPriceMeta
 }
 
@@ -40,12 +46,24 @@ export interface IEdadealPriceForUnit {
   unit: string
 }
 
+export interface IEdadealPriceDataMeta {
+  currency: string
+  currencyCode: string
+  currencyPosition: string
+}
+
+export interface IEdadealPriceData {
+  meta: IEdadealPriceMeta
+  new: EdadealPriceValue
+}
+
 export interface IEdadealProduct {
   uuid: string
   type: 'meta_offer' | 'sku'
   title: string
   partner: IEdadealPartner
   brandUuid: string
+  priceData?: IEdadealPriceData
   priceForUnit: IEdadealPriceForUnit
   imageUrl: string
 }
@@ -93,7 +111,7 @@ export interface IEdadealGetProductsResponse {
 }
 
 export interface IEdadealSearchRequest {
-  city: ICity
+  coordinates: ICoordinates
   shopIds: string[]
   sort?: EdadealSort
   text: string

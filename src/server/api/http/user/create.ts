@@ -1,11 +1,11 @@
 import joi from 'joi'
 import { buildPublicHandler } from '../builder'
-import { createUser } from '../../../external'
+import { createUser, ICreateUserParams } from '../../../external'
 
-const requestSchema = joi.object({
+const schema = joi.object<ICreateUserParams>({
   telegramId: joi.number().required(),
 })
 
-export const create = buildPublicHandler(requestSchema, (params, { writeExecutor }) => {
+export const create = buildPublicHandler(schema, (params, { writeExecutor }) => {
   return writeExecutor.execute(createUser, params)
 })

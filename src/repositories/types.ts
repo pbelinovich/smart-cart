@@ -1,19 +1,39 @@
 import { EntityEvent } from './external'
-import { MessagesBasedCommunicator } from '@shared'
-import { IUserEntity } from './internal'
+import { IAIProductsListEntity, IMarketplaceProductEntity, IProductEntity, IProductsRequestEntity, IUserEntity } from './internal'
 
 export { EntityEvent, IEntity, DataBaseSession, IUpdatableRepo, INonUpdatableRepo } from './external'
 
+export type AIProductsListEntityEvents = EntityEvent<IAIProductsListEntity>
+export type MarketplaceProductEntityEvents = EntityEvent<IMarketplaceProductEntity>
+export type ProductEntityEvents = EntityEvent<IProductEntity>
+export type ProductsRequestEntityEvents = EntityEvent<IProductsRequestEntity>
 export type UserEntityEvents = EntityEvent<IUserEntity>
 
-export type DataBaseEvent = {
-  entity: 'users'
-  event: UserEntityEvents
-}
+export type DataBaseEvent =
+  | {
+      entity: 'aiProductsLists'
+      event: AIProductsListEntityEvents
+    }
+  | {
+      entity: 'marketplaceProducts'
+      event: MarketplaceProductEntityEvents
+    }
+  | {
+      entity: 'products'
+      event: ProductEntityEvents
+    }
+  | {
+      entity: 'productsRequests'
+      event: ProductsRequestEntityEvents
+    }
+  | {
+      entity: 'users'
+      event: UserEntityEvents
+    }
 
-export type ProcessNames = 'parseProducts'
+export type ProcessNames = 'parseProducts' | 'fetchEdadealProducts' | 'finishFetchEdadealProducts'
 export type ProcessMessages = 'dbEvent'
-export type ProcessCommunicator = MessagesBasedCommunicator<ProcessNames, ProcessMessages>
+export type ProcessInitData = { processName: ProcessNames; proxy?: string }
 
 export type PriceCategory = 'cheapest' | 'popular' | 'mostExpensive'
 
@@ -73,7 +93,16 @@ export interface IMarketplaceRepo<TSearchParams, TSearchResult> {
   search: (params: TSearchParams) => Promise<TSearchResult>
 }
 
+export interface IParseProductsParams {
+  productsRequestId: string
+}
+
 export interface IFetchEdadealProductsParams {
   productsRequestId: string
   product: IAIProduct
+}
+
+export interface IFinishFetchEdadealProductsParams {
+  productsRequestId: string
+  success: boolean
 }

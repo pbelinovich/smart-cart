@@ -34,21 +34,21 @@ const mockCoordinates: { [key in 'spb' | 'samara']: { latitude: number; longitud
 }
 
 export class EdadealMarketplaceRepo implements IMarketplace<IEdadealGetProductsResponse> {
-  private request = async <TParams, TResult>({ index, method = 'GET', url, data, userAddress, proxy }: IEdadealRequestParams<TParams>) => {
+  private request = async <TParams, TResult>({ index, method = 'GET', url, data, proxy }: IEdadealRequestParams<TParams>) => {
     try {
       const fingerprint = fingerprintGeneratorByIndex(index)
-      const coordinates = userAddress?.coordinates || mockCoordinates.spb
+      // const coordinates = userAddress?.coordinates || mockCoordinates.spb
       const headers: RawAxiosRequestHeaders = {
         // ...DEFAULT_REQUEST_HEADERS,
         'User-Agent': fingerprint.userAgent,
-        'X-Position-Latitude': coordinates.latitude,
-        'X-Position-Longitude': coordinates.longitude,
+        // 'X-Position-Latitude': coordinates.latitude,
+        // 'X-Position-Longitude': coordinates.longitude,
       }
 
-      if (userAddress) {
-        // headers['X-Position-Latitude'] = userAddress.coordinates.latitude
-        // headers['X-Position-Longitude'] = userAddress.coordinates.longitude
-      }
+      // if (userAddress) {
+      // headers['X-Position-Latitude'] = userAddress.coordinates.latitude
+      // headers['X-Position-Longitude'] = userAddress.coordinates.longitude
+      // }
 
       const response = await axios<TResult>({
         url,
@@ -124,7 +124,7 @@ export class EdadealMarketplaceRepo implements IMarketplace<IEdadealGetProductsR
           index: lastIndex.index + lastIndex.count,
           url: PRODUCTS_URL,
           data: requestParams,
-          userAddress: params.userAddress,
+          // userAddress: params.userAddress,
           // proxy,
           fingerprint: fingerprintGenerator(),
         })
@@ -155,7 +155,7 @@ export class EdadealMarketplaceRepo implements IMarketplace<IEdadealGetProductsR
                 ...requestParams,
                 text: leftText,
               },
-              userAddress: params.userAddress,
+              // userAddress: params.userAddress,
               // proxy,
               fingerprint: fingerprintGenerator(),
             })

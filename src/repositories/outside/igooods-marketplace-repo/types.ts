@@ -1,4 +1,4 @@
-import { IAuthEntity, IUserAddressEntity } from '../../internal'
+// import { IAuthEntity, IUserAddressEntity } from '../../internal'
 
 export type IIgooodsSort = 'popularity' | 'price'
 export type IIgooodsSortOrder = 'asc' | 'desc'
@@ -11,12 +11,12 @@ export interface IIgooodsGetPageResponse<T> {
 }
 
 export interface IIgooodsGetShopsParams {
-  auth: IAuthEntity
-  userAddress: IUserAddressEntity
+  auth: any
+  userAddress: any
 }
 
 export interface IIgooodsGetProductParams {
-  auth: IAuthEntity
+  auth: any
   shopId: string
   query: string
   sort: IIgooodsSort

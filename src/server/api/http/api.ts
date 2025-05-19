@@ -1,33 +1,25 @@
 import { buildPublicDomain } from './builder'
+import * as productHandlers from './product'
+import * as productsRequestHandlers from './products-request'
 import * as userHandlers from './user'
-import * as edadealHandlers from './edadeal'
-import * as igooodsHandlers from './igooods'
 
 export const publicHttpApi = buildPublicDomain({
+  product: {
+    POST: {
+      getByProductsRequestId: productHandlers.getByProductsRequestId,
+    },
+  },
+  productsRequest: {
+    POST: {
+      create: productsRequestHandlers.create,
+    },
+  },
   user: {
     GET: {
       byTelegramId: userHandlers.getByTelegramId,
     },
     POST: {
       create: userHandlers.create,
-    },
-  },
-  userAddress: {
-    GET: {
-      // byTelegramId: userHandlers.getByTelegramId,
-    },
-    POST: {
-      // create: userHandlers.create,
-    },
-  },
-  edadeal: {
-    POST: {
-      getCarts: edadealHandlers.getCarts,
-    },
-  },
-  igooods: {
-    POST: {
-      getCarts: igooodsHandlers.getCarts,
     },
   },
 })

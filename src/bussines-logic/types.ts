@@ -6,6 +6,8 @@ import {
   IMarketplaceProductEntity,
   IProductEntity,
   IProductsRequestEntity,
+  MistralRepo,
+  EdadealRepo,
 } from './external'
 import { IOperation, IOperationExecutor } from '@shared'
 
@@ -28,6 +30,9 @@ export interface IReadOperationContext {
   productRepo: IReadOnlyRepo<IProductEntity>
   productsRequestRepo: IReadOnlyRepo<IProductsRequestEntity>
   userRepo: IReadOnlyRepo<IUserEntity>
+
+  mistralRepo: MistralRepo
+  edadealRepo: EdadealRepo
 }
 
 export interface IWriteOperationContext {
@@ -36,6 +41,9 @@ export interface IWriteOperationContext {
   productRepo: IUpdatableRepo<IProductEntity>
   productsRequestRepo: IUpdatableRepo<IProductsRequestEntity>
   userRepo: IUpdatableRepo<IUserEntity>
+
+  mistralRepo: MistralRepo
+  edadealRepo: EdadealRepo
 
   readExecutor: IOperationExecutor<IReadOperationContext>
 }
