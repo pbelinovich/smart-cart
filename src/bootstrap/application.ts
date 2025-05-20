@@ -42,13 +42,17 @@ export const getAppInstance = (): IApp => {
 
         return {
           context: {
+            get absentProductRepo() {
+              onGetRepo(readReposFactory.absentProductRepo)
+              return readReposFactory.absentProductRepo
+            },
             get aiProductsListRepo() {
               onGetRepo(readReposFactory.aiProductsListRepo)
               return readReposFactory.aiProductsListRepo
             },
-            get marketplaceProductRepo() {
-              onGetRepo(readReposFactory.marketplaceProductRepo)
-              return readReposFactory.marketplaceProductRepo
+            get presentProductRepo() {
+              onGetRepo(readReposFactory.presentProductRepo)
+              return readReposFactory.presentProductRepo
             },
             get productRepo() {
               onGetRepo(readReposFactory.productRepo)
@@ -88,11 +92,14 @@ export const getAppInstance = (): IApp => {
         return {
           context: {
             readExecutor,
+            get absentProductRepo() {
+              return writeReposFactory.absentProductRepo
+            },
             get aiProductsListRepo() {
               return writeReposFactory.aiProductsListRepo
             },
-            get marketplaceProductRepo() {
-              return writeReposFactory.marketplaceProductRepo
+            get presentProductRepo() {
+              return writeReposFactory.presentProductRepo
             },
             get productRepo() {
               return writeReposFactory.productRepo

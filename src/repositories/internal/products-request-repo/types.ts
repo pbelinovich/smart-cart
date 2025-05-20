@@ -1,6 +1,13 @@
 import { IEntity } from '../../external'
 
-export type ProductsRequestStatus = 'created' | 'executed' | 'error'
+export type ProductsRequestStatus =
+  | 'created'
+  | 'aiParsing'
+  | 'errorWhileAIParsing'
+  | 'aiParsed'
+  | 'collecting'
+  | 'errorWhileCollecting'
+  | 'collected'
 
 export interface IProductsRequestEntity extends IEntity {
   userId: string

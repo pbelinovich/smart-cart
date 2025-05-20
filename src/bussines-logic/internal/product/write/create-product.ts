@@ -5,7 +5,7 @@ import { relatedEntitiesExist } from '../../../common/guardians'
 
 export interface ICreateProductParams {
   productsRequestId: string
-  marketplaceProductHash: string
+  cachedProductHash: string
   quantity: string
 }
 
@@ -15,7 +15,7 @@ export const createProduct = buildWriteOperation(
       id: context.productRepo.getNewId(),
       productsRequestId: params.productsRequestId,
       createDate: dateTime.utc().toISOString(),
-      marketplaceProductHash: params.marketplaceProductHash,
+      cachedProductHash: params.cachedProductHash,
       quantity: params.quantity,
     }
 

@@ -1,13 +1,13 @@
-import { parseProducts } from './parse-products'
-import { fetchEdadealProducts } from './fetch-edadeal-products'
-import { finishFetchEdadealProducts } from './finish-fetch-edadeal-products'
 import { ProcessNames } from './external'
 import { communicator, processInitData } from './common'
+import { mistralHandlers } from './ai'
+import { edadealHandlers } from './marketplaces'
 
 const processesMap: { [key in ProcessNames]: (params: any) => any } = {
-  parseProducts,
-  fetchEdadealProducts,
-  finishFetchEdadealProducts,
+  'mistral/parseProducts': mistralHandlers.parseProducts,
+  'edadeal/startProductsCollecting': edadealHandlers.startProductsCollecting,
+  'edadeal/collectProducts': edadealHandlers.collectProducts,
+  'edadeal/finishProductsCollecting': edadealHandlers.finishProductsCollecting,
 }
 
 const processesMapKeys = Object.keys(processesMap) as ProcessNames[]

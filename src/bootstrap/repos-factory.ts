@@ -3,19 +3,29 @@ import {
   DataBaseSession,
   MemorySession,
   AIProductsListRepo,
-  MarketplaceProductsRepo,
+  PresentProductRepo,
   ProductRepo,
   ProductsRequestRepo,
+  AbsentProductRepo,
 } from './external'
 
 export class ReposFactory {
   constructor(private _dbSession: DataBaseSession, private _memorySession: MemorySession) {}
 
+  private _absentProductRepo: AbsentProductRepo | undefined
   private _aiProductsListRepo: AIProductsListRepo | undefined
-  private _marketplaceProductRepo: MarketplaceProductsRepo | undefined
+  private _presentProductRepo: PresentProductRepo | undefined
   private _productRepo: ProductRepo | undefined
   private _productsRequestRepo: ProductsRequestRepo | undefined
   private _user: UserRepo | undefined
+
+  get absentProductRepo() {
+    if (!this._absentProductRepo) {
+      this._absentProductRepo = new AbsentProductRepo(this._dbSession)
+    }
+
+    return this._absentProductRepo!
+  }
 
   get aiProductsListRepo() {
     if (!this._aiProductsListRepo) {
@@ -25,12 +35,12 @@ export class ReposFactory {
     return this._aiProductsListRepo!
   }
 
-  get marketplaceProductRepo() {
-    if (!this._marketplaceProductRepo) {
-      this._marketplaceProductRepo = new MarketplaceProductsRepo(this._dbSession)
+  get presentProductRepo() {
+    if (!this._presentProductRepo) {
+      this._presentProductRepo = new PresentProductRepo(this._dbSession)
     }
 
-    return this._marketplaceProductRepo!
+    return this._presentProductRepo!
   }
 
   get productRepo() {

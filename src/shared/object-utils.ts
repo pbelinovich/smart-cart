@@ -6,6 +6,7 @@ const s4 = () =>
     .substring(1)
 
 export const guid = () => s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4()
+export const lightGuid = () => s4() + s4()
 
 export const snapshot = <T>(obj: T, allowFunction = false): T => {
   if (obj instanceof Date) {

@@ -18,6 +18,7 @@ export type WorkerData = {
 }
 
 export type WorkerPoolParams = {
+  taskName: ProcessNames
   eventBus: IEventBus<DataBaseEvent>
   size?: number
   proxyList?: string[]

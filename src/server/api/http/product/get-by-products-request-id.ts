@@ -1,13 +1,15 @@
 import joi from 'joi'
 import { buildPublicHandler } from '../builder'
-import { IProductDto } from './types'
+import { IPresentProductDto, IAbsentProductDto } from './types'
 import {
-  getMarketplaceProductsByHashes,
+  getAbsentProductsByHashes,
+  getPresentProductsByHashes,
   getProductsByProductsRequestId,
   getProductsRequestById,
   getUserById,
+  IAbsentProductEntity,
   IGetProductByProductsRequestIdParams,
-  IMarketplaceProductEntity,
+  IPresentProductEntity,
   updateUserLastActivity,
 } from '../../../external'
 
@@ -23,44 +25,74 @@ export const getByProductsRequestId = buildPublicHandler(schema, async (params, 
     throw new Error('User does not exist')
   }
 
-  const productsRequestId = await readExecutor.execute(getProductsRequestById, { id: params.productsRequestId })
+  const productsRequest = await readExecutor.execute(getProductsRequestById, { id: params.productsRequestId })
 
-  if (!productsRequestId) {
+  if (!productsRequest) {
     throw new Error('Unable to find products request')
   }
 
-  const [products] = await Promise.all([
-    readExecutor.execute(getProductsByProductsRequestId, params),
+  if (productsRequest.userId !== user.id) {
+    throw new Error('User does not have access to this products request')
+  }
+
+  const products = await readExecutor.execute(getProductsByProductsRequestId, params)
+  const hashes = products.map(x => x.cachedProductHash)
+
+  const [presentProducts, absentProducts] = await Promise.all([
+    readExecutor.execute(getPresentProductsByHashes, { hashes }),
+    readExecutor.execute(getAbsentProductsByHashes, { hashes }),
     writeExecutor.execute(updateUserLastActivity, { id: user.id }),
   ])
 
-  const marketplaceProducts = await readExecutor.execute(getMarketplaceProductsByHashes, {
-    hashes: products.map(x => x.marketplaceProductHash),
-  })
-
-  const hashToMarketplaceProductMap = marketplaceProducts.reduce<{
-    [hash: string]: IMarketplaceProductEntity
+  const hashToPresentProductMap = presentProducts.reduce<{
+    [hash: string]: IPresentProductEntity
   }>((acc, product) => {
     acc[product.hash] = product
     return acc
   }, {})
 
-  return products.reduce<IProductDto[]>((acc, product) => {
-    const marketplaceProduct = hashToMarketplaceProductMap[product.marketplaceProductHash]
-
-    if (marketplaceProduct) {
-      acc.push({
-        id: product.id,
-        createDate: product.createDate,
-        quantity: product.quantity,
-        cityId: marketplaceProduct.cityId,
-        shopId: marketplaceProduct.shopId,
-        queryName: marketplaceProduct.queryName,
-        productName: marketplaceProduct.productName,
-        productPrice: marketplaceProduct.productPrice,
-      })
-    }
-
+  const hashToAbsentProductMap = absentProducts.reduce<{
+    [hash: string]: IAbsentProductEntity
+  }>((acc, product) => {
+    acc[product.hash] = product
     return acc
-  }, [])
+  }, {})
+
+  return {
+    present: products.reduce<IPresentProductDto[]>((acc, product) => {
+      const presentProduct = hashToPresentProductMap[product.cachedProductHash]
+
+      if (presentProduct) {
+        acc.push({
+          id: product.id,
+          createDate: product.createDate,
+          quantity: product.quantity,
+          cityId: presentProduct.cityId,
+          shopId: presentProduct.shopId,
+          queryName: presentProduct.queryName,
+          productName: presentProduct.productName,
+          productPrice: presentProduct.productPrice,
+        })
+      }
+
+      return acc
+    }, []),
+    absent: products.reduce<IAbsentProductDto[]>((acc, product) => {
+      const presentProduct = hashToPresentProductMap[product.cachedProductHash]
+      const absentProduct = hashToAbsentProductMap[product.cachedProductHash]
+
+      if (!presentProduct && absentProduct) {
+        acc.push({
+          id: product.id,
+          createDate: product.createDate,
+          quantity: product.quantity,
+          cityId: absentProduct.cityId,
+          shopId: absentProduct.shopId,
+          queryName: absentProduct.queryName,
+        })
+      }
+
+      return acc
+    }, []),
+  }
 })

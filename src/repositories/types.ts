@@ -1,10 +1,10 @@
 import { EntityEvent } from './external'
-import { IAIProductsListEntity, IMarketplaceProductEntity, IProductEntity, IProductsRequestEntity, IUserEntity } from './internal'
+import { IAIProductsListEntity, IPresentProductEntity, IProductEntity, IProductsRequestEntity, IUserEntity } from './internal'
 
 export { EntityEvent, IEntity, DataBaseSession, IUpdatableRepo, INonUpdatableRepo } from './external'
 
 export type AIProductsListEntityEvents = EntityEvent<IAIProductsListEntity>
-export type MarketplaceProductEntityEvents = EntityEvent<IMarketplaceProductEntity>
+export type PresentProductEntityEvents = EntityEvent<IPresentProductEntity>
 export type ProductEntityEvents = EntityEvent<IProductEntity>
 export type ProductsRequestEntityEvents = EntityEvent<IProductsRequestEntity>
 export type UserEntityEvents = EntityEvent<IUserEntity>
@@ -15,8 +15,8 @@ export type DataBaseEvent =
       event: AIProductsListEntityEvents
     }
   | {
-      entity: 'marketplaceProducts'
-      event: MarketplaceProductEntityEvents
+      entity: 'presentProducts'
+      event: PresentProductEntityEvents
     }
   | {
       entity: 'products'
@@ -31,9 +31,15 @@ export type DataBaseEvent =
       event: UserEntityEvents
     }
 
-export type ProcessNames = 'parseProducts' | 'fetchEdadealProducts' | 'finishFetchEdadealProducts'
+export type MistralParseProducts = 'mistral/parseProducts'
+export type EdadealStartCollectingProducts = 'edadeal/startProductsCollecting'
+export type EdadealCollectProducts = 'edadeal/collectProducts'
+export type EdadealFinishCollectingProducts = 'edadeal/finishProductsCollecting'
+
+export type ProcessNames = MistralParseProducts | EdadealStartCollectingProducts | EdadealCollectProducts | EdadealFinishCollectingProducts
+
 export type ProcessMessages = 'dbEvent'
-export type ProcessInitData = { processName: ProcessNames; proxy?: string }
+export type ProcessInitData = { processId: string; processName: ProcessNames; proxy?: string }
 
 export type PriceCategory = 'cheapest' | 'popular' | 'mostExpensive'
 
@@ -97,12 +103,16 @@ export interface IParseProductsParams {
   productsRequestId: string
 }
 
-export interface IFetchEdadealProductsParams {
+export interface IStartCollectingProductsParams {
+  productsRequestId: string
+}
+
+export interface ICollectProductsParams {
   productsRequestId: string
   product: IAIProduct
 }
 
-export interface IFinishFetchEdadealProductsParams {
+export interface IFinishCollectingProductsParams {
   productsRequestId: string
   success: boolean
 }

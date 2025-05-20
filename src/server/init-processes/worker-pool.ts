@@ -1,18 +1,20 @@
 import path from 'node:path'
 import { Worker } from 'node:worker_threads'
-import { guid, MessagesBasedCommunicator } from '@shared'
+import { lightGuid, MessagesBasedCommunicator } from '@shared'
 import { DataBaseEvent, IEventBus, logInfo, ProcessInitData, ProcessMessages, ProcessNames } from '../external'
 import { Task, TaskResult, WorkerData, WorkerPoolParams } from './types'
 
 export class WorkerPool<TData, TResult> {
   private readonly eventBus: IEventBus<DataBaseEvent>
+  private readonly taskName: ProcessNames
   private readonly taskTimeout: number
 
   private queue: Task<TData, TResult>[] = []
   private workers: { [workerId: string]: WorkerData } = {}
 
-  constructor(private readonly taskName: ProcessNames, { eventBus, size = 1, proxyList = [], taskTimeout = 30000 }: WorkerPoolParams) {
+  constructor({ taskName, eventBus, size = 1, proxyList = [], taskTimeout = 30000 }: WorkerPoolParams) {
     this.eventBus = eventBus
+    this.taskName = taskName
     this.taskTimeout = taskTimeout
 
     for (let i = 0; i < size; i++) {
@@ -25,7 +27,9 @@ export class WorkerPool<TData, TResult> {
   }
 
   private createWorkerInstance = (proxy?: string) => {
-    const processInitData: ProcessInitData = { processName: this.taskName, proxy }
+    const workerId = lightGuid()
+    const processInitData: ProcessInitData = { processId: workerId, processName: this.taskName, proxy }
+
     const worker = new Worker(path.join(__dirname, '../processes/index.js'), { workerData: processInitData })
     const communicator = new MessagesBasedCommunicator<ProcessNames, ProcessMessages>({
       postMessage: message => worker.postMessage(message),
@@ -36,7 +40,6 @@ export class WorkerPool<TData, TResult> {
       },
     })
 
-    const workerId = guid()
     const unsubFromDb = communicator.on('dbEvent', event => {
       this.eventBus.sendEvent(event)
     })

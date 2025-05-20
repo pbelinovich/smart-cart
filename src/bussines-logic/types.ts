@@ -1,15 +1,16 @@
+import { IOperation, IOperationExecutor } from '@shared'
 import {
   IUserEntity,
   IReadOnlyRepo,
   IUpdatableRepo,
   IAIProductsListEntity,
-  IMarketplaceProductEntity,
+  IPresentProductEntity,
   IProductEntity,
   IProductsRequestEntity,
   MistralRepo,
   EdadealRepo,
+  IAbsentProductEntity,
 } from './external'
-import { IOperation, IOperationExecutor } from '@shared'
 
 export {
   FilterInfo,
@@ -25,8 +26,9 @@ export {
 } from './external'
 
 export interface IReadOperationContext {
+  absentProductRepo: IReadOnlyRepo<IAbsentProductEntity>
   aiProductsListRepo: IReadOnlyRepo<IAIProductsListEntity>
-  marketplaceProductRepo: IReadOnlyRepo<IMarketplaceProductEntity>
+  presentProductRepo: IReadOnlyRepo<IPresentProductEntity>
   productRepo: IReadOnlyRepo<IProductEntity>
   productsRequestRepo: IReadOnlyRepo<IProductsRequestEntity>
   userRepo: IReadOnlyRepo<IUserEntity>
@@ -36,8 +38,9 @@ export interface IReadOperationContext {
 }
 
 export interface IWriteOperationContext {
+  absentProductRepo: IUpdatableRepo<IAbsentProductEntity>
   aiProductsListRepo: IUpdatableRepo<IAIProductsListEntity>
-  marketplaceProductRepo: IUpdatableRepo<IMarketplaceProductEntity>
+  presentProductRepo: IUpdatableRepo<IPresentProductEntity>
   productRepo: IUpdatableRepo<IProductEntity>
   productsRequestRepo: IUpdatableRepo<IProductsRequestEntity>
   userRepo: IUpdatableRepo<IUserEntity>

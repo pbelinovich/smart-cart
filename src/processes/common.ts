@@ -1,6 +1,6 @@
 import { parentPort, workerData } from 'node:worker_threads'
 import { IProcessContext, ProcessHandler } from './types'
-import { getAppInstance, ProcessInitData, ProcessMessages, ProcessNames } from './external'
+import { getAppInstance, logInfo, ProcessInitData, ProcessMessages, ProcessNames } from './external'
 import { MessagesBasedCommunicator } from '@shared'
 
 if (!parentPort) {
@@ -25,6 +25,7 @@ const processContext: IProcessContext = {
   readExecutor,
   writeExecutor,
   processInitData,
+  log: message => logInfo(`[${processInitData.processName} | ${processInitData.processId}] ${message}`),
 }
 
 appInstance.database.subscribe(event => {
@@ -33,7 +34,10 @@ appInstance.database.subscribe(event => {
 
 const processHandlerBuilder = (context: IProcessContext) => {
   return <TParams, TResult>(handler: ProcessHandler<TParams, TResult>) => {
-    return (params: TParams) => handler(context, params)
+    return (params: TParams) => {
+      context.log(JSON.stringify(params))
+      return handler(context, params)
+    }
   }
 }
 
