@@ -13,11 +13,12 @@ const initAIProcesses = ({ eventBus }: InitProcessesParams) => {
   const parseProductsPool = new WorkerPool<IParseProductsParams, boolean>({
     taskName: 'mistral/parseProducts',
     eventBus,
+    taskTimeout: 1000 * 60 * 2, // 2 minutes
   })
 
-  eventBus.subscribe(ev => {
+  eventBus.subscribe(async ev => {
     if (ev.entity === ProductsRequestRepo.collectionName && ev.event.kind === 'created') {
-      return parseProductsPool.runTask({ productsRequestId: ev.event.entity.id })
+      await parseProductsPool.runTask({ productsRequestId: ev.event.entity.id })
     }
   })
 }
