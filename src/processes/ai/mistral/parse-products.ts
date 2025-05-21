@@ -1,32 +1,26 @@
 import { buildProcessHandler } from '../../common'
-import {
-  createAiProductsList,
-  getProductsRequestById,
-  IParseProductsParams,
-  parseProductsByQuery,
-  updateProductsRequest,
-} from '../../external'
+import { getProductsRequestById, IParseProductsParams, parseProductsByQuery, updateProductsRequest } from '../../external'
 
 export const parseProducts = buildProcessHandler(async ({ readExecutor, writeExecutor }, params: IParseProductsParams) => {
   const productsRequest = await readExecutor.execute(getProductsRequestById, { id: params.productsRequestId })
 
-  if (!productsRequest || productsRequest.status !== 'created' || !productsRequest.query) {
-    await writeExecutor.execute(updateProductsRequest, { id: params.productsRequestId, status: 'errorWhileAIParsing' })
-    return false
+  if (!productsRequest || productsRequest.status !== 'productsParsing' || productsRequest.error || !productsRequest.query) {
+    if (!productsRequest.error) {
+      await writeExecutor.execute(updateProductsRequest, { id: params.productsRequestId, error: true })
+    }
+
+    return
   }
 
   try {
-    const [list] = await Promise.all([
-      readExecutor.execute(parseProductsByQuery, { query: productsRequest.query }),
-      writeExecutor.execute(updateProductsRequest, { id: params.productsRequestId, status: 'aiParsing' }),
-    ])
+    const products = await readExecutor.execute(parseProductsByQuery, { query: productsRequest.query })
 
-    await writeExecutor.execute(updateProductsRequest, { id: productsRequest.id, status: 'aiParsed' })
-    await writeExecutor.execute(createAiProductsList, { productsRequestId: productsRequest.id, list })
+    if (!products || !products.length) {
+      throw new Error('No products parsed')
+    }
+
+    return products
   } catch (e) {
-    await writeExecutor.execute(updateProductsRequest, { id: params.productsRequestId, status: 'errorWhileAIParsing' })
-    return false
+    await writeExecutor.execute(updateProductsRequest, { id: productsRequest.id, error: true })
   }
-
-  return true
 })

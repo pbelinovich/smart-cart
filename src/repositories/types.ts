@@ -32,12 +32,9 @@ export type DataBaseEvent =
     }
 
 export type MistralParseProducts = 'mistral/parseProducts'
-export type EdadealStartCollectingProducts = 'edadeal/startProductsCollecting'
 export type EdadealCollectProducts = 'edadeal/collectProducts'
-export type EdadealFinishCollectingProducts = 'edadeal/finishProductsCollecting'
 
-export type ProcessNames = MistralParseProducts | EdadealStartCollectingProducts | EdadealCollectProducts | EdadealFinishCollectingProducts
-
+export type ProcessNames = MistralParseProducts | EdadealCollectProducts
 export type ProcessMessages = 'dbEvent'
 export type ProcessInitData = { processId: string; processName: ProcessNames; proxy?: string }
 
@@ -103,16 +100,7 @@ export interface IParseProductsParams {
   productsRequestId: string
 }
 
-export interface IStartCollectingProductsParams {
-  productsRequestId: string
-}
-
 export interface ICollectProductsParams {
   productsRequestId: string
   product: IAIProduct
-}
-
-export interface IFinishCollectingProductsParams {
-  productsRequestId: string
-  success: boolean
 }

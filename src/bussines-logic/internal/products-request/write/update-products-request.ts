@@ -1,14 +1,20 @@
 import { buildWriteOperation } from '../../../common/write'
 import { ProductsRequestStatus } from '../../../external'
+import { dateTime } from '@shared'
 
 export interface IUpdateProductsRequestParams {
   id: string
-  status: ProductsRequestStatus
+  status?: ProductsRequestStatus
+  error?: boolean
 }
 
-export const updateProductsRequest = buildWriteOperation((context, params: IUpdateProductsRequestParams) => {
+export const updateProductsRequest = buildWriteOperation(async (context, params: IUpdateProductsRequestParams) => {
+  const productsRequest = await context.productsRequestRepo.getById(params.id)
+
   return context.productsRequestRepo.update({
     id: params.id,
-    status: params.status,
+    modifyDate: dateTime().utc().toISOString(),
+    status: params.status || productsRequest.status,
+    error: params.error === undefined ? productsRequest.error : params.error,
   })
 }, [])

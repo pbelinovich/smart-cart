@@ -5,6 +5,7 @@ export type ServerParams = {
 }
 
 export type InitProcessesParams = {
+  app: IApp
   eventBus: IEventBus<DataBaseEvent>
 }
 

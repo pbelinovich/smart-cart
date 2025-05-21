@@ -19,6 +19,7 @@ export const createProductsRequest = buildWriteOperation(
       createDate: now,
       query: params.query.replace(/\s+/g, ' ').trim(),
       status: 'created',
+      error: false,
     }
 
     const created = await context.productsRequestRepo.create(productsRequest)

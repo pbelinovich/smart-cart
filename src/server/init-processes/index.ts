@@ -2,71 +2,74 @@ import { WorkerPool } from './worker-pool'
 import { InitProcessesParams } from '../types'
 import {
   AIProductsListRepo,
+  finishProductsCollecting,
+  finishProductsParsing,
+  IAIProduct,
   ICollectProductsParams,
-  IFinishCollectingProductsParams,
   IParseProductsParams,
-  IStartCollectingProductsParams,
   ProductsRequestRepo,
+  startProductsCollecting,
+  startProductsParsing,
+  updateProductsRequest,
 } from '../external'
 
-const initAIProcesses = ({ eventBus }: InitProcessesParams) => {
-  const parseProductsPool = new WorkerPool<IParseProductsParams, boolean>({
+export const initProcesses = ({ app, eventBus }: InitProcessesParams) => {
+  const { writeExecutor } = app.getExecutors({})
+
+  const mistralWorkerPool = new WorkerPool<IParseProductsParams, IAIProduct[] | undefined>({
     taskName: 'mistral/parseProducts',
     eventBus,
     taskTimeout: 1000 * 60 * 2, // 2 minutes
   })
 
-  eventBus.subscribe(async ev => {
-    if (ev.entity === ProductsRequestRepo.collectionName && ev.event.kind === 'created') {
-      await parseProductsPool.runTask({ productsRequestId: ev.event.entity.id })
-    }
-  })
-}
-
-const initProductsCollectingProcesses = ({ eventBus }: InitProcessesParams) => {
-  const startProductsCollectingPool = new WorkerPool<IStartCollectingProductsParams, boolean>({
-    taskName: 'edadeal/startProductsCollecting',
-    eventBus,
-  })
-
-  const collectProductsPool = new WorkerPool<ICollectProductsParams, boolean>({
+  const edadealWorkerPool = new WorkerPool<ICollectProductsParams, boolean>({
     taskName: 'edadeal/collectProducts',
     eventBus,
     size: 2,
     proxyList: ['socks5h://user291075:0f3s8i@195.96.150.5:12673'],
   })
 
-  const finishProductsCollectingPool = new WorkerPool<IFinishCollectingProductsParams, boolean>({
-    taskName: 'edadeal/finishProductsCollecting',
-    eventBus,
-  })
+  return eventBus.subscribe(async ev => {
+    if (ev.entity === ProductsRequestRepo.collectionName) {
+      if (ev.event.kind === 'created') {
+        if (ev.event.entity.status === 'created') {
+          return writeExecutor.execute(startProductsParsing, { productsRequestId: ev.event.entity.id })
+        }
+      }
 
-  eventBus.subscribe(async ev => {
-    if (ev.entity === AIProductsListRepo.collectionName && ev.event.kind === 'created') {
-      const { entity } = ev.event
+      if (ev.event.kind === 'updated') {
+        if (ev.event.entity.status === 'startProductsParsing' && ev.event.prevEntity.status === 'created') {
+          await writeExecutor.execute(updateProductsRequest, { id: ev.event.entity.id, status: 'productsParsing' })
 
-      await startProductsCollectingPool.runTask({
-        productsRequestId: entity.productsRequestId,
-      })
+          const result = await mistralWorkerPool.runTask({ productsRequestId: ev.event.entity.id })
 
-      const results = await Promise.all(
-        entity.list.map(product => {
-          return collectProductsPool.runTask({
-            productsRequestId: entity.productsRequestId,
-            product,
+          return writeExecutor.execute(finishProductsParsing, {
+            productsRequestId: ev.event.entity.id,
+            list: result.kind === 'success' ? result.result : undefined,
           })
-        })
-      )
+        }
+      }
+    }
 
-      await finishProductsCollectingPool.runTask({
-        productsRequestId: entity.productsRequestId,
-        success: results.every(x => x.kind === 'success' && x.result),
-      })
+    if (ev.entity === AIProductsListRepo.collectionName) {
+      if (ev.event.kind === 'created') {
+        await writeExecutor.execute(startProductsCollecting, { productsRequestId: ev.event.entity.productsRequestId })
+        await writeExecutor.execute(updateProductsRequest, {
+          id: ev.event.entity.productsRequestId,
+          status: 'productsCollecting',
+        })
+
+        const results = await Promise.all(
+          ev.event.entity.list.map(product => {
+            return edadealWorkerPool.runTask({ productsRequestId: ev.event.entity.productsRequestId, product })
+          })
+        )
+
+        return writeExecutor.execute(finishProductsCollecting, {
+          productsRequestId: ev.event.entity.productsRequestId,
+          success: results.every(x => x.kind === 'success' && x.result),
+        })
+      }
     }
   })
-}
-
-export const initProcesses = (params: InitProcessesParams) => {
-  initAIProcesses(params)
-  initProductsCollectingProcesses(params)
 }

@@ -39,10 +39,10 @@ const getPrice = (edadealProduct: IEdadealProduct) => {
   return getPriceFromPriceValue(edadealProduct.priceData?.new) || getPriceFromPriceValue(edadealProduct.priceForUnit?.price?.value)
 }
 
-export const collectProducts = buildProcessHandler(async ({ readExecutor, writeExecutor, log }, params: ICollectProductsParams) => {
+export const collectProducts = buildProcessHandler(async ({ readExecutor, writeExecutor }, params: ICollectProductsParams) => {
   const productsRequest = await readExecutor.execute(getProductsRequestById, { id: params.productsRequestId })
 
-  if (!productsRequest || productsRequest.status !== 'collecting') {
+  if (!productsRequest || productsRequest.status !== 'productsCollecting') {
     return false
   }
 

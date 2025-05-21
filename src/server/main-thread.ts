@@ -12,5 +12,5 @@ export const initMainThread = (serverParams: ServerParams) => {
   appInstance.memoryStorage.subscribe(eventBus.sendEvent)
 
   setupAndRunServer({ serverParams, app: appInstance })
-  initProcesses({ eventBus })
+  initProcesses({ app: appInstance, eventBus })
 }

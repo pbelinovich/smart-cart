@@ -5,9 +5,7 @@ import { edadealHandlers } from './marketplaces'
 
 const processesMap: { [key in ProcessNames]: (params: any) => any } = {
   'mistral/parseProducts': mistralHandlers.parseProducts,
-  'edadeal/startProductsCollecting': edadealHandlers.startProductsCollecting,
   'edadeal/collectProducts': edadealHandlers.collectProducts,
-  'edadeal/finishProductsCollecting': edadealHandlers.finishProductsCollecting,
 }
 
 const processesMapKeys = Object.keys(processesMap) as ProcessNames[]
