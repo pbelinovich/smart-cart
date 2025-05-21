@@ -19,8 +19,8 @@ import {
   removePresentProduct,
   removeAbsentProduct,
   createAbsentProduct,
+  createProductsResponse,
 } from '../../external'
-import { createProductsResponse } from '../../../bussines-logic/internal/products-response'
 
 const getPriceFromPriceValue = (priceValue?: EdadealPriceValue) => {
   if (priceValue) {
