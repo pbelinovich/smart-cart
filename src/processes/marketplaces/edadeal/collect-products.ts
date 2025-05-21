@@ -20,6 +20,7 @@ import {
   removeAbsentProduct,
   createAbsentProduct,
 } from '../../external'
+import { createProductsResponse } from '../../../bussines-logic/internal/products-response'
 
 const getPriceFromPriceValue = (priceValue?: EdadealPriceValue) => {
   if (priceValue) {
@@ -92,7 +93,17 @@ export const collectProducts = buildProcessHandler(async ({ readExecutor, writeE
         shopIds: Object.keys(shopMarketplaceIdToHashMap),
         text: params.product.name,
       })
+
+      await writeExecutor.execute(createProductsResponse, {
+        productsRequestId: productsRequest.id,
+        data: response,
+      })
     } catch (e) {
+      await writeExecutor.execute(createProductsResponse, {
+        productsRequestId: productsRequest.id,
+        data: 'errorWhileFetching',
+      })
+
       return false
     }
 

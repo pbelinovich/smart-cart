@@ -62,6 +62,10 @@ export const getAppInstance = (): IApp => {
               onGetRepo(readReposFactory.productsRequestRepo)
               return readReposFactory.productsRequestRepo
             },
+            get productsResponseRepo() {
+              onGetRepo(readReposFactory.productsResponseRepo)
+              return readReposFactory.productsResponseRepo
+            },
             get userRepo() {
               onGetRepo(readReposFactory.userRepo)
               return readReposFactory.userRepo
@@ -106,6 +110,9 @@ export const getAppInstance = (): IApp => {
             },
             get productsRequestRepo() {
               return writeReposFactory.productsRequestRepo
+            },
+            get productsResponseRepo() {
+              return writeReposFactory.productsResponseRepo
             },
             get userRepo() {
               return writeReposFactory.userRepo

@@ -7,6 +7,7 @@ import {
   IPresentProductEntity,
   IProductEntity,
   IProductsRequestEntity,
+  IProductsResponseEntity,
   MistralRepo,
   EdadealRepo,
   IAbsentProductEntity,
@@ -31,6 +32,7 @@ export interface IReadOperationContext {
   presentProductRepo: IReadOnlyRepo<IPresentProductEntity>
   productRepo: IReadOnlyRepo<IProductEntity>
   productsRequestRepo: IReadOnlyRepo<IProductsRequestEntity>
+  productsResponseRepo: IReadOnlyRepo<IProductsResponseEntity>
   userRepo: IReadOnlyRepo<IUserEntity>
 
   mistralRepo: MistralRepo
@@ -43,6 +45,7 @@ export interface IWriteOperationContext {
   presentProductRepo: IUpdatableRepo<IPresentProductEntity>
   productRepo: IUpdatableRepo<IProductEntity>
   productsRequestRepo: IUpdatableRepo<IProductsRequestEntity>
+  productsResponseRepo: IUpdatableRepo<IProductsResponseEntity>
   userRepo: IUpdatableRepo<IUserEntity>
 
   mistralRepo: MistralRepo

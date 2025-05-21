@@ -7,6 +7,7 @@ import {
   ProductRepo,
   ProductsRequestRepo,
   AbsentProductRepo,
+  ProductsResponseRepo,
 } from './external'
 
 export class ReposFactory {
@@ -17,6 +18,7 @@ export class ReposFactory {
   private _presentProductRepo: PresentProductRepo | undefined
   private _productRepo: ProductRepo | undefined
   private _productsRequestRepo: ProductsRequestRepo | undefined
+  private _productsResponseRepo: ProductsResponseRepo | undefined
   private _user: UserRepo | undefined
 
   get absentProductRepo() {
@@ -57,6 +59,14 @@ export class ReposFactory {
     }
 
     return this._productsRequestRepo!
+  }
+
+  get productsResponseRepo() {
+    if (!this._productsResponseRepo) {
+      this._productsResponseRepo = new ProductsResponseRepo(this._dbSession)
+    }
+
+    return this._productsResponseRepo!
   }
 
   get userRepo() {
