@@ -1,5 +1,5 @@
 import joi from 'joi'
-import { IAIProduct, PriceCategory } from '../../types'
+import { IRawAIProduct, PriceCategory } from '../../types'
 
 const priceCategoryMap: { [key in PriceCategory]: true } = {
   cheapest: true,
@@ -7,7 +7,7 @@ const priceCategoryMap: { [key in PriceCategory]: true } = {
   mostExpensive: true,
 }
 
-const productSchema = joi.object<IAIProduct>({
+const productSchema = joi.object<IRawAIProduct>({
   name: joi.string().required(),
   quantity: joi.string().required(),
   priceCategory: joi
@@ -16,4 +16,4 @@ const productSchema = joi.object<IAIProduct>({
     .required(),
 })
 
-export const productsListSchema = joi.array<IAIProduct[]>().items(productSchema).required()
+export const productsListSchema = joi.array<IRawAIProduct[]>().items(productSchema).required()

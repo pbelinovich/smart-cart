@@ -84,7 +84,7 @@ export const finishProductsCollecting = buildWriteOperation(
           price: presentProduct.productPrice,
         })
 
-        cart.totalPrice += presentProduct.productPrice
+        cart.totalPrice += presentProduct.productPrice * collectedProduct.quantity
 
         return
       }

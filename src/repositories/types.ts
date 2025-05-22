@@ -1,26 +1,21 @@
 import { EntityEvent } from './external'
-import { IAIProductsListEntity, IPresentProductEntity, IProductEntity, IProductsRequestEntity, IUserEntity } from './internal'
+import { IAbsentProductEntity, IPresentProductEntity, IProductsRequestEntity, IUserEntity } from './internal'
 
 export { EntityEvent, IEntity, DataBaseSession, IUpdatableRepo, INonUpdatableRepo } from './external'
 
-export type AIProductsListEntityEvents = EntityEvent<IAIProductsListEntity>
+export type AbsentProductEntityEvents = EntityEvent<IAbsentProductEntity>
 export type PresentProductEntityEvents = EntityEvent<IPresentProductEntity>
-export type ProductEntityEvents = EntityEvent<IProductEntity>
 export type ProductsRequestEntityEvents = EntityEvent<IProductsRequestEntity>
 export type UserEntityEvents = EntityEvent<IUserEntity>
 
 export type DataBaseEvent =
   | {
-      entity: 'aiProductsLists'
-      event: AIProductsListEntityEvents
+      entity: 'absentProducts'
+      event: AbsentProductEntityEvents
     }
   | {
       entity: 'presentProducts'
       event: PresentProductEntityEvents
-    }
-  | {
-      entity: 'products'
-      event: ProductEntityEvents
     }
   | {
       entity: 'productsRequests'
@@ -40,9 +35,15 @@ export type ProcessInitData = { processId: string; processNames: ProcessNames[];
 
 export type PriceCategory = 'cheapest' | 'popular' | 'mostExpensive'
 
-export interface IAIProduct {
+export interface IRawAIProduct {
   name: string
   quantity: string
+  priceCategory: PriceCategory
+}
+
+export interface IAIProduct {
+  name: string
+  quantity: number
   priceCategory: PriceCategory
 }
 
@@ -65,14 +66,14 @@ export interface IShop {
 
 export interface ICollectedProduct {
   cachedProductHash: string
-  quantity: string
+  quantity: number
   priceCategory: PriceCategory
 }
 
 type ProductInStock = {
   kind: 'inStock'
   name: string
-  quantity: string
+  quantity: number
   priceCategory: PriceCategory
   price: number
 }
@@ -80,7 +81,7 @@ type ProductInStock = {
 type ProductIsOutOfStock = {
   kind: 'isOutOfStock'
   name: string
-  quantity: string
+  quantity: number
   priceCategory: PriceCategory
 }
 
