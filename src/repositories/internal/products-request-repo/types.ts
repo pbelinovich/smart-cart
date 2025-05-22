@@ -1,12 +1,7 @@
 import { IEntity } from '../../external'
 import { IAIProduct, ICart } from '../../types'
 
-export type ProductsRequestStatus =
-  | 'created'
-  | 'productsParsing'
-  | 'finishProductsParsing'
-  | 'productsCollecting'
-  | 'finishProductsCollecting'
+export type ProductsRequestStatus = 'created' | 'productsParsing' | 'productsParsed' | 'productsCollecting' | 'productsCollected'
 
 export interface IProductsRequestEntity extends IEntity {
   userId: string

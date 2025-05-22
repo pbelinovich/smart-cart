@@ -46,6 +46,14 @@ export const getAppInstance = (): IApp => {
               onGetRepo(readReposFactory.absentProductRepo)
               return readReposFactory.absentProductRepo
             },
+            get changeCityRequestRepo() {
+              onGetRepo(readReposFactory.changeCityRequestRepo)
+              return readReposFactory.changeCityRequestRepo
+            },
+            get cityRepo() {
+              onGetRepo(readReposFactory.cityRepo)
+              return readReposFactory.cityRepo
+            },
             get presentProductRepo() {
               onGetRepo(readReposFactory.presentProductRepo)
               return readReposFactory.presentProductRepo
@@ -90,6 +98,12 @@ export const getAppInstance = (): IApp => {
             readExecutor,
             get absentProductRepo() {
               return writeReposFactory.absentProductRepo
+            },
+            get changeCityRequestRepo() {
+              return writeReposFactory.changeCityRequestRepo
+            },
+            get cityRepo() {
+              return writeReposFactory.cityRepo
             },
             get presentProductRepo() {
               return writeReposFactory.presentProductRepo

@@ -9,16 +9,15 @@ export interface IStartProductsCollectingParams {
 export const startProductsCollecting = buildWriteOperation(async (_, params: IStartProductsCollectingParams, { execute }) => {
   const productsRequest = await execute(getProductsRequestById, { id: params.productsRequestId })
 
-  if (!productsRequest || productsRequest.status !== 'finishProductsParsing' || productsRequest.error) {
+  if (!productsRequest || productsRequest.status !== 'productsParsed' || productsRequest.error) {
     if (!productsRequest.error) {
       await execute(updateProductsRequest, { id: params.productsRequestId, error: true })
     }
 
-    return
+    return false
   }
 
-  await execute(updateProductsRequest, {
-    id: params.productsRequestId,
-    status: 'productsCollecting',
-  })
+  await execute(updateProductsRequest, { id: params.productsRequestId, status: 'productsCollecting' })
+
+  return true
 })

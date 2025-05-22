@@ -9,7 +9,7 @@ import {
   IPresentProductEntity,
   IEdadealProduct,
   createPresentProduct,
-  IEdadealGetProductsResponse,
+  IEdadealProductsSearchResponse,
   searchEdadealProducts,
   EdadealPriceValue,
   generateProductHash,
@@ -92,12 +92,12 @@ export const collectProducts = buildProcessHandler(async ({ readExecutor, writeE
   const absentProductsCreationPromises: (() => Promise<void>)[] = []
 
   if (!everyProductIsCached) {
-    let response: IEdadealGetProductsResponse | undefined
+    let response: IEdadealProductsSearchResponse | undefined
 
     try {
       response = await readExecutor.execute(searchEdadealProducts, {
-        // TODO добавить сюда доп хэдер
         coordinates: city.coordinates,
+        chercherArea: city.chercherArea,
         shopIds: Object.keys(shopMarketplaceIdToHashMap),
         text: params.product.name,
       })

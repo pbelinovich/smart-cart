@@ -16,12 +16,14 @@ export const finishProductsParsing = buildWriteOperation(async (_, params: IFini
       await execute(updateProductsRequest, { id: params.productsRequestId, error: true })
     }
 
-    return
+    return false
   }
 
   await execute(updateProductsRequest, {
     id: params.productsRequestId,
-    status: 'finishProductsParsing',
+    status: 'productsParsed',
     aiProducts: params.list,
   })
+
+  return true
 })

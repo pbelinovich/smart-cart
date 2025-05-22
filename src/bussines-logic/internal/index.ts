@@ -1,4 +1,5 @@
 export * from './absent-product'
+export * from './change-city-request'
 export * from './city'
 export * from './present-product'
 export * from './products-request'

@@ -89,7 +89,7 @@ export interface IEdadealEntity {
   retailers: IEdadealRetailer[]
 }
 
-export interface IEdadealGetProductsRequest {
+export interface IEdadealExternalProductsSearchRequest {
   addContent: boolean
   allNanoOffers: boolean
   checkAdult: boolean
@@ -103,16 +103,46 @@ export interface IEdadealGetProductsRequest {
   text: string
 }
 
-export interface IEdadealGetProductsResponse {
+export interface IEdadealProductsSearchResponse {
   entities: IEdadealEntity[]
   items: IEdadealProduct[]
   searchText: string
   total: number
 }
 
-export interface IEdadealSearchRequest {
+export interface IEdadealProductsSearchRequest {
   coordinates: ICoordinates
+  chercherArea: string
   shopIds: string[]
   sort?: EdadealSort
   text: string
+}
+
+export interface IEdadealExternalCitiesSearchRequest {
+  country_geo_id: string
+  lang: string
+  q: string
+}
+
+export interface IEdadealCitiesSearchRequest {
+  query: string
+}
+
+export interface IEdadealCitiesSearchResponseItem {
+  uuid: string
+  center: { lat: number; lng: number }
+  fullName: string
+  name: string
+  region: string
+  slug: string
+}
+
+export type EdadealCitiesSearchResponse = IEdadealCitiesSearchResponseItem[]
+
+export interface IEdadealGetChercherRequest {
+  coordinates: ICoordinates
+}
+
+export interface IEdadealGetChercherResponse {
+  chercherArea: string
 }

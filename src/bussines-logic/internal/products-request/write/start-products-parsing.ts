@@ -14,11 +14,13 @@ export const startProductsParsing = buildWriteOperation(async (_, params: IStart
       await execute(updateProductsRequest, { id: params.productsRequestId, error: true })
     }
 
-    return
+    return false
   }
 
   await execute(updateProductsRequest, {
     id: params.productsRequestId,
     status: 'productsParsing',
   })
+
+  return true
 })

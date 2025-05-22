@@ -6,6 +6,8 @@ import { edadealHandlers } from './marketplaces'
 const processesMap: { [key in ProcessNames]: (params: any) => any } = {
   'mistral/parseProducts': mistralHandlers.parseProducts,
   'edadeal/collectProducts': edadealHandlers.collectProducts,
+  'edadeal/searchCities': edadealHandlers.searchCities,
+  'edadeal/getChercherArea': edadealHandlers.getChercherArea,
 }
 
 processInitData.processNames.forEach(name => {

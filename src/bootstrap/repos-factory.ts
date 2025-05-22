@@ -6,12 +6,16 @@ import {
   ProductsRequestRepo,
   AbsentProductRepo,
   ProductsResponseRepo,
+  CityRepo,
+  ChangeCityRequestRepo,
 } from './external'
 
 export class ReposFactory {
   constructor(private _dbSession: DataBaseSession, private _memorySession: MemorySession) {}
 
   private _absentProductRepo: AbsentProductRepo | undefined
+  private _changeCityRequestRepo: ChangeCityRequestRepo | undefined
+  private _cityRepo: CityRepo | undefined
   private _presentProductRepo: PresentProductRepo | undefined
   private _productsRequestRepo: ProductsRequestRepo | undefined
   private _productsResponseRepo: ProductsResponseRepo | undefined
@@ -23,6 +27,22 @@ export class ReposFactory {
     }
 
     return this._absentProductRepo!
+  }
+
+  get changeCityRequestRepo() {
+    if (!this._changeCityRequestRepo) {
+      this._changeCityRequestRepo = new ChangeCityRequestRepo(this._dbSession)
+    }
+
+    return this._changeCityRequestRepo!
+  }
+
+  get cityRepo() {
+    if (!this._cityRepo) {
+      this._cityRepo = new CityRepo(this._dbSession)
+    }
+
+    return this._cityRepo!
   }
 
   get presentProductRepo() {

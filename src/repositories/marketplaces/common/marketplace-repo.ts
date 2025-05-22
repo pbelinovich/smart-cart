@@ -25,32 +25,33 @@ export abstract class MarketplaceRepo {
     for (const key in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
         const value = obj[key]
-        const fullKey = prefix ? `${prefix}[${key}]` : key
 
-        if (value === null || value === undefined) {
-          continue
-        } else if (Array.isArray(value)) {
-          value.forEach(item => {
-            if (item !== null && item !== undefined) {
-              if (typeof item === 'object' && !Array.isArray(item)) {
-                // Обработка массива объектов
-                const nestedQuery = this.objectToQueryString(item, fullKey)
-                if (nestedQuery) {
-                  queryParts.push(nestedQuery)
+        if (value !== null && value !== undefined) {
+          const fullKey = prefix ? `${prefix}[${key}]` : key
+
+          if (Array.isArray(value)) {
+            value.forEach(item => {
+              if (item !== null && item !== undefined) {
+                if (typeof item === 'object' && !Array.isArray(item)) {
+                  // Обработка массива объектов
+                  const nestedQuery = this.objectToQueryString(item, fullKey)
+                  if (nestedQuery) {
+                    queryParts.push(nestedQuery)
+                  }
+                } else {
+                  queryParts.push(`${encodeURIComponent(fullKey)}=${encodeURIComponent(String(item))}`)
                 }
-              } else {
-                queryParts.push(`${encodeURIComponent(fullKey)}=${encodeURIComponent(String(item))}`)
               }
+            })
+          } else if (typeof value === 'object') {
+            // Рекурсивный вызов для вложенных объектов
+            const nestedQuery = this.objectToQueryString(value as QueryObject, fullKey)
+            if (nestedQuery) {
+              queryParts.push(nestedQuery)
             }
-          })
-        } else if (typeof value === 'object') {
-          // Рекурсивный вызов для вложенных объектов
-          const nestedQuery = this.objectToQueryString(value as QueryObject, fullKey)
-          if (nestedQuery) {
-            queryParts.push(nestedQuery)
+          } else {
+            queryParts.push(`${encodeURIComponent(fullKey)}=${encodeURIComponent(String(value))}`)
           }
-        } else {
-          queryParts.push(`${encodeURIComponent(fullKey)}=${encodeURIComponent(String(value))}`)
         }
       }
     }
@@ -58,7 +59,7 @@ export abstract class MarketplaceRepo {
     return queryParts.join('&')
   }
 
-  protected request = <TData extends { [key: string]: any }, TResult>(p: IMarketplaceRequestParams<TData>) => {
+  protected request = <TData, TResult>(p: IMarketplaceRequestParams<TData>) => {
     let timeout = false
 
     return new Promise<TResult>((resolve, reject) => {
@@ -67,8 +68,8 @@ export abstract class MarketplaceRepo {
 
       let path = url.pathname
 
-      if (p.method === 'GET') {
-        const params = this.objectToQueryString(p.data)
+      if (p.method === 'GET' && typeof p.data === 'object' && p.data !== null) {
+        const params = this.objectToQueryString(p.data as any)
 
         if (params) {
           path += '?' + params.toString()

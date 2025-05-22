@@ -9,6 +9,8 @@ import {
   MistralRepo,
   EdadealRepo,
   IAbsentProductEntity,
+  ICityEntity,
+  IChangeCityRequestEntity,
 } from './external'
 
 export {
@@ -26,6 +28,8 @@ export {
 
 export interface IReadOperationContext {
   absentProductRepo: IReadOnlyRepo<IAbsentProductEntity>
+  changeCityRequestRepo: IReadOnlyRepo<IChangeCityRequestEntity>
+  cityRepo: IReadOnlyRepo<ICityEntity>
   presentProductRepo: IReadOnlyRepo<IPresentProductEntity>
   productsRequestRepo: IReadOnlyRepo<IProductsRequestEntity>
   productsResponseRepo: IReadOnlyRepo<IProductsResponseEntity>
@@ -37,6 +41,8 @@ export interface IReadOperationContext {
 
 export interface IWriteOperationContext {
   absentProductRepo: IUpdatableRepo<IAbsentProductEntity>
+  changeCityRequestRepo: IUpdatableRepo<IChangeCityRequestEntity>
+  cityRepo: IUpdatableRepo<ICityEntity>
   presentProductRepo: IUpdatableRepo<IPresentProductEntity>
   productsRequestRepo: IUpdatableRepo<IProductsRequestEntity>
   productsResponseRepo: IUpdatableRepo<IProductsResponseEntity>

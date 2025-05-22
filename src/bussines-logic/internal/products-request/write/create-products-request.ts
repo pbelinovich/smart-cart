@@ -11,12 +11,11 @@ export interface ICreateProductsRequestParams {
 export const createProductsRequest = buildWriteOperation(
   async (context, params: ICreateProductsRequestParams) => {
     const user = await context.userRepo.getById(params.userId)
-    const now = dateTime.utc().toISOString()
     const productsRequest: IProductsRequestEntity = {
       id: context.productsRequestRepo.getNewId(),
       userId: params.userId,
       cityId: user.actualCityId,
-      createDate: now,
+      createDate: dateTime.utc().toISOString(),
       query: params.query.replace(/\s+/g, ' ').trim(),
       status: 'created',
       error: false,

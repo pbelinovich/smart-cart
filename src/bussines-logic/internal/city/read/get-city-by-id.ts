@@ -1,10 +1,3 @@
-import { buildReadOperation } from '../../../common/read'
-import { cities } from './mock'
+import { buildGetByIdOperation } from '../../../common/read'
 
-export interface IGetCityByIdParams {
-  id: string
-}
-
-export const getCityById = buildReadOperation((_, params: IGetCityByIdParams) => {
-  return cities.find(city => city.id === params.id)
-}, [])
+export const getCityById = buildGetByIdOperation(c => c.cityRepo, [])

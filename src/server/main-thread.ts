@@ -3,6 +3,7 @@ import { setupAndRunServer } from './server-setup'
 import { ServerParams } from './types'
 import { DataBaseEvent, EventBus } from './external'
 import { initProcesses } from './init-processes'
+import { initJobs } from './jobs'
 
 export const initMainThread = (serverParams: ServerParams) => {
   const appInstance = getAppInstance()
@@ -13,4 +14,5 @@ export const initMainThread = (serverParams: ServerParams) => {
 
   setupAndRunServer({ serverParams, app: appInstance })
   initProcesses({ app: appInstance, eventBus })
+  initJobs(appInstance)
 }

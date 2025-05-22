@@ -26,7 +26,7 @@ export const finishProductsCollecting = buildWriteOperation(
         await execute(updateProductsRequest, { id: productsRequestId, error: true })
       }
 
-      return
+      return false
     }
 
     const hashes = collectedProducts.map(x => x.cachedProductHash)
@@ -146,6 +146,8 @@ export const finishProductsCollecting = buildWriteOperation(
       return 0
     })
 
-    await execute(updateProductsRequest, { id: productsRequest.id, status: 'finishProductsCollecting', carts })
+    await execute(updateProductsRequest, { id: productsRequest.id, status: 'productsCollected', carts })
+
+    return true
   }
 )

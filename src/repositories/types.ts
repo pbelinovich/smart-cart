@@ -1,9 +1,18 @@
 import { EntityEvent } from './external'
-import { IAbsentProductEntity, IPresentProductEntity, IProductsRequestEntity, IUserEntity } from './internal'
+import {
+  IAbsentProductEntity,
+  IChangeCityRequestEntity,
+  ICityEntity,
+  IPresentProductEntity,
+  IProductsRequestEntity,
+  IUserEntity,
+} from './internal'
 
 export { EntityEvent, IEntity, DataBaseSession, IUpdatableRepo, INonUpdatableRepo } from './external'
 
 export type AbsentProductEntityEvents = EntityEvent<IAbsentProductEntity>
+export type ChangeCityRequestEntityEvents = EntityEvent<IChangeCityRequestEntity>
+export type CityEntityEvents = EntityEvent<ICityEntity>
 export type PresentProductEntityEvents = EntityEvent<IPresentProductEntity>
 export type ProductsRequestEntityEvents = EntityEvent<IProductsRequestEntity>
 export type UserEntityEvents = EntityEvent<IUserEntity>
@@ -12,6 +21,14 @@ export type DataBaseEvent =
   | {
       entity: 'absentProducts'
       event: AbsentProductEntityEvents
+    }
+  | {
+      entity: 'changeCityRequests'
+      event: ChangeCityRequestEntityEvents
+    }
+  | {
+      entity: 'cities'
+      event: CityEntityEvents
     }
   | {
       entity: 'presentProducts'
@@ -28,8 +45,10 @@ export type DataBaseEvent =
 
 export type MistralParseProducts = 'mistral/parseProducts'
 export type EdadealCollectProducts = 'edadeal/collectProducts'
+export type EdadealSearchCities = 'edadeal/searchCities'
+export type EdadealGetChercherArea = 'edadeal/getChercherArea'
 
-export type ProcessNames = MistralParseProducts | EdadealCollectProducts
+export type ProcessNames = MistralParseProducts | EdadealCollectProducts | EdadealSearchCities | EdadealGetChercherArea
 export type ProcessMessages = 'dbEvent'
 export type ProcessInitData = { processId: string; processNames: ProcessNames[]; proxy?: string }
 
@@ -55,6 +74,8 @@ export interface ICoordinates {
 export interface ICity {
   id: string
   name: string
+  region: string
+  slug: string
   coordinates: ICoordinates
 }
 
@@ -95,7 +116,7 @@ export interface ICart {
 }
 
 export interface IMarketplaceRepo<TSearchParams, TSearchResult> {
-  search: (params: TSearchParams) => Promise<TSearchResult>
+  searchProducts: (params: TSearchParams) => Promise<TSearchResult>
 }
 
 export interface IParseProductsParams {
@@ -105,4 +126,13 @@ export interface IParseProductsParams {
 export interface ICollectProductsParams {
   productsRequestId: string
   product: IAIProduct
+}
+
+export interface ISearchCitiesParams {
+  changeCityRequestId: string
+  query: string
+}
+
+export interface IGetChercherAreaParams {
+  changeCityRequestId: string
 }

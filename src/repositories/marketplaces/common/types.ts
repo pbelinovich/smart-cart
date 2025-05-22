@@ -1,6 +1,6 @@
 import { OutgoingHttpHeaders } from 'node:http'
 
-export interface IMarketplaceRequestParams<TData extends { [key: string]: any }> {
+export interface IMarketplaceRequestParams<TData> {
   method: 'GET' | 'POST'
   url: string
   headers?: OutgoingHttpHeaders | string[]

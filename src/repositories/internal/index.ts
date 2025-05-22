@@ -1,4 +1,6 @@
 export * from './absent-product-repo'
+export * from './change-city-request-repo'
+export * from './city-repo'
 export * from './present-product-repo'
 export * from './products-request-repo'
 export * from './products-response-repo'
