@@ -1,7 +1,5 @@
 export * from './absent-product-repo'
-export * from './ai-products-list-repo'
 export * from './present-product-repo'
-export * from './product-repo'
 export * from './products-request-repo'
 export * from './products-response-repo'
 export * from './user-repo'

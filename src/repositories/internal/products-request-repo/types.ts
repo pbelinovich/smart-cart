@@ -1,11 +1,10 @@
 import { IEntity } from '../../external'
+import { IAIProduct, ICart } from '../../types'
 
 export type ProductsRequestStatus =
   | 'created'
-  | 'startProductsParsing'
   | 'productsParsing'
   | 'finishProductsParsing'
-  | 'startProductsCollecting'
   | 'productsCollecting'
   | 'finishProductsCollecting'
 
@@ -17,4 +16,6 @@ export interface IProductsRequestEntity extends IEntity {
   query: string
   status: ProductsRequestStatus
   error: boolean
+  aiProducts: IAIProduct[]
+  carts: ICart[]
 }

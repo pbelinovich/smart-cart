@@ -36,7 +36,7 @@ export type EdadealCollectProducts = 'edadeal/collectProducts'
 
 export type ProcessNames = MistralParseProducts | EdadealCollectProducts
 export type ProcessMessages = 'dbEvent'
-export type ProcessInitData = { processId: string; processName: ProcessNames; proxy?: string }
+export type ProcessInitData = { processId: string; processNames: ProcessNames[]; proxy?: string }
 
 export type PriceCategory = 'cheapest' | 'popular' | 'mostExpensive'
 
@@ -51,8 +51,6 @@ export interface ICoordinates {
   longitude: number
 }
 
-export type Marketplace = 'igooods' | 'edadeal'
-
 export interface ICity {
   id: string
   name: string
@@ -65,31 +63,34 @@ export interface IShop {
   name: string
 }
 
-export interface IProduct {
+export interface ICollectedProduct {
+  cachedProductHash: string
+  quantity: string
+  priceCategory: PriceCategory
+}
+
+type ProductInStock = {
+  kind: 'inStock'
   name: string
-  quantity: number
+  quantity: string
+  priceCategory: PriceCategory
   price: number
 }
+
+type ProductIsOutOfStock = {
+  kind: 'isOutOfStock'
+  name: string
+  quantity: string
+  priceCategory: PriceCategory
+}
+
+export type Product = ProductInStock | ProductIsOutOfStock
 
 export interface ICart {
   shopId: string
   shopName: string
-  products: IProduct[]
+  products: Product[]
   totalPrice: number
-}
-
-export type CartsMap = { [shopId: string]: ICart }
-
-export interface IGetCartsParams {
-  // auth: IAuthEntity
-  // userAddress?: IUserAddressEntity
-  userProducts: IAIProduct[]
-}
-
-export interface IMarketplace<T> {
-  // getAuthData: () => Promise<AuthData | undefined>
-  // getCities: () => Promise<ICity[]>
-  getCarts: (params: IGetCartsParams) => Promise<{ carts: ICart[]; responses: T[] }>
 }
 
 export interface IMarketplaceRepo<TSearchParams, TSearchResult> {

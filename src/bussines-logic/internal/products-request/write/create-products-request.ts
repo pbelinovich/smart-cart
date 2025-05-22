@@ -20,6 +20,8 @@ export const createProductsRequest = buildWriteOperation(
       query: params.query.replace(/\s+/g, ' ').trim(),
       status: 'created',
       error: false,
+      aiProducts: [],
+      carts: [],
     }
 
     const created = await context.productsRequestRepo.create(productsRequest)

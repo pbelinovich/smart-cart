@@ -3,9 +3,7 @@ import {
   IUserEntity,
   IReadOnlyRepo,
   IUpdatableRepo,
-  IAIProductsListEntity,
   IPresentProductEntity,
-  IProductEntity,
   IProductsRequestEntity,
   IProductsResponseEntity,
   MistralRepo,
@@ -28,9 +26,7 @@ export {
 
 export interface IReadOperationContext {
   absentProductRepo: IReadOnlyRepo<IAbsentProductEntity>
-  aiProductsListRepo: IReadOnlyRepo<IAIProductsListEntity>
   presentProductRepo: IReadOnlyRepo<IPresentProductEntity>
-  productRepo: IReadOnlyRepo<IProductEntity>
   productsRequestRepo: IReadOnlyRepo<IProductsRequestEntity>
   productsResponseRepo: IReadOnlyRepo<IProductsResponseEntity>
   userRepo: IReadOnlyRepo<IUserEntity>
@@ -41,9 +37,7 @@ export interface IReadOperationContext {
 
 export interface IWriteOperationContext {
   absentProductRepo: IUpdatableRepo<IAbsentProductEntity>
-  aiProductsListRepo: IUpdatableRepo<IAIProductsListEntity>
   presentProductRepo: IUpdatableRepo<IPresentProductEntity>
-  productRepo: IUpdatableRepo<IProductEntity>
   productsRequestRepo: IUpdatableRepo<IProductsRequestEntity>
   productsResponseRepo: IUpdatableRepo<IProductsResponseEntity>
   userRepo: IUpdatableRepo<IUserEntity>

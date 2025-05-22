@@ -1,26 +1,28 @@
 import { buildProcessHandler } from '../../common'
-import { getProductsRequestById, IParseProductsParams, parseProductsByQuery, updateProductsRequest } from '../../external'
+import { getProductsRequestById, IParseProductsParams, parseProductsByQuery, ProductsRequestStatus } from '../../external'
 
-export const parseProducts = buildProcessHandler(async ({ readExecutor, writeExecutor }, params: IParseProductsParams) => {
+export const parseProducts = buildProcessHandler(async ({ readExecutor }, params: IParseProductsParams) => {
   const productsRequest = await readExecutor.execute(getProductsRequestById, { id: params.productsRequestId })
 
-  if (!productsRequest || productsRequest.status !== 'productsParsing' || productsRequest.error || !productsRequest.query) {
-    if (!productsRequest.error) {
-      await writeExecutor.execute(updateProductsRequest, { id: params.productsRequestId, error: true })
-    }
-
-    return
+  if (!productsRequest) {
+    throw new Error('Products request not found')
   }
 
-  try {
-    const products = await readExecutor.execute(parseProductsByQuery, { query: productsRequest.query })
+  const productsParsingStatus: ProductsRequestStatus = 'productsParsing'
 
-    if (!products || !products.length) {
-      throw new Error('No products parsed')
-    }
-
-    return products
-  } catch (e) {
-    await writeExecutor.execute(updateProductsRequest, { id: productsRequest.id, error: true })
+  if (productsRequest.status !== productsParsingStatus) {
+    throw new Error(`Products request has must be ${productsParsingStatus} but it is ${productsRequest.status}`)
   }
+
+  if (productsRequest.error) {
+    throw new Error('Products request has error')
+  }
+
+  const products = await readExecutor.execute(parseProductsByQuery, { query: productsRequest.query })
+
+  if (!products || !products.length) {
+    throw new Error('No products parsed')
+  }
+
+  return products
 })

@@ -8,9 +8,8 @@ const processesMap: { [key in ProcessNames]: (params: any) => any } = {
   'edadeal/collectProducts': edadealHandlers.collectProducts,
 }
 
-const processesMapKeys = Object.keys(processesMap) as ProcessNames[]
-const targetProcessName = processesMapKeys.find(key => processInitData.processName === key)
-
-if (targetProcessName) {
-  communicator.setRequestHandler(targetProcessName, processesMap[targetProcessName])
-}
+processInitData.processNames.forEach(name => {
+  if (processesMap[name]) {
+    communicator.setRequestHandler(name, processesMap[name])
+  }
+})

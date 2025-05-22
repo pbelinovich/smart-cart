@@ -4,7 +4,8 @@ import { DataBaseEvent, IEventBus, ProcessMessages, ProcessNames } from '../exte
 
 export type TaskResult<TResult> = { kind: 'success'; result: TResult } | { kind: 'error'; error: any }
 
-export type Task<TData, TResult> = {
+export type Task<TProcess extends ProcessNames, TData, TResult> = {
+  name: TProcess
   data: TData
   resolve: (taskResult: TaskResult<TResult>) => void
 }
@@ -17,8 +18,8 @@ export type WorkerData = {
   destroy: () => Promise<number>
 }
 
-export type WorkerPoolParams = {
-  taskName: ProcessNames
+export type WorkerPoolParams<TProcess extends ProcessNames> = {
+  taskNames: TProcess[]
   eventBus: IEventBus<DataBaseEvent>
   size?: number
   proxyList?: string[]

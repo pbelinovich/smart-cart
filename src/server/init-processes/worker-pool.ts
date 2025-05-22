@@ -4,17 +4,17 @@ import { lightGuid, MessagesBasedCommunicator } from '@shared'
 import { DataBaseEvent, IEventBus, logInfo, ProcessInitData, ProcessMessages, ProcessNames } from '../external'
 import { Task, TaskResult, WorkerData, WorkerPoolParams } from './types'
 
-export class WorkerPool<TData, TResult> {
+export class WorkerPool<TProcess extends ProcessNames> {
   private readonly eventBus: IEventBus<DataBaseEvent>
-  private readonly taskName: ProcessNames
+  private readonly taskNames: TProcess[]
   private readonly taskTimeout: number
 
-  private queue: Task<TData, TResult>[] = []
+  private queue: Task<TProcess, any, any>[] = []
   private workers: { [workerId: string]: WorkerData } = {}
 
-  constructor({ taskName, eventBus, size = 1, proxyList = [], taskTimeout = 30000 }: WorkerPoolParams) {
+  constructor({ taskNames, eventBus, size = 1, proxyList = [], taskTimeout = 30000 }: WorkerPoolParams<TProcess>) {
     this.eventBus = eventBus
-    this.taskName = taskName
+    this.taskNames = taskNames
     this.taskTimeout = taskTimeout
 
     for (let i = 0; i < size; i++) {
@@ -23,12 +23,12 @@ export class WorkerPool<TData, TResult> {
   }
 
   private log = (workerId: string, message: string) => {
-    logInfo(`[${this.taskName} | ${workerId}] ${message}`)
+    logInfo(`[${this.taskNames.join(' | ')} | "${workerId}"] ${message}`)
   }
 
   private createWorkerInstance = (proxy?: string) => {
     const workerId = lightGuid()
-    const processInitData: ProcessInitData = { processId: workerId, processName: this.taskName, proxy }
+    const processInitData: ProcessInitData = { processId: workerId, processNames: this.taskNames, proxy }
 
     const worker = new Worker(path.join(__dirname, '../processes/index.js'), { workerData: processInitData })
     const communicator = new MessagesBasedCommunicator<ProcessNames, ProcessMessages>({
@@ -90,7 +90,7 @@ export class WorkerPool<TData, TResult> {
       }
     }, this.taskTimeout)
 
-    const resolve = (taskResult: TaskResult<TResult>) => {
+    const resolve = (taskResult: TaskResult<any>) => {
       if (destroyed) return
       clearTimeout(timeoutId)
       this.workers[freeWorkerId].busy = false
@@ -99,15 +99,15 @@ export class WorkerPool<TData, TResult> {
     }
 
     this.workers[freeWorkerId].communicator
-      .request<TResult>(this.taskName, task.data)
+      .request<any>(task.name, task.data)
       .then(result => resolve({ kind: 'success', result }))
       .catch(error => resolve({ kind: 'error', error }))
   }
 
-  runTask = (data: TData) => {
+  runTask = <TData, TResult>(name: TProcess, data: TData) => {
     let promiseResolve: (result: TaskResult<TResult>) => void = () => undefined
 
-    this.queue.push({ data, resolve: result => promiseResolve(result) })
+    this.queue.push({ name, data, resolve: result => promiseResolve(result) })
     this.tryNext()
 
     return new Promise<TaskResult<TResult>>(resolve => {

@@ -17,5 +17,8 @@ export const startProductsParsing = buildWriteOperation(async (_, params: IStart
     return
   }
 
-  await execute(updateProductsRequest, { id: params.productsRequestId, status: 'startProductsParsing' })
+  await execute(updateProductsRequest, {
+    id: params.productsRequestId,
+    status: 'productsParsing',
+  })
 })

@@ -7,7 +7,6 @@ import {
   getCityById,
   getShopsList,
   IPresentProductEntity,
-  createProduct,
   IEdadealProduct,
   createPresentProduct,
   IEdadealGetProductsResponse,
@@ -20,6 +19,8 @@ import {
   removeAbsentProduct,
   createAbsentProduct,
   createProductsResponse,
+  ICollectedProduct,
+  ProductsRequestStatus,
 } from '../../external'
 
 const getPriceFromPriceValue = (priceValue?: EdadealPriceValue) => {
@@ -43,15 +44,21 @@ const getPrice = (edadealProduct: IEdadealProduct) => {
 export const collectProducts = buildProcessHandler(async ({ readExecutor, writeExecutor }, params: ICollectProductsParams) => {
   const productsRequest = await readExecutor.execute(getProductsRequestById, { id: params.productsRequestId })
 
-  if (!productsRequest || productsRequest.status !== 'productsCollecting') {
-    return false
+  if (!productsRequest) {
+    throw new Error(`Products request ${params.productsRequestId} not found`)
+  }
+
+  const productsCollectingStatus: ProductsRequestStatus = 'productsCollecting'
+
+  if (productsRequest.status !== productsCollectingStatus) {
+    throw new Error(`Products request has must be ${productsCollectingStatus} but it is ${productsRequest.status}`)
   }
 
   const user = await readExecutor.execute(getUserById, { id: productsRequest.userId })
   const city = await readExecutor.execute(getCityById, { id: user.actualCityId })
 
   if (!city) {
-    return false
+    throw new Error(`City ${user.actualCityId} not found`)
   }
 
   const shops = await readExecutor.execute(getShopsList, {})
@@ -89,6 +96,7 @@ export const collectProducts = buildProcessHandler(async ({ readExecutor, writeE
 
     try {
       response = await readExecutor.execute(searchEdadealProducts, {
+        // TODO добавить сюда доп хэдер
         coordinates: city.coordinates,
         shopIds: Object.keys(shopMarketplaceIdToHashMap),
         text: params.product.name,
@@ -104,7 +112,7 @@ export const collectProducts = buildProcessHandler(async ({ readExecutor, writeE
         data: 'errorWhileFetching',
       })
 
-      return false
+      throw e
     }
 
     const shopToItemsMap = (response?.items || []).reduce<{ [shopId: string]: IEdadealProduct[] }>((acc, item) => {
@@ -178,17 +186,13 @@ export const collectProducts = buildProcessHandler(async ({ readExecutor, writeE
     })
   }
 
-  await Promise.all([
-    ...presentProductsCreationPromises.map(x => x()),
-    ...absentProductsCreationPromises.map(x => x()),
-    ...shops.map(shop => {
-      return writeExecutor.execute(createProduct, {
-        productsRequestId: params.productsRequestId,
-        cachedProductHash: shopMarketplaceIdToHashMap[shop.marketplaceId],
-        quantity: params.product.quantity,
-      })
-    }),
-  ])
+  await Promise.all([...presentProductsCreationPromises.map(x => x()), ...absentProductsCreationPromises.map(x => x())])
 
-  return true
+  return shops.map<ICollectedProduct>(shop => {
+    return {
+      cachedProductHash: shopMarketplaceIdToHashMap[shop.marketplaceId],
+      quantity: params.product.quantity,
+      priceCategory: params.product.priceCategory,
+    }
+  })
 })

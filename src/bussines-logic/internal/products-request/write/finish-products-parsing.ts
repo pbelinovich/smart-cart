@@ -1,5 +1,4 @@
 import { buildWriteOperation } from '../../../common/write'
-import { createAiProductsList } from '../../ai-products-list'
 import { IAIProduct } from '../../../external'
 import { getProductsRequestById } from '../read'
 import { updateProductsRequest } from './update-products-request'
@@ -20,6 +19,9 @@ export const finishProductsParsing = buildWriteOperation(async (_, params: IFini
     return
   }
 
-  await execute(updateProductsRequest, { id: params.productsRequestId, status: 'finishProductsParsing' })
-  await execute(createAiProductsList, { productsRequestId: params.productsRequestId, list: params.list })
+  await execute(updateProductsRequest, {
+    id: params.productsRequestId,
+    status: 'finishProductsParsing',
+    aiProducts: params.list,
+  })
 })

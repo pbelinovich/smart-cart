@@ -25,7 +25,7 @@ const processContext: IProcessContext = {
   readExecutor,
   writeExecutor,
   processInitData,
-  log: message => logInfo(`[${processInitData.processName} | ${processInitData.processId}] ${message}`),
+  log: message => logInfo(`[${processInitData.processNames} | ${processInitData.processId}] ${message}`),
 }
 
 appInstance.database.subscribe(event => {

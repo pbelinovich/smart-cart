@@ -1,15 +1,12 @@
 import { buildPublicDomain } from './builder'
-import * as productHandlers from './product'
 import * as productsRequestHandlers from './products-request'
 import * as userHandlers from './user'
 
 export const publicHttpApi = buildPublicDomain({
-  product: {
-    POST: {
-      getByProductsRequestId: productHandlers.getByProductsRequestId,
-    },
-  },
   productsRequest: {
+    GET: {
+      byId: productsRequestHandlers.getById,
+    },
     POST: {
       create: productsRequestHandlers.create,
     },
