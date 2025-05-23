@@ -5,5 +5,6 @@ export interface IGetPresentProductByHashParams {
 }
 
 export const getPresentProductsByHashes = buildReadOperation((context, params: IGetPresentProductByHashParams) => {
-  return context.presentProductRepo.query.where((_, p) => _.in(p('hash'), params.hashes)).all()
+  const nowInSeconds = Math.floor(Date.now() / 1000)
+  return context.presentProductRepo.query.where((_, p) => _.and(_.in(p('hash'), params.hashes), _.gt(p('expiresAt'), nowInSeconds))).all()
 })

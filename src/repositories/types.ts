@@ -47,8 +47,15 @@ export type MistralParseProducts = 'mistral/parseProducts'
 export type EdadealCollectProducts = 'edadeal/collectProducts'
 export type EdadealSearchCities = 'edadeal/searchCities'
 export type EdadealGetChercherArea = 'edadeal/getChercherArea'
+export type InternalDatabaseCleanup = 'internal/databaseCleanup'
 
-export type ProcessNames = MistralParseProducts | EdadealCollectProducts | EdadealSearchCities | EdadealGetChercherArea
+export type ProcessNames =
+  | MistralParseProducts
+  | EdadealCollectProducts
+  | EdadealSearchCities
+  | EdadealGetChercherArea
+  | InternalDatabaseCleanup
+
 export type ProcessMessages = 'dbEvent'
 export type ProcessInitData = { processId: string; processNames: ProcessNames[]; proxy?: string }
 
@@ -76,6 +83,7 @@ export interface ICity {
   name: string
   region: string
   slug: string
+  lvl: number
   coordinates: ICoordinates
 }
 
@@ -92,7 +100,6 @@ export interface ICollectedProduct {
 }
 
 type ProductInStock = {
-  kind: 'inStock'
   name: string
   quantity: number
   priceCategory: PriceCategory
@@ -100,18 +107,16 @@ type ProductInStock = {
 }
 
 type ProductIsOutOfStock = {
-  kind: 'isOutOfStock'
   name: string
   quantity: number
   priceCategory: PriceCategory
 }
 
-export type Product = ProductInStock | ProductIsOutOfStock
-
 export interface ICart {
   shopId: string
   shopName: string
-  products: Product[]
+  productsInStock: ProductInStock[]
+  productsAreOutOfStock: ProductIsOutOfStock[]
   totalPrice: number
 }
 
@@ -135,4 +140,8 @@ export interface ISearchCitiesParams {
 
 export interface IGetChercherAreaParams {
   changeCityRequestId: string
+}
+
+export interface IDatabaseCleanupParams {
+  cronExpression: string
 }

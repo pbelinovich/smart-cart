@@ -16,6 +16,7 @@ export const createProductsRequest = buildWriteOperation(
       userId: params.userId,
       cityId: user.actualCityId,
       createDate: dateTime.utc().toISOString(),
+      expiresAt: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 7 days
       query: params.query.replace(/\s+/g, ' ').trim(),
       status: 'created',
       error: false,

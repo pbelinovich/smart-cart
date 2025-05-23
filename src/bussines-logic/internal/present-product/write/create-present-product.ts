@@ -11,12 +11,19 @@ export interface ICreatePresentProductParams {
   hash: string
 }
 
-export const createPresentProduct = buildWriteOperation((context, params: ICreatePresentProductParams) => {
+export const createPresentProduct = buildWriteOperation(async (context, params: ICreatePresentProductParams) => {
+  const prevPresentProduct = await context.presentProductRepo.query.where((_, p) => _.eq(p('hash'), params.hash)).firstOrNull()
+
+  if (prevPresentProduct) {
+    await context.presentProductRepo.remove(prevPresentProduct.id)
+  }
+
   const presentProduct: IPresentProductEntity = {
     id: context.presentProductRepo.getNewId(),
     cityId: params.cityId,
     shopId: params.shopId,
     createDate: dateTime.utc().toISOString(),
+    expiresAt: Math.floor(Date.now() / 1000) + 60 * 60 * 6, // 6 hours
     queryName: params.queryName,
     productName: params.productName,
     productPrice: params.productPrice,

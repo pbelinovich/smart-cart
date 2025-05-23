@@ -36,11 +36,27 @@ export const initProcesses = ({ app, eventBus }: InitProcessesParams) => {
     proxyList: ['socks5h://user291075:0f3s8i@195.96.150.5:12673'],
   })
 
+  const internalWorkerPool = new WorkerPool({
+    taskNames: ['internal/databaseCleanup'],
+    eventBus,
+  })
+
+  // отправляем расписание крона в процесс очистки
+  Promise.resolve().then(() => {
+    return internalWorkerPool.runTask('internal/databaseCleanup', {
+      cronExpression: process.env.DATA_BASE_CLEANUP_CRON || '0 */2 * * *', // каждые 2 часа
+    })
+  })
+
   eventBus.subscribe(async ev => {
     if (ev.entity === ChangeCityRequestRepo.collectionName) {
       if (ev.event.kind === 'created') {
         if (ev.event.entity.status === 'created') {
-          await writeExecutor.execute(startCitiesSearching, { changeCityRequestId: ev.event.entity.id })
+          const needContinue = await writeExecutor.execute(startCitiesSearching, { changeCityRequestId: ev.event.entity.id })
+
+          if (!needContinue) {
+            return
+          }
 
           const result = await edadealWorkerPool.runTask<ISearchCitiesParams, ICity[]>('edadeal/searchCities', {
             changeCityRequestId: ev.event.entity.id,

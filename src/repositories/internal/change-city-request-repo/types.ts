@@ -14,6 +14,7 @@ export interface IChangeCityRequestEntity extends IEntity {
   userId: string
   createDate: string
   modifyDate?: string
+  expiresAt: number
   query: string
   status: ChangeCityRequestStatus
   error: boolean

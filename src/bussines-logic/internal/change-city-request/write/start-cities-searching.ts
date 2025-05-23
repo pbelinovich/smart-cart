@@ -14,8 +14,10 @@ export const startCitiesSearching = buildWriteOperation(async (_, params: IStart
       await execute(updateChangeCityRequest, { id: params.changeCityRequestId, error: true })
     }
 
-    return
+    return false
   }
 
   await execute(updateChangeCityRequest, { id: params.changeCityRequestId, status: 'citiesSearching' })
+
+  return true
 })

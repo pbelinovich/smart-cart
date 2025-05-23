@@ -1,6 +1,19 @@
 import { buildProcessHandler } from '../../common'
 import { ChangeCityRequestStatus, getChangeCityRequestById, ICity, ISearchCitiesParams, searchEdadealCities } from '../../external'
 
+const popularCities: { [key: string]: true } = {
+  moskva: true,
+  'sankt-peterburg': true,
+  novosibirsk: true,
+  ekaterinburg: true,
+  kazan: true,
+  krasnoyarsk: true,
+  'nizhnij-novgorod': true,
+  chelyabinsk: true,
+  ufa: true,
+  samara: true,
+}
+
 export const searchCities = buildProcessHandler(async ({ readExecutor }, params: ISearchCitiesParams) => {
   const changeCityRequest = await readExecutor.execute(getChangeCityRequestById, { id: params.changeCityRequestId })
 
@@ -16,14 +29,46 @@ export const searchCities = buildProcessHandler(async ({ readExecutor }, params:
 
   const cities = await readExecutor.execute(searchEdadealCities, { query: params.query })
 
-  return cities.map<ICity>(city => ({
-    id: city.uuid,
-    name: city.name,
-    region: city.region,
-    slug: city.slug,
-    coordinates: {
-      latitude: city.center.lat,
-      longitude: city.center.lng,
-    },
-  }))
+  return cities
+    .map<ICity>(city => ({
+      id: city.uuid,
+      name: city.name,
+      region: city.region,
+      slug: city.slug,
+      lvl: city.lvl,
+      coordinates: {
+        latitude: city.center.lat,
+        longitude: city.center.lng,
+      },
+    }))
+    .sort((a, b) => {
+      const aIsPopular = popularCities[a.slug]
+      const bIsPopular = popularCities[b.slug]
+
+      if (aIsPopular && !bIsPopular) {
+        return -1
+      }
+
+      if (!aIsPopular && bIsPopular) {
+        return 1
+      }
+
+      if (a.lvl < b.lvl) {
+        return -1
+      }
+
+      if (a.lvl > b.lvl) {
+        return 1
+      }
+
+      if (a.name < b.name) {
+        return -1
+      }
+
+      if (a.name > b.name) {
+        return 1
+      }
+
+      return 0
+    })
 })

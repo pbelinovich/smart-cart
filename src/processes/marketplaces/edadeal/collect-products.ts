@@ -15,8 +15,6 @@ import {
   generateProductHash,
   getAbsentProductsByHashes,
   IAbsentProductEntity,
-  removePresentProduct,
-  removeAbsentProduct,
   createAbsentProduct,
   createProductsResponse,
   ICollectedProduct,
@@ -151,13 +149,7 @@ export const collectProducts = buildProcessHandler(async ({ readExecutor, writeE
       const price = shopItem && shopItem[0] ? getPrice(shopItem[0]) : 0
 
       if (shopItem && shopItem[0] && price > 0) {
-        const prevPresentProduct = presentProductsMap[hash]
-
         presentProductsCreationPromises.push(async () => {
-          if (prevPresentProduct) {
-            await writeExecutor.execute(removePresentProduct, { id: prevPresentProduct.id })
-          }
-
           await writeExecutor.execute(createPresentProduct, {
             cityId: city.id,
             shopId: shop.id,
@@ -168,13 +160,7 @@ export const collectProducts = buildProcessHandler(async ({ readExecutor, writeE
           })
         })
       } else {
-        const prevAbsentProduct = absentProductsMap[hash]
-
         absentProductsCreationPromises.push(async () => {
-          if (prevAbsentProduct) {
-            await writeExecutor.execute(removeAbsentProduct, { id: prevAbsentProduct.id })
-          }
-
           await writeExecutor.execute(createAbsentProduct, {
             cityId: city.id,
             shopId: shop.id,

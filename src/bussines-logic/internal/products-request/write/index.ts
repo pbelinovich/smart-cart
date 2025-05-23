@@ -1,6 +1,7 @@
 export * from './create-products-request'
 export * from './finish-products-collecting'
 export * from './finish-products-parsing'
+export * from './remove-old-products-requests'
 export * from './remove-products-requests'
 export * from './start-products-collecting'
 export * from './start-products-parsing'

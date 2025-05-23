@@ -8,6 +8,7 @@ export interface IProductsRequestEntity extends IEntity {
   cityId: string
   createDate: string
   modifyDate?: string
+  expiresAt: number // in seconds
   query: string
   status: ProductsRequestStatus
   error: boolean

@@ -69,15 +69,15 @@ export const finishProductsCollecting = buildWriteOperation(
           shopIdToCartMap[shop.id] = {
             shopId: shop.id,
             shopName: shop.name,
-            products: [],
+            productsInStock: [],
+            productsAreOutOfStock: [],
             totalPrice: 0,
           }
         }
 
         const cart = shopIdToCartMap[shop.id]
 
-        cart.products.push({
-          kind: 'inStock',
+        cart.productsInStock.push({
           name: presentProduct.productName,
           quantity: collectedProduct.quantity,
           priceCategory: collectedProduct.priceCategory,
@@ -102,15 +102,15 @@ export const finishProductsCollecting = buildWriteOperation(
           shopIdToCartMap[shop.id] = {
             shopId: shop.id,
             shopName: shop.name,
-            products: [],
+            productsInStock: [],
+            productsAreOutOfStock: [],
             totalPrice: 0,
           }
         }
 
         const cart = shopIdToCartMap[shop.id]
 
-        cart.products.push({
-          kind: 'isOutOfStock',
+        cart.productsAreOutOfStock.push({
           name: absentProduct.queryName,
           quantity: collectedProduct.quantity,
           priceCategory: collectedProduct.priceCategory,
@@ -120,21 +120,15 @@ export const finishProductsCollecting = buildWriteOperation(
 
     const carts = Object.values(shopIdToCartMap)
 
-    carts.forEach(cart => {
-      cart.products.sort((a, b) => {
-        if (a.kind === 'inStock' && b.kind === 'isOutOfStock') {
-          return -1
-        }
-
-        if (a.kind === 'isOutOfStock' && b.kind === 'inStock') {
-          return 1
-        }
-
-        return 0
-      })
-    })
-
     carts.sort((a, b) => {
+      if (!a.productsAreOutOfStock.length && b.productsAreOutOfStock.length) {
+        return -1
+      }
+
+      if (a.productsAreOutOfStock.length && !b.productsAreOutOfStock.length) {
+        return 1
+      }
+
       if (a.totalPrice < b.totalPrice) {
         return -1
       }

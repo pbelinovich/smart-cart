@@ -135,6 +135,7 @@ export interface IEdadealCitiesSearchResponseItem {
   name: string
   region: string
   slug: string
+  lvl: number
 }
 
 export type EdadealCitiesSearchResponse = IEdadealCitiesSearchResponseItem[]
