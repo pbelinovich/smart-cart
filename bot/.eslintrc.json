@@ -1,0 +1,53 @@
+{
+  "extends": [
+    "./configs/.eslintrc.json"
+  ],
+  "plugins": [
+    "import"
+  ],
+  "env": {
+    "node": true,
+    "browser": true
+  },
+  "rules": {
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          "**/bootstrap/**",
+          "**/bootstrap",
+          "**/bussines-logic**",
+          "**/bussines-logic",
+          "**/foundation/**",
+          "**/foundation",
+          "**/processes/**",
+          "**/processes",
+          "**/repositories/**",
+          "**/repositories",
+          "**/server/**",
+          "**/server",
+          "**/shared/**",
+          "**/shared"
+        ],
+        "paths": [
+          "path",
+          "fs",
+          "http",
+          "https",
+          "worker_threads"
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/external.ts"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ]
+}
