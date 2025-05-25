@@ -3,8 +3,7 @@ import { SetupTelegramBotParams } from '../types'
 import { message } from 'telegraf/filters'
 import { IBotCommandContext, UserCommand } from './types'
 import { startCommand, userMessageCommand } from './commands'
-import { logInfo, ShutdownManager } from '../external'
-import { escapeMarkdownV2 } from './tools'
+import { logInfo, QueueMaster, ShutdownManager } from '../external'
 
 const MAX_MSG_LENGTH = 300
 
@@ -12,47 +11,59 @@ export const setupTelegramBot = ({ app, telegramBotToken, publicHttpApi }: Setup
   const bot = new Telegraf(telegramBotToken)
   const executors = app.getExecutors({})
 
+  const queueMaster = new QueueMaster()
+
+  const getChatId = (ctx: Context) => ctx.chat?.id
   const getTelegramId = (ctx: Context) => ctx.from?.id
-  const getContext = (telegramId: number, command: UserCommand, ctx: Context): IBotCommandContext => ({
+
+  const getContext = (chatId: number, telegramId: number, command: UserCommand, ctx: Context): IBotCommandContext => ({
     ...executors,
+    chatId,
     telegramId,
     publicHttpApi,
-    reply: async message => {
-      await ctx.reply(escapeMarkdownV2(message), { parse_mode: 'MarkdownV2' })
+    sendMessage: message => {
+      return queueMaster.enqueue(async () => {
+        // <tg-emoji emoji-id="5397631056109117802"></tg-emoji>
+        await ctx.telegram.sendMessage(chatId, message, { parse_mode: 'HTML' })
+      })
     },
     log: message => logInfo(`command/${command}: ${message}`),
   })
 
   bot.start(ctx => {
+    const chatId = getChatId(ctx)
     const telegramId = getTelegramId(ctx)
 
-    if (!telegramId) {
+    if (!chatId || !telegramId) {
       return
     }
 
-    return startCommand(getContext(telegramId, 'start', ctx), {})
+    return startCommand(getContext(chatId, telegramId, 'start', ctx), {})
   })
 
   bot.command('city', ctx => {
+    const chatId = getChatId(ctx)
     const telegramId = getTelegramId(ctx)
 
-    if (!telegramId) {
+    if (!chatId || !telegramId) {
       return
     }
   })
 
   bot.command('cancel', ctx => {
+    const chatId = getChatId(ctx)
     const telegramId = getTelegramId(ctx)
 
-    if (!telegramId) {
+    if (!chatId || !telegramId) {
       return
     }
   })
 
   bot.on(message('text'), ctx => {
+    const chatId = getChatId(ctx)
     const telegramId = getTelegramId(ctx)
 
-    if (!telegramId) {
+    if (!chatId || !telegramId) {
       return
     }
 
@@ -63,7 +74,7 @@ export const setupTelegramBot = ({ app, telegramBotToken, publicHttpApi }: Setup
       return
     }
 
-    return userMessageCommand(getContext(telegramId, 'userMessage', ctx), { message })
+    return userMessageCommand(getContext(chatId, telegramId, 'userMessage', ctx), { message })
   })
 
   Promise.resolve().then(() => {

@@ -1,3 +1,3 @@
-export const escapeMarkdownV2 = (text: string): string => {
-  return text.replace(/([_*$begin:math:display$$end:math:display$()~`>#+\-=|{}.!\\])/g, '\\$1')
+export const formatPrice = (price: number) => {
+  return (price / 100).toFixed(2)
 }

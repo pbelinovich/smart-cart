@@ -9,7 +9,7 @@ export type SseClient = {
   onEvent: <TData>(systemEventName: string, sub: (data: TData) => void) => () => void
   statusObserver: Observer<SseStatus>
   connectionIdObserver: Observer<string | undefined>
-  connect: () => void
+  connect: () => Promise<void>
   disconnect: () => void
 }
 
@@ -42,6 +42,7 @@ export const buildSseClient = (baseUrl: string, eventsUrl: string): SseClient =>
 
   let eventSourceInterval: any
   let pingInterval: any
+  let timeout: any
 
   return {
     baseUrl,
@@ -50,64 +51,66 @@ export const buildSseClient = (baseUrl: string, eventsUrl: string): SseClient =>
     statusObserver,
     connectionIdObserver,
     connect: () => {
-      statusObserver.trigger('CONNECTING')
-      eventSource = new EventSource(url)
+      let resolved = false
 
-      eventSource.addEventListener('open', () => {
-        console.log('!!', 'open')
-        statusObserver.trigger('CONNECTED')
-      })
+      return new Promise((resolve, reject) => {
+        statusObserver.trigger('CONNECTING')
+        eventSource = new EventSource(url)
 
-      eventSource.addEventListener('message', m => {
-        console.log('!!', 'message', m)
-      })
+        eventSource.onopen = () => {
+          statusObserver.trigger('CONNECTED')
+        }
 
-      eventSource.addEventListener('error', e => {
-        console.log('!!', 'err')
-        console.log(e)
-        statusObserver.trigger('DISCONNECTED')
-        eventSource = undefined
-      })
+        unsubFromConnectionId = onEvent('connectionEstablished', (data: { id: string }) => {
+          connectionIdObserver.trigger(data.id)
 
-      // eventSource.onopen = () => {}
-
-      unsubFromConnectionId = onEvent('connectionEstablished', (data: { id: string }) => {
-        console.log('!!', 'connectionEstablished')
-        connectionIdObserver.trigger(data.id)
-      })
-
-      // Обработка ошибок
-      // eventSource.onerror = e => {}
-
-      eventSourceInterval = setInterval(() => {
-        // console.log('!!eventSource3', eventSource)
-        if (eventSource) {
-          if (eventSource.readyState === 0) {
-            statusObserver.trigger('CONNECTING')
-          } else if (eventSource.readyState === 2) {
-            statusObserver.trigger('DISCONNECTED')
-            eventSource = undefined
-          } else {
-            statusObserver.trigger('CONNECTED')
+          if (!resolved) {
+            resolved = true
+            resolve()
           }
-        }
-      }, 1000)
+        })
 
-      pingInterval = setInterval(() => {
-        if (statusObserver.getValue() === 'CONNECTED') {
-          axios({
-            url: `${url}${url.endsWith('/') ? '' : '/'}ping?id=${connectionIdObserver.getValue()}`,
-            headers: {
-              [CONNECTION_ID_HEADER_NAME]: connectionIdObserver.getValue(),
-            },
-          })
+        // Обработка ошибок
+        eventSource.onerror = e => {
+          console.log(e)
+          statusObserver.trigger('DISCONNECTED')
         }
-      }, 1000 * 30 /*  30 seconds */)
+
+        eventSourceInterval = setInterval(() => {
+          if (eventSource) {
+            if (eventSource.readyState === 0) {
+              statusObserver.trigger('CONNECTING')
+            } else if (eventSource.readyState === 2) {
+              statusObserver.trigger('DISCONNECTED')
+              eventSource = undefined
+            } else {
+              statusObserver.trigger('CONNECTED')
+            }
+          }
+        }, 1000)
+
+        pingInterval = setInterval(() => {
+          if (statusObserver.getValue() === 'CONNECTED') {
+            axios({
+              url: `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}events/ping?id=${connectionIdObserver.getValue()}`,
+              headers: {
+                [CONNECTION_ID_HEADER_NAME]: connectionIdObserver.getValue(),
+              },
+            })
+          }
+        }, 1000 * 30 /*  30 seconds */)
+
+        timeout = setTimeout(() => {
+          if (!resolved) {
+            reject(new Error('Timeout'))
+          }
+        }, 1000 * 20)
+      })
     },
     disconnect: () => {
-      console.log('!!', 'disconnect')
-      clearInterval(eventSourceInterval)
+      clearTimeout(timeout)
       clearInterval(pingInterval)
+      clearInterval(eventSourceInterval)
       if (unsubFromConnectionId) unsubFromConnectionId()
       if (eventSource) {
         eventSource.close()

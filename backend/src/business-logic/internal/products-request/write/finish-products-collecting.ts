@@ -118,14 +118,22 @@ export const finishProductsCollecting = buildWriteOperation(
       }
     })
 
+    const cartsForPreparing = Object.values(shopIdToCartMap)
+
+    cartsForPreparing.forEach(cart => {
+      if (!cart.productsInStock.length) {
+        delete shopIdToCartMap[cart.shopId]
+      }
+    })
+
     const carts = Object.values(shopIdToCartMap)
 
     carts.sort((a, b) => {
-      if (!a.productsAreOutOfStock.length && b.productsAreOutOfStock.length) {
+      if (a.productsAreOutOfStock.length < b.productsAreOutOfStock.length) {
         return -1
       }
 
-      if (a.productsAreOutOfStock.length && !b.productsAreOutOfStock.length) {
+      if (a.productsAreOutOfStock.length > b.productsAreOutOfStock.length) {
         return 1
       }
 

@@ -15,7 +15,8 @@ export const createChangeCityRequest = buildWriteOperation(
       userId: params.userId,
       createDate: dateTime.utc().toISOString(),
       expiresAt: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 7 days
-      query: params.query.replace(/\s+/g, ' ').trim(),
+      // query: params.query.replace(/\s+/g, ' ').trim(),
+      query: params.query.trim(),
       status: 'created',
       error: false,
       cities: [],

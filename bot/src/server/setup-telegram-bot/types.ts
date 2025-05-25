@@ -4,9 +4,10 @@ import { SetupTelegramBotParams } from '../types'
 export type UserCommand = 'start' | 'city' | 'userMessage' | 'cancel'
 
 export interface IBotCommandContext extends IAppExecutors {
+  chatId: number
   telegramId: number
   publicHttpApi: SetupTelegramBotParams['publicHttpApi']
-  reply: (message: string) => Promise<void>
+  sendMessage: (message: string) => Promise<void>
   log: (message: string) => void
 }
 

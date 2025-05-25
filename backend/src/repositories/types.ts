@@ -61,15 +61,15 @@ export type ProcessInitData = { processId: string; processNames: ProcessNames[];
 
 export type PriceCategory = 'cheapest' | 'popular' | 'mostExpensive'
 
-export interface IRawAIProduct {
-  name: string
-  quantity: string
-  priceCategory: PriceCategory
-}
-
 export interface IAIProduct {
   name: string
   quantity: number
+  priceCategory: PriceCategory
+}
+
+export interface IRawAIProduct {
+  name: string
+  quantity: string
   priceCategory: PriceCategory
 }
 

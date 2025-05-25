@@ -43,12 +43,14 @@ const errorMapper = (errorIn: any) => {
 export const setupHTTPApi = ({ expressApp, app, eventBus }: SetupHttpApiParams) => {
   const channelsManager = new ChannelsManager(eventBus)
 
+  channelsManager.appendSSEHandlerToExpress(expressApp)
+
   appendApiDomainToExpress({
     expressApp,
     api: publicHttpApi,
     domainName: 'public',
-    contextGetter: () => {
-      const executors = app.getExecutors({})
+    contextGetter: ({ onUseRepo }) => {
+      const executors = app.getExecutors({ onUseReadRepo: onUseRepo })
 
       return {
         readExecutor: executors.readExecutor,

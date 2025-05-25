@@ -1,7 +1,7 @@
 import { IShop } from '../../../external'
 
 export const shops: IShop[] = [
-  /* {
+  {
     id: 'metro-cc',
     marketplaceId: '94d989f8-42c3-11e6-9419-52540010b608',
     name: 'Metro',
@@ -35,7 +35,7 @@ export const shops: IShop[] = [
     id: 'lenta-giper',
     marketplaceId: '94d98813-42c3-11e6-9419-52540010b608',
     name: 'Гипер Лента',
-  }, */
+  },
   {
     id: 'dixy',
     marketplaceId: '94d985de-42c3-11e6-9419-52540010b608',
@@ -46,17 +46,17 @@ export const shops: IShop[] = [
     marketplaceId: '94d987b8-42c3-11e6-9419-52540010b608',
     name: 'Магнит',
   },
-  /* {
+  {
     id: 'okmarket-giper',
     marketplaceId: '94d98864-42c3-11e6-9419-52540010b608',
     name: "О'кей гипермаркет",
-  }, */
+  },
   {
     id: 'perekrestok',
     marketplaceId: '94d98417-42c3-11e6-9419-52540010b608',
     name: 'Перекрёсток',
   },
-  /* {
+  {
     id: '5ka',
     marketplaceId: '94d98382-42c3-11e6-9419-52540010b608',
     name: 'Пятёрочка',
@@ -65,5 +65,5 @@ export const shops: IShop[] = [
     id: 'lenta-super',
     marketplaceId: '94d98f39-42c3-11e6-9419-52540010b608',
     name: 'Супер Лента',
-  }, */
+  },
 ]

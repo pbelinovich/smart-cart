@@ -1,4 +1,6 @@
 import { IProductsRequestEntity, PriceCategory, ProductsRequestStatus } from '@server'
+import { html } from 'teleform'
+import { formatPrice } from '../../tools'
 
 const priceCategoryEmoji: Record<PriceCategory, string> = {
   cheapest: '💸',
@@ -26,7 +28,13 @@ const statusToFormatterMap: Record<ProductsRequestStatus, (productsRequest: IPro
       return 'Упс! Произошла ошибка после того, как список был проанализирован. Повтори попытку, пж'
     }
 
-    return '⬇️ Проанализировал сообщение'
+    if (!productsRequest.aiProducts.length) {
+      return html.bold('🤖 Нейросеть не распознала ни одного товара.')
+    }
+
+    const items = productsRequest.aiProducts.map(p => `• ${p.name} x${p.quantity} ${priceCategoryEmoji[p.priceCategory]}`).join('\n')
+
+    return [html.bold('🤖 Распознанные товары:'), items].join('\n')
   },
   productsCollecting: productsRequest => {
     if (productsRequest.error) {
@@ -40,29 +48,42 @@ const statusToFormatterMap: Record<ProductsRequestStatus, (productsRequest: IPro
       return 'Упс! Произошла ошибка после того, как корзины были собраны. Повтори попытку, пж'
     }
 
-    if (!productsRequest.carts.length) return '❌ Не получилось ничего найти\\.'
+    const results: string[] = []
 
-    return productsRequest.carts
-      .map(cart => {
-        const header = `🛒 *${cart.shopName}*\n💵 _Итого_: *${cart.totalPrice.toFixed(2)}₽*`
+    if (productsRequest.carts.length) {
+      results.push(
+        ...productsRequest.carts.map(cart => {
+          const header = [
+            '🛒 ',
+            html.bold(cart.shopName),
+            '\n💵 ',
+            html.italic('Итого:'),
+            ' ',
+            html.bold(`${formatPrice(cart.totalPrice)}₽`),
+          ].join('')
 
-        const inStockList = cart.productsInStock.length
-          ? cart.productsInStock
-              .map(p => `• ${p.name} x${p.quantity} — *${p.price.toFixed(2)}₽* ${priceCategoryEmoji[p.priceCategory]}`)
-              .join('\n')
-          : '— Нет доступных товаров\\.'
+          const inStock = cart.productsInStock
+            .map(p =>
+              ['• ', p.name, ' x', p.quantity, ' — ', html.bold(`${formatPrice(p.price)}₽`), ' ', priceCategoryEmoji[p.priceCategory]].join(
+                ''
+              )
+            )
+            .join('\n')
 
-        const outOfStockList = cart.productsAreOutOfStock.length
-          ? cart.productsAreOutOfStock
-              .map(p => `• ${p.name} x${p.quantity} — _Нет в наличии_ ${priceCategoryEmoji[p.priceCategory]}`)
-              .join('\n')
-          : ''
+          const outOfStock = cart.productsAreOutOfStock.map(p => ['• ', p.name, ' x', p.quantity].join('')).join('\n')
 
-        const outOfStockBlock = outOfStockList ? `\n\n❗️ *Нет в наличии:*\n${outOfStockList}` : ''
+          const stockBlock = ['🧾 ', html.bold('Найдено:'), '\n', inStock || html.italic('— Нет доступных товаров.')].join('')
 
-        return `${header}\n\n🧾 *Найдено:*\n${inStockList}${outOfStockBlock}`
-      })
-      .join('\n\n────────────\n\n')
+          const outOfStockBlock = outOfStock ? ['\n\n❗️ ', html.bold('Нет в наличии:'), '\n', outOfStock].join('') : ''
+
+          return [header, '\n\n', stockBlock, outOfStockBlock].join('')
+        })
+      )
+    } else {
+      results.push('❌ Не получилось ничего найти.')
+    }
+
+    return results.join('\n\n─\n\n')
   },
 }
 

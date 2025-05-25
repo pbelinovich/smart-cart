@@ -1,13 +1,14 @@
 import { buildCommandHandler } from '../common'
 import { createSession, getSessionByTelegramId } from '../../../external'
 import { formatProductsRequest } from './format-products-request'
+import isEqual from 'react-fast-compare'
 
 export interface IUserMessageCommandParams {
   message: string
 }
 
 export const userMessageCommand = buildCommandHandler(
-  async ({ readExecutor, writeExecutor, telegramId, publicHttpApi, reply, log }, params: IUserMessageCommandParams) => {
+  async ({ readExecutor, writeExecutor, telegramId, publicHttpApi, sendMessage, log }, params: IUserMessageCommandParams) => {
     const unsubs: (() => Promise<void> | void)[] = []
 
     try {
@@ -30,30 +31,39 @@ export const userMessageCommand = buildCommandHandler(
       }
 
       if (session.state === 'idle') {
-        const productsRequestId = await publicHttpApi.productsRequest.POST.create({
+        const productsRequest = await publicHttpApi.productsRequest.POST.create({
           userId: user.id,
           query: params.message,
         })
 
+        await sendMessage(formatProductsRequest(productsRequest))
+
         const productsRequestChannel = await publicHttpApi.productsRequest.CHANNEL.getById({
           userId: user.id,
-          id: productsRequestId,
+          id: productsRequest.id,
         })
 
-        unsubs.push(
-          productsRequestChannel.destroy,
-          productsRequestChannel.subscribe(productsRequest => {
-            reply(formatProductsRequest(productsRequest))
-          })
-        )
+        const nextProductsRequest = productsRequestChannel.getValue()
+
+        if (!isEqual(productsRequest, nextProductsRequest)) {
+          await sendMessage(formatProductsRequest(productsRequestChannel.getValue()))
+        }
+
+        const unsubFromProductsRequest = productsRequestChannel.subscribe(async productsRequest => {
+          await sendMessage(formatProductsRequest(productsRequest))
+
+          if (productsRequest.error || productsRequest.status === 'productsCollected') {
+            unsubFromProductsRequest()
+            await productsRequestChannel.destroy()
+          }
+        })
+
+        unsubs.push(unsubFromProductsRequest, productsRequestChannel.destroy)
       }
-
-      await reply('Привет! Напиши список продуктов или выбери город через /city')
     } catch (e: any) {
+      await Promise.all(unsubs.map(unsub => unsub()))
       log(e.message)
-      await reply('Произошла ошибка при попытке получить список продуктов. Попробуйте позже.')
+      await sendMessage('Произошла ошибка при попытке получить список продуктов. Попробуйте позже.')
     }
-
-    await Promise.all(unsubs.map(unsub => unsub()))
   }
 )

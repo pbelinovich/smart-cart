@@ -29,7 +29,6 @@ const createHandlerProxy = (baseUrl: string, domain: string, service: string, me
     {
       get(_, handlerName: string) {
         const url = `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}${domain ? `${domain}/` : ''}${service}/${methodKind}/${handlerName}`
-        console.log('!!url', url)
         if (methodKind === 'GET' || methodKind === 'POST') {
           return (params: any) =>
             axios({
@@ -44,16 +43,7 @@ const createHandlerProxy = (baseUrl: string, domain: string, service: string, me
         if (methodKind === 'CHANNEL') {
           return async (params: any) => {
             const sseClient = buildSseClient(baseUrl, 'events')
-
-            /* axios.interceptors.request.use(config => {
-              config.headers[CONNECTION_ID_HEADER_NAME] = sseClient.connectionIdObserver.getValue()
-              return config
-            }) */
-
-            sseClient.connect()
-
-            await delay(3000)
-            console.log('!!after delay', sseClient.connectionIdObserver.getValue())
+            await sseClient.connect()
 
             const initial = await axios<IChannelInitialResponse>({
               url,
@@ -66,6 +56,7 @@ const createHandlerProxy = (baseUrl: string, domain: string, service: string, me
             }).then(x => {
               return x.data
             })
+
             let revision: number | undefined = undefined
             const channelValueObserver = createObserver(initial.result)
             const unsubFromSSEUpdateDiff = sseClient.onEvent<IChannelDiffUpdateResponse>('channelUpdateDiff', data => {
@@ -93,7 +84,7 @@ const createHandlerProxy = (baseUrl: string, domain: string, service: string, me
                 unsubFromSSEUpdateDiff()
                 unsubFromSSEUpdate()
                 await axios({
-                  url: `${url.endsWith('/') ? '' : '/'}destroy?id=${initial.channelId}`,
+                  url: `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}events/destroy?id=${initial.channelId}`,
                   headers: {
                     [CONNECTION_ID_HEADER_NAME]: sseClient.connectionIdObserver.getValue(),
                   },
@@ -109,7 +100,7 @@ const createHandlerProxy = (baseUrl: string, domain: string, service: string, me
                 }
                 lastParams = params
                 return await axios<{ success: true }>({
-                  url: `${url.endsWith('/') ? '' : '/'}updateParams?id=${initial.channelId}`,
+                  url: `${baseUrl}${baseUrl.endsWith('/') ? '' : '/'}events/updateParams?id=${initial.channelId}`,
                   method: 'post',
                   data: params,
                   responseType: 'json',

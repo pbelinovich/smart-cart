@@ -1,7 +1,7 @@
 import { buildCommandHandler } from './common'
 import { createSession, getSessionByTelegramId, removeSessions } from '../../../business-logic'
 
-export const startCommand = buildCommandHandler(async ({ readExecutor, writeExecutor, telegramId, publicHttpApi, reply, log }) => {
+export const startCommand = buildCommandHandler(async ({ readExecutor, writeExecutor, telegramId, publicHttpApi, sendMessage, log }) => {
   try {
     log(`START by ${telegramId}`)
 
@@ -22,9 +22,9 @@ export const startCommand = buildCommandHandler(async ({ readExecutor, writeExec
 
     await writeExecutor.execute(createSession, { userId: user.id, telegramId })
 
-    return reply('Привет! Напиши список продуктов или выбери город через /city')
+    return sendMessage('Привет! Напиши список продуктов или выбери город через /city')
   } catch (e: any) {
     log(e.message)
-    return reply('Произошла ошибка при регистрации. Попробуйте позже.')
+    return sendMessage('Произошла ошибка при регистрации. Попробуйте позже.')
   }
 })
