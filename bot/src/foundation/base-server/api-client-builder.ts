@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { applyPatch, deepClone } from 'fast-json-patch'
 import isEqual from 'react-fast-compare'
-import { Observer, createObserver, CONNECTION_ID_HEADER_NAME, delay } from '@shared'
+import { Observer, createObserver, CONNECTION_ID_HEADER_NAME } from '@shared'
 import { buildSseClient } from './sse-client-builder'
 import {
   ApiDomain,

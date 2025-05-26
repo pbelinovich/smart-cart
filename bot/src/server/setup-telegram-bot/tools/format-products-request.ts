@@ -1,6 +1,6 @@
 import { IProductsRequestEntity, PriceCategory, ProductsRequestStatus } from '@server'
 import { html } from 'teleform'
-import { formatPrice } from '../../tools'
+import { formatPrice } from './format-price'
 
 const priceCategoryEmoji: Record<PriceCategory, string> = {
   cheapest: '💸',

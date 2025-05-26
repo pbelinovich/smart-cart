@@ -1,86 +1,32 @@
-import { Context, Telegraf } from 'telegraf'
+import { Telegraf } from 'telegraf'
 import { SetupTelegramBotParams } from '../types'
 import { message } from 'telegraf/filters'
-import { IBotCommandContext, UserCommand } from './types'
-import { startCommand, userMessageCommand } from './commands'
-import { logInfo, QueueMaster, ShutdownManager } from '../external'
+import { cityCommand, startCommand, userMessageCommand } from './commands'
+import { logInfo, ShutdownManager } from '../external'
+import { buildCommandRunner } from './builder'
+import { CITY_COMMAND, START_COMMAND } from './common'
 
-const MAX_MSG_LENGTH = 300
+export const setupTelegramBot = (params: SetupTelegramBotParams) => {
+  const telegramBot = new Telegraf(params.telegramBotToken)
 
-export const setupTelegramBot = ({ app, telegramBotToken, publicHttpApi }: SetupTelegramBotParams) => {
-  const bot = new Telegraf(telegramBotToken)
-  const executors = app.getExecutors({})
+  const { runCommand } = buildCommandRunner(params)
 
-  const queueMaster = new QueueMaster()
-
-  const getChatId = (ctx: Context) => ctx.chat?.id
-  const getTelegramId = (ctx: Context) => ctx.from?.id
-
-  const getContext = (chatId: number, telegramId: number, command: UserCommand, ctx: Context): IBotCommandContext => ({
-    ...executors,
-    chatId,
-    telegramId,
-    publicHttpApi,
-    sendMessage: message => {
-      return queueMaster.enqueue(async () => {
-        // <tg-emoji emoji-id="5397631056109117802"></tg-emoji>
-        await ctx.telegram.sendMessage(chatId, message, { parse_mode: 'HTML' })
-      })
-    },
-    log: message => logInfo(`command/${command}: ${message}`),
+  telegramBot.command(START_COMMAND, ctx => {
+    return runCommand(ctx, startCommand, {})
   })
 
-  bot.start(ctx => {
-    const chatId = getChatId(ctx)
-    const telegramId = getTelegramId(ctx)
-
-    if (!chatId || !telegramId) {
-      return
-    }
-
-    return startCommand(getContext(chatId, telegramId, 'start', ctx), {})
+  telegramBot.command(CITY_COMMAND, ctx => {
+    return runCommand(ctx, cityCommand, {})
   })
 
-  bot.command('city', ctx => {
-    const chatId = getChatId(ctx)
-    const telegramId = getTelegramId(ctx)
+  // telegramBot.command('cancel', ctx => undefined)
 
-    if (!chatId || !telegramId) {
-      return
-    }
+  telegramBot.on(message('text'), ctx => {
+    return runCommand(ctx, userMessageCommand, { message: ctx.message.text.trim() })
   })
 
-  bot.command('cancel', ctx => {
-    const chatId = getChatId(ctx)
-    const telegramId = getTelegramId(ctx)
-
-    if (!chatId || !telegramId) {
-      return
-    }
-  })
-
-  bot.on(message('text'), ctx => {
-    const chatId = getChatId(ctx)
-    const telegramId = getTelegramId(ctx)
-
-    if (!chatId || !telegramId) {
-      return
-    }
-
-    const message = ctx.message.text.trim()
-
-    if (message.length > MAX_MSG_LENGTH) {
-      ctx.reply('Слишком длинное сообщение\\. Пожалуйста\\, сократите до 300 символов\\.', { parse_mode: 'MarkdownV2' })
-      return
-    }
-
-    return userMessageCommand(getContext(chatId, telegramId, 'userMessage', ctx), { message })
-  })
-
-  Promise.resolve().then(() => {
-    return bot.launch(() => {
-      ShutdownManager.addTask(() => bot.stop('Server went down'))
-      logInfo(`Telegram bot ${bot.botInfo?.username} is started`)
-    })
+  telegramBot.launch(() => {
+    ShutdownManager.addTask(() => telegramBot.stop('Server went down'))
+    logInfo(`Telegram bot ${telegramBot.botInfo?.username} is started`)
   })
 }

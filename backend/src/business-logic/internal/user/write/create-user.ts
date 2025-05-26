@@ -7,6 +7,9 @@ import { getDefaultCity } from '../../city'
 
 export interface ICreateUserParams {
   telegramId: number
+  telegramLogin?: string
+  telegramFirstName?: string
+  telegramLastName?: string
 }
 
 export const createUser = buildWriteOperation(
@@ -21,6 +24,9 @@ export const createUser = buildWriteOperation(
     const user: IUserEntity = {
       id: context.userRepo.getNewId(),
       telegramId: params.telegramId,
+      telegramLogin: params.telegramLogin,
+      telegramFirstName: params.telegramFirstName,
+      telegramLastName: params.telegramLastName,
       createDate: now,
       lastActivityDate: now,
       actualCityId: defaultCity.id,

@@ -4,6 +4,9 @@ import { createUser, ICreateUserParams } from '../../../external'
 
 const schema = joi.object<ICreateUserParams>({
   telegramId: joi.number().required(),
+  telegramLogin: joi.string(),
+  telegramFirstName: joi.string(),
+  telegramLastName: joi.string(),
 })
 
 export const create = buildPublicHandler(schema, (params, { writeExecutor }) => {

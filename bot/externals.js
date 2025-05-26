@@ -1,8 +1,3 @@
-module.exports = [
-  function (_, request, callback) {
-    if (/^@codeless\/.*/.test(request)) {
-      return callback(null, request)
-    }
-    callback()
-  },
-]
+const nodeExternals = require('webpack-node-externals')
+
+module.exports = [nodeExternals()]

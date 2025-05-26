@@ -9,9 +9,9 @@ const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
 const smartCartServerUrl = process.env.SMART_CART_SERVER_URL
 
 const params: ServerParams = {
-  port: port || '5011',
+  port: port || '6011',
   telegramBotToken: telegramBotToken || '',
-  smartCartServerUrl: smartCartServerUrl || '127.0.0.1:5010',
+  smartCartServerUrl: smartCartServerUrl || '127.0.0.1:6010',
 }
 
 initMainThread(params)

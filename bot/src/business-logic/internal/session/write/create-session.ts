@@ -3,10 +3,12 @@ import { buildWriteOperation } from '../../../common/write'
 import { uniqueEntity } from '../../../common/guardians'
 import { getSessionByTelegramId, getSessionByUserId } from '../read'
 import { dateTime } from '@shared'
+import { SessionState } from '../../../external'
 
 export interface ICreateSessionParams {
   userId: string
   telegramId: number
+  state?: SessionState
 }
 
 export const createSession = buildWriteOperation(
@@ -17,7 +19,7 @@ export const createSession = buildWriteOperation(
       telegramId: params.telegramId,
       createDate: dateTime.utc().toISOString(),
       expiresAt: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 24 hours
-      state: 'idle',
+      state: params.state || 'idle',
     }
 
     return context.sessionRepo.create(session)
