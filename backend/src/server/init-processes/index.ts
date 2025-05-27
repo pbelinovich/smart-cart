@@ -52,16 +52,22 @@ export const initProcesses = ({ app, eventBus }: InitProcessesParams) => {
     if (ev.entity === ChangeCityRequestRepo.collectionName) {
       if (ev.event.kind === 'created') {
         if (ev.event.entity.status === 'created') {
-          const needContinue = await writeExecutor.execute(startCitiesSearching, { changeCityRequestId: ev.event.entity.id })
+          const result = await edadealWorkerPool.runTask<ISearchCitiesParams, ICity[]>(
+            'edadeal/searchCities',
+            {
+              changeCityRequestId: ev.event.entity.id,
+              query: ev.event.entity.query,
+            },
+            {
+              preTask: async params => {
+                const needContinue = await writeExecutor.execute(startCitiesSearching, { changeCityRequestId: ev.event.entity.id })
 
-          if (!needContinue) {
-            return
-          }
-
-          const result = await edadealWorkerPool.runTask<ISearchCitiesParams, ICity[]>('edadeal/searchCities', {
-            changeCityRequestId: ev.event.entity.id,
-            query: ev.event.entity.query,
-          })
+                if (!needContinue) {
+                  params.stopTask()
+                }
+              },
+            }
+          )
 
           await writeExecutor.execute(finishCitiesSearching, {
             changeCityRequestId: ev.event.entity.id,
@@ -76,15 +82,21 @@ export const initProcesses = ({ app, eventBus }: InitProcessesParams) => {
     if (ev.entity === ChangeCityRequestRepo.collectionName) {
       if (ev.event.kind === 'updated') {
         if (ev.event.entity.status === 'citySelected' && ev.event.entity.selectedCityId && !ev.event.prevEntity.selectedCityId) {
-          const needContinue = await writeExecutor.execute(startUserCityUpdating, { changeCityRequestId: ev.event.entity.id })
+          const result = await edadealWorkerPool.runTask<IGetChercherAreaParams, string>(
+            'edadeal/getChercherArea',
+            {
+              changeCityRequestId: ev.event.entity.id,
+            },
+            {
+              preTask: async params => {
+                const needContinue = await writeExecutor.execute(startUserCityUpdating, { changeCityRequestId: ev.event.entity.id })
 
-          if (!needContinue) {
-            return
-          }
-
-          const result = await edadealWorkerPool.runTask<IGetChercherAreaParams, string>('edadeal/getChercherArea', {
-            changeCityRequestId: ev.event.entity.id,
-          })
+                if (!needContinue) {
+                  params.stopTask()
+                }
+              },
+            }
+          )
 
           await writeExecutor.execute(finishUserCityUpdating, {
             changeCityRequestId: ev.event.entity.id,
@@ -99,15 +111,21 @@ export const initProcesses = ({ app, eventBus }: InitProcessesParams) => {
     if (ev.entity === ProductsRequestRepo.collectionName) {
       if (ev.event.kind === 'created') {
         if (ev.event.entity.status === 'created') {
-          const needContinue = await writeExecutor.execute(startProductsParsing, { productsRequestId: ev.event.entity.id })
+          const result = await mistralWorkerPool.runTask<IParseProductsParams, IAIProduct[]>(
+            'mistral/parseProducts',
+            {
+              productsRequestId: ev.event.entity.id,
+            },
+            {
+              preTask: async params => {
+                const needContinue = await writeExecutor.execute(startProductsParsing, { productsRequestId: ev.event.entity.id })
 
-          if (!needContinue) {
-            return
-          }
-
-          const result = await mistralWorkerPool.runTask<IParseProductsParams, IAIProduct[]>('mistral/parseProducts', {
-            productsRequestId: ev.event.entity.id,
-          })
+                if (!needContinue) {
+                  params.stopTask()
+                }
+              },
+            }
+          )
 
           await writeExecutor.execute(finishProductsParsing, {
             productsRequestId: ev.event.entity.id,

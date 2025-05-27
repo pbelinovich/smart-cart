@@ -1,6 +1,17 @@
 import { IProductsRequestEntity, PriceCategory, ProductsRequestStatus } from '@server'
 import { html } from 'teleform'
 import { formatPrice } from './format-price'
+import { ISendMessageOptions } from '../common'
+
+export interface IFormatProductsRequestResult {
+  message: string
+  options?: ISendMessageOptions
+}
+
+type StatusToFormatterMap = Record<
+  ProductsRequestStatus,
+  (productsRequest: IProductsRequestEntity) => IFormatProductsRequestResult | string
+>
 
 const priceCategoryEmoji: Record<PriceCategory, string> = {
   cheapest: '💸',
@@ -8,13 +19,13 @@ const priceCategoryEmoji: Record<PriceCategory, string> = {
   mostExpensive: '💰',
 }
 
-const statusToFormatterMap: Record<ProductsRequestStatus, (productsRequest: IProductsRequestEntity) => string> = {
+const statusToFormatterMap: StatusToFormatterMap = {
   created: productsRequest => {
     if (productsRequest.error) {
-      return 'Упс! Произошла ошибка во время создания запроса. Повтори попытку, пж'
+      return 'Упс! Произошла ошибка во время создания запроса на сбор корзин. Повтори попытку, пж'
     }
 
-    return '⬇️ Создал запрос на сбор корзин. Ожидай, бро'
+    return '☑️ Создал запрос на сбор корзин. Ожидай, бро'
   },
   productsParsing: productsRequest => {
     if (productsRequest.error) {
@@ -24,17 +35,17 @@ const statusToFormatterMap: Record<ProductsRequestStatus, (productsRequest: IPro
     return '🕓 Анализирую твой список...'
   },
   productsParsed: productsRequest => {
+    if (!productsRequest.aiProducts.length) {
+      return '🤖 Я не распознал ни одного товара'
+    }
+
     if (productsRequest.error) {
       return 'Упс! Произошла ошибка после того, как список был проанализирован. Повтори попытку, пж'
     }
 
-    if (!productsRequest.aiProducts.length) {
-      return html.bold('🤖 Нейросеть не распознала ни одного товара.')
-    }
-
     const items = productsRequest.aiProducts.map(p => `• ${p.name} x${p.quantity} ${priceCategoryEmoji[p.priceCategory]}`).join('\n')
 
-    return [html.bold('🤖 Распознанные товары:'), items].join('\n')
+    return [html.bold('🤖 Твой запрос:'), items].join('\n')
   },
   productsCollecting: productsRequest => {
     if (productsRequest.error) {
@@ -80,14 +91,21 @@ const statusToFormatterMap: Record<ProductsRequestStatus, (productsRequest: IPro
         })
       )
     } else {
-      results.push('❌ Не получилось ничего найти.')
+      results.push('❌ Не получилось ничего найти')
     }
 
     return results.join('\n\n─\n\n')
   },
 }
 
-export const formatProductsRequest = (productsRequest: IProductsRequestEntity): string => {
+export const formatProductsRequest = (productsRequest: IProductsRequestEntity): IFormatProductsRequestResult | undefined => {
   const format = statusToFormatterMap[productsRequest.status]
-  return format ? format(productsRequest) : ''
+
+  if (!format) {
+    return
+  }
+
+  const result = format(productsRequest)
+
+  return typeof result === 'string' ? { message: result } : result
 }

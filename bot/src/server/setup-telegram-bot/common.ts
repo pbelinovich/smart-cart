@@ -1,13 +1,17 @@
-import { IAppExecutors } from '../external'
+import { IAppExecutors, IUpdateSessionParams } from '../external'
 import { SetupTelegramBotParams } from '../types'
+import { Markup } from 'telegraf'
+import { ParseMode } from '@telegraf/types/message'
 
-export type StartCommand = 'start'
-export type CityCommand = 'city'
-export type CancelCommand = 'cancel'
+export type StartCommandName = 'start'
+export type CityCommandName = 'city'
+export type CancelCommandName = 'cancel'
 
-export const START_COMMAND: StartCommand = 'start'
-export const CITY_COMMAND: CityCommand = 'city'
-export const CANCEL_COMMAND: CancelCommand = 'cancel'
+export const START_COMMAND: StartCommandName = 'start'
+export const CITY_COMMAND: CityCommandName = 'city'
+export const CANCEL_COMMAND: CancelCommandName = 'cancel'
+
+export type CommandName = StartCommandName | CityCommandName | CancelCommandName
 
 export interface ITgUser {
   id: number
@@ -16,14 +20,28 @@ export interface ITgUser {
   lastName: string | undefined
 }
 
+export interface ISendMessageOptions {
+  parseMode?: ParseMode
+  replyMarkup?: Markup.Markup<any>
+}
+
 export interface IDefaultCommandContext extends IAppExecutors {
-  runCommand: CommandRunner
   publicHttpApi: SetupTelegramBotParams['publicHttpApi']
   chatId: number
   tgUser: ITgUser
-  sendMessage: (message: string) => Promise<void>
+  sendMessage: (message: string, options?: ISendMessageOptions) => Promise<void>
   log: (message: string) => void
+  updateSession: (params: IUpdateSessionParams) => Promise<void>
 }
 
-export type CommandHandler<TParams, TResult> = (context: IDefaultCommandContext, params: TParams) => Promise<TResult>
-export type CommandRunner = <TParams, TResult>(handler: CommandHandler<TParams, TResult>, params: TParams) => Promise<TResult | void>
+export type CommandHandler<TParams, TResult> = (
+  context: IDefaultCommandContext,
+  params: TParams,
+  commandRunner: ICommandRunner
+) => Promise<TResult>
+
+export type CommandRunnerHandler = <TParams, TResult>(handler: CommandHandler<TParams, TResult>, params: TParams) => Promise<TResult | void>
+
+export interface ICommandRunner {
+  runCommand: CommandRunnerHandler
+}

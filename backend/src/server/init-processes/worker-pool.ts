@@ -2,7 +2,7 @@ import path from 'node:path'
 import { Worker } from 'node:worker_threads'
 import { lightGuid, MessagesBasedCommunicator } from '@shared'
 import { DataBaseEvent, IEventBus, logInfo, ProcessInitData, ProcessMessages, ProcessNames } from '../external'
-import { Task, TaskResult, WorkerData, WorkerPoolParams } from './types'
+import { Task, TaskExtra, TaskResult, WorkerData, WorkerPoolParams } from './types'
 
 export class WorkerPool<TProcess extends ProcessNames> {
   private readonly eventBus: IEventBus<DataBaseEvent>
@@ -98,16 +98,19 @@ export class WorkerPool<TProcess extends ProcessNames> {
       this.tryNext()
     }
 
-    this.workers[freeWorkerId].communicator
-      .request<any>(task.name, task.data)
-      .then(result => resolve({ kind: 'success', result }))
+    let stoppedByPreTask = false
+
+    Promise.resolve()
+      .then(() => (task.extra?.preTask ? task.extra.preTask({ stopTask: () => (stoppedByPreTask = true) }) : undefined))
+      .then(() => (!stoppedByPreTask ? this.workers[freeWorkerId].communicator.request<any>(task.name, task.data) : undefined))
+      .then(result => resolve(stoppedByPreTask ? { kind: 'stoppedByPreTask' } : { kind: 'success', result }))
       .catch(error => resolve({ kind: 'error', error }))
   }
 
-  runTask = <TData, TResult>(name: TProcess, data: TData) => {
+  runTask = <TData, TResult>(name: TProcess, data: TData, extra?: TaskExtra) => {
     let promiseResolve: (result: TaskResult<TResult>) => void = () => undefined
 
-    this.queue.push({ name, data, resolve: result => promiseResolve(result) })
+    this.queue.push({ name, data, extra, resolve: result => promiseResolve(result) })
     this.tryNext()
 
     return new Promise<TaskResult<TResult>>(resolve => {

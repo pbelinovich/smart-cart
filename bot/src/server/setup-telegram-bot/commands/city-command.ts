@@ -1,37 +1,47 @@
 import { buildCommand } from '../builder'
-import { createSession, getSessionByTelegramId, updateSession } from '../../external'
+import { createSession, getSessionByTelegramId, SessionState, updateSession } from '../../external'
+import { CITY_COMMAND } from '../common'
+import { formatCommand } from '../tools'
 
 export const cityCommand = buildCommand(async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, sendMessage, log }) => {
   try {
     log('CITY')
 
-    const [prevUser, session] = await Promise.all([
-      publicHttpApi.user.GET.byTelegramId({ telegramId: tgUser.id }),
-      readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id }),
-    ])
+    const session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
 
-    let user = prevUser
+    if (session) {
+      const statusesToCancel: SessionState[] = ['creatingChangeCityRequest', 'choosingCity', 'confirmingCity']
 
-    if (!user) {
-      user = await publicHttpApi.user.POST.create({
+      if (statusesToCancel.includes(session.state) && session.activeChangeCityRequestId) {
+        await publicHttpApi.changeCityRequest.POST.cancel({
+          changeCityRequestId: session.activeChangeCityRequestId,
+          userId: session.userId,
+        })
+      }
+
+      await writeExecutor.execute(updateSession, { id: session.id, state: 'creatingChangeCityRequest' })
+    } else {
+      let user = await publicHttpApi.user.GET.byTelegramId({ telegramId: tgUser.id })
+
+      if (!user) {
+        user = await publicHttpApi.user.POST.create({
+          telegramId: tgUser.id,
+          telegramLogin: tgUser.login,
+          telegramFirstName: tgUser.firstName,
+          telegramLastName: tgUser.lastName,
+        })
+      }
+
+      await writeExecutor.execute(createSession, {
+        userId: user.id,
         telegramId: tgUser.id,
-        telegramLogin: tgUser.login,
-        telegramFirstName: tgUser.firstName,
-        telegramLastName: tgUser.lastName,
+        state: 'creatingChangeCityRequest',
       })
     }
 
-    if (session) {
-      await writeExecutor.execute(updateSession, { id: session.id, state: 'choosingCity' })
-    } else {
-      await writeExecutor.execute(createSession, { userId: user.id, telegramId: tgUser.id, state: 'choosingCity' })
-    }
-
-    return sendMessage(
-      'Введи свой город в свободном формате. Я пришлю тебе список городов, которые я знаю, и ты сможешь выбрать один из них.'
-    )
+    return sendMessage('⬇ Введи свой город в свободном формате, я поищу')
   } catch (e) {
     log(e instanceof Error ? e.message : String(e))
-    return sendMessage('Произошла ошибка при выполнении команды /city. Пожалуйста, попробуйте позже.')
+    return sendMessage(`Произошла ошибка при выполнении команды ${formatCommand(CITY_COMMAND)}. Попробуйте позже, пж`)
   }
 })

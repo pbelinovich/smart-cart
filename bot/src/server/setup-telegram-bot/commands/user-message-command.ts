@@ -1,6 +1,8 @@
 import { buildCommand } from '../builder'
 import { createSession, getSessionByTelegramId } from '../../external'
 import { productsRequestCommand } from './products-request-command'
+import { changeCityRequestCommand } from './change-city-request-command'
+import { selectCityCommand } from './select-city-command'
 
 export interface IUserMessageCommandParams {
   message: string
@@ -9,47 +11,49 @@ export interface IUserMessageCommandParams {
 const MAX_MSG_LENGTH = 300
 
 export const userMessageCommand = buildCommand(
-  async ({ readExecutor, writeExecutor, runCommand, tgUser, publicHttpApi, sendMessage, log }, params: IUserMessageCommandParams) => {
+  async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, sendMessage, log }, params: IUserMessageCommandParams, commandRunner) => {
     try {
       log('USER MESSAGE')
 
       if (params.message.length > MAX_MSG_LENGTH) {
-        return sendMessage('Слишком длинное сообщение. Пожалуйста, сократите до 300 символов.')
+        return sendMessage('Слишком длинное сообщение. Сократи до 300 символов, пж')
       }
 
-      const [prevUser, prevSession] = await Promise.all([
-        publicHttpApi.user.GET.byTelegramId({ telegramId: tgUser.id }),
-        readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id }),
-      ])
+      let session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
 
-      let user = prevUser
-      let session = prevSession
+      if (!session) {
+        let user = await publicHttpApi.user.GET.byTelegramId({ telegramId: tgUser.id })
 
-      if (!user) {
-        user = await publicHttpApi.user.POST.create({
+        if (!user) {
+          user = await publicHttpApi.user.POST.create({
+            telegramId: tgUser.id,
+            telegramLogin: tgUser.login,
+            telegramFirstName: tgUser.firstName,
+            telegramLastName: tgUser.lastName,
+          })
+        }
+
+        session = await writeExecutor.execute(createSession, {
+          userId: user.id,
           telegramId: tgUser.id,
-          telegramLogin: tgUser.login,
-          telegramFirstName: tgUser.firstName,
-          telegramLastName: tgUser.lastName,
+          state: 'idle',
         })
       }
 
-      if (!session) {
-        session = await writeExecutor.execute(createSession, { userId: user.id, telegramId: tgUser.id })
+      if (session.state === 'idle') {
+        return commandRunner.runCommand(productsRequestCommand, { message: params.message })
       }
 
-      if (session.state === 'idle') {
-        return runCommand(productsRequestCommand, { message: params.message })
+      if (session.state === 'creatingChangeCityRequest') {
+        return commandRunner.runCommand(changeCityRequestCommand, { message: params.message })
       }
 
       if (session.state === 'choosingCity') {
-      }
-
-      if (session.state === 'confirmingCity') {
+        return commandRunner.runCommand(selectCityCommand, { message: params.message })
       }
     } catch (e) {
       log(e instanceof Error ? e.message : String(e))
-      return sendMessage('Произошла ошибка при обработке вашего сообщения. Пожалуйста, попробуйте позже.')
+      return sendMessage('Произошла ошибка при обработке вашего сообщения. Попробуй позже, пж')
     }
   }
 )

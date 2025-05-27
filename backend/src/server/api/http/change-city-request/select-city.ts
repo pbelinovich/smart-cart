@@ -11,7 +11,7 @@ import {
 const schema = joi.object<ISelectCityParams>({
   changeCityRequestId: joi.string().required(),
   userId: joi.string().required(),
-  selectedCityId: joi.string().required(),
+  selectedCityName: joi.string().required(),
 })
 
 export const selectCity = buildPublicHandler(schema, async (params, { readExecutor, writeExecutor }) => {

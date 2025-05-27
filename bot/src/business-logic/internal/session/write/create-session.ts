@@ -8,7 +8,9 @@ import { SessionState } from '../../../external'
 export interface ICreateSessionParams {
   userId: string
   telegramId: number
-  state?: SessionState
+  state: SessionState
+  activeProductsRequestId?: string
+  activeChangeCityRequestId?: string
 }
 
 export const createSession = buildWriteOperation(
@@ -19,7 +21,7 @@ export const createSession = buildWriteOperation(
       telegramId: params.telegramId,
       createDate: dateTime.utc().toISOString(),
       expiresAt: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 24 hours
-      state: params.state || 'idle',
+      state: params.state,
     }
 
     return context.sessionRepo.create(session)

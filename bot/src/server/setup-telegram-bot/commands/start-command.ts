@@ -1,33 +1,59 @@
+import { html } from 'teleform'
 import { buildCommand } from '../builder'
-import { createSession, getSessionByTelegramId, removeSessions } from '../../external'
+import { createSession, getSessionByTelegramId, SessionState, updateSession } from '../../external'
+import { formatCommand, formatUser } from '../tools'
+import { CITY_COMMAND } from '../common'
 
 export const startCommand = buildCommand(async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, sendMessage, log }) => {
   try {
     log('START')
 
-    const [prevUser, prevSession] = await Promise.all([
-      publicHttpApi.user.GET.byTelegramId({ telegramId: tgUser.id }),
-      readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id }),
-    ])
+    const session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
+    const cityCommand = formatCommand(CITY_COMMAND)
 
-    let user = prevUser
+    if (session) {
+      const statusesToCancel: SessionState[] = ['creatingChangeCityRequest', 'choosingCity', 'confirmingCity']
 
-    if (!user) {
-      user = await publicHttpApi.user.POST.create({
+      if (statusesToCancel.includes(session.state) && session.activeChangeCityRequestId) {
+        await publicHttpApi.changeCityRequest.POST.cancel({
+          changeCityRequestId: session.activeChangeCityRequestId,
+          userId: session.userId,
+        })
+      }
+
+      await writeExecutor.execute(updateSession, { id: session.id, state: 'idle' })
+    } else {
+      let user = await publicHttpApi.user.GET.byTelegramId({ telegramId: tgUser.id })
+
+      if (!user) {
+        user = await publicHttpApi.user.POST.create({
+          telegramId: tgUser.id,
+          telegramLogin: tgUser.login,
+          telegramFirstName: tgUser.firstName,
+          telegramLastName: tgUser.lastName,
+        })
+
+        await writeExecutor.execute(createSession, {
+          userId: user.id,
+          telegramId: tgUser.id,
+          state: 'idle',
+        })
+
+        const userName = formatUser(user)
+
+        return sendMessage(
+          `Привет${userName ? `, ${html.bold(userName)}` : ''}! Напиши список продуктов или выбери город через ${cityCommand}`
+        )
+      }
+
+      await writeExecutor.execute(createSession, {
+        userId: user.id,
         telegramId: tgUser.id,
-        telegramLogin: tgUser.login,
-        telegramFirstName: tgUser.firstName,
-        telegramLastName: tgUser.lastName,
+        state: 'idle',
       })
     }
 
-    if (prevSession) {
-      await writeExecutor.execute(removeSessions, { ids: [prevSession.id] })
-    }
-
-    await writeExecutor.execute(createSession, { userId: user.id, telegramId: tgUser.id })
-
-    return sendMessage('Привет! Напиши список продуктов или выбери город через /city')
+    return sendMessage(`Ты уже зарегистрирован. Напиши список продуктов или выбери город через ${cityCommand}`)
   } catch (e) {
     log(e instanceof Error ? e.message : String(e))
     return sendMessage('Произошла ошибка при регистрации. Попробуйте позже.')

@@ -12,17 +12,17 @@ export const setupTelegramBot = (params: SetupTelegramBotParams) => {
   const { runCommand } = buildCommandRunner(params)
 
   telegramBot.command(START_COMMAND, ctx => {
-    return runCommand(ctx, startCommand, {})
+    runCommand(ctx, startCommand, {})
   })
 
   telegramBot.command(CITY_COMMAND, ctx => {
-    return runCommand(ctx, cityCommand, {})
+    runCommand(ctx, cityCommand, {})
   })
 
   // telegramBot.command('cancel', ctx => undefined)
 
   telegramBot.on(message('text'), ctx => {
-    return runCommand(ctx, userMessageCommand, { message: ctx.message.text.trim() })
+    runCommand(ctx, userMessageCommand, { message: ctx.message.text.trim() })
   })
 
   telegramBot.launch(() => {
