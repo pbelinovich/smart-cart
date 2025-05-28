@@ -1,5 +1,6 @@
 import { buildProcessHandler } from '../../common'
 import { ChangeCityRequestStatus, getChangeCityRequestById, ICity, ISearchCitiesParams, searchEdadealCities } from '../../external'
+import { guid } from '@shared'
 
 const popularCities: { [key: string]: true } = {
   moskva: true,
@@ -31,7 +32,8 @@ export const searchCities = buildProcessHandler(async ({ readExecutor }, params:
 
   return cities
     .map<ICity>(city => ({
-      id: city.uuid,
+      id: guid(),
+      marketplaceId: city.uuid,
       name: city.name,
       region: city.region,
       slug: city.slug,

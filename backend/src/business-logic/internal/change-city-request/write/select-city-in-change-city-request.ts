@@ -6,7 +6,7 @@ import { relatedEntitiesExist } from '../../../common/guardians'
 export interface ISelectCityParams {
   changeCityRequestId: string
   userId: string
-  selectedCityName: string
+  selectedCityId: string
 }
 
 export const selectCityInChangeCityRequest = buildWriteOperation(
@@ -21,8 +21,7 @@ export const selectCityInChangeCityRequest = buildWriteOperation(
       return false
     }
 
-    const cityName = params.selectedCityName.toLowerCase()
-    const foundCity = changeCityRequest.cities.find(city => city.name.toLowerCase() === cityName)
+    const foundCity = changeCityRequest.cities.find(city => city.id === params.selectedCityId)
 
     if (!foundCity) {
       await execute(updateChangeCityRequest, { id: params.changeCityRequestId, error: true })

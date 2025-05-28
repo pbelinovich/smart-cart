@@ -1,32 +1,26 @@
 import { IChangeCityRequestEntity, ChangeCityRequestStatus } from '@server'
 import { html } from 'teleform'
 import { Markup } from 'telegraf'
-import { ISendMessageOptions } from '../common'
+import { chunkArray } from './chunk-array'
+import { formatError } from './format-error'
+import { MessageInfo } from '../message-manager'
 
-export interface IFormatChangeCityRequestResult {
-  message: string
-  options?: ISendMessageOptions
-}
-
-type StatusToFormatterMap = Record<
-  ChangeCityRequestStatus,
-  (changeCityRequest: IChangeCityRequestEntity) => IFormatChangeCityRequestResult | string
->
+type StatusToFormatterMap = Record<ChangeCityRequestStatus, (changeCityRequest: IChangeCityRequestEntity) => MessageInfo | string>
 
 const statusToFormatterMap: StatusToFormatterMap = {
   created: changeCityRequest => {
     if (changeCityRequest.error) {
-      return 'Упс! Произошла ошибка во время создания запроса на смену города. Повтори попытку, пж'
+      return formatError('Произошла ошибка во время создания запроса на смену города')
     }
 
     return '☑️ Создал запрос на смену города. Ожидай, бро'
   },
   citiesSearching: changeCityRequest => {
     if (changeCityRequest.error) {
-      return 'Упс! Произошла ошибка во время поиска городов. Повтори попытку, пж'
+      return formatError('Произошла ошибка во время поиска городов')
     }
 
-    return '🕓 Ищу города...'
+    return { message: '🕓 Ищу города...', options: { kind: 'edit' } }
   },
   citiesFound: changeCityRequest => {
     if (!changeCityRequest.cities.length) {
@@ -34,43 +28,54 @@ const statusToFormatterMap: StatusToFormatterMap = {
     }
 
     if (changeCityRequest.error) {
-      return 'Упс! Произошла ошибка после того, как я нашел города. Повтори попытку, пж'
+      return formatError('Произошла ошибка во время выбора города')
     }
 
-    const cities = changeCityRequest.cities.map(city => city.name)
-    const replyMarkup = Markup.keyboard(cities).oneTime().resize()
+    const cities = chunkArray(changeCityRequest.cities, 2)
+    const toMarkup = cities.map(item => item.map(city => Markup.button.callback(city.name, `selectCity/${city.id}`)))
 
-    return { message: '⬇ Выбери город', options: { replyMarkup } }
+    toMarkup.push([Markup.button.callback('❌ Отменить', 'cancel')])
+
+    return {
+      message: '⬇ Выбери город',
+      options: {
+        kind: 'edit',
+        markup: Markup.inlineKeyboard(toMarkup),
+      },
+    }
   },
   citySelected: changeCityRequest => {
     if (changeCityRequest.error) {
-      return 'Упс! Произошла ошибка во время выбора города. Повтори попытку, пж'
+      return formatError('Произошла ошибка во время выбора города')
     }
 
-    return '🕓 Запоминаю...'
+    return { message: '🕓 Запоминаю...', options: { kind: 'edit' } }
   },
   chercherAreaGetting: changeCityRequest => {
     if (changeCityRequest.error) {
-      return 'Упс! Произошла ошибка после того, как был выбран город. Повтори попытку, пж'
+      return formatError('Произошла ошибка после того, как был выбран город')
     }
 
-    return '🕓 Еще запрашиваю пару метаданных...'
+    return { message: '🕓 Еще запрашиваю пару метаданных...', options: { kind: 'edit' } }
   },
   userCityUpdated: changeCityRequest => {
     if (changeCityRequest.error) {
-      return 'Упс! Произошла ошибка на финальной стадии выбора города. Повтори попытку, пж'
+      return formatError('Произошла ошибка на финальной стадии выбора города')
     }
 
     const selectedCity = changeCityRequest.cities.find(city => city.id === changeCityRequest.selectedCityId)
 
-    return `✅ Установил город${selectedCity ? ` ${html.bold(selectedCity.name)}` : ''}`
+    return {
+      message: `✅ Установил город${selectedCity ? ` ${html.bold(selectedCity.name)}` : ''}`,
+      options: { kind: 'edit' },
+    }
   },
   canceledByUser: () => {
-    return '❌ Выбор города отменен'
+    return { message: '❌ Выбор города отменен', options: { kind: 'edit' } }
   },
 }
 
-export const formatChangeCityRequest = (changeCityRequest: IChangeCityRequestEntity): IFormatChangeCityRequestResult | undefined => {
+export const formatChangeCityRequest = (changeCityRequest: IChangeCityRequestEntity): MessageInfo | undefined => {
   const format = statusToFormatterMap[changeCityRequest.status]
 
   if (!format) {

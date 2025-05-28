@@ -1,5 +1,6 @@
 export * from './format-change-city-request'
 export * from './format-command'
+export * from './format-error'
 export * from './format-price'
 export * from './format-products-request'
 export * from './format-user'

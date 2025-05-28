@@ -1,32 +1,73 @@
 import { Telegraf } from 'telegraf'
 import { SetupTelegramBotParams } from '../types'
 import { message } from 'telegraf/filters'
-import { cityCommand, startCommand, userMessageCommand } from './commands'
+import { cancelCommand, changeCityCommand, cityCommand, selectCityCommand, startCommand, userMessageCommand } from './commands'
 import { logInfo, ShutdownManager } from '../external'
 import { buildCommandRunner } from './builder'
-import { CITY_COMMAND, START_COMMAND } from './common'
+import {
+  CANCEL_COMMAND,
+  CHANGE_COMMAND,
+  SELECT_CITY_ACTION,
+  COMMANDS,
+  COMMANDS_MAP,
+  START_COMMAND,
+  SHOW_MORE_ACTION,
+  CANCEL_ACTION,
+  CITY_COMMAND,
+} from './common'
+import { MessageManager } from './message-manager'
 
 export const setupTelegramBot = (params: SetupTelegramBotParams) => {
-  const telegramBot = new Telegraf(params.telegramBotToken)
+  const bot = new Telegraf(params.telegramBotToken)
+  const messageManager = new MessageManager()
 
-  const { runCommand } = buildCommandRunner(params)
+  const { runCommand } = buildCommandRunner(params, messageManager)
 
-  telegramBot.command(START_COMMAND, ctx => {
+  bot.command(START_COMMAND, ctx => {
     runCommand(ctx, startCommand, {})
   })
 
-  telegramBot.command(CITY_COMMAND, ctx => {
+  bot.command(CITY_COMMAND, ctx => {
     runCommand(ctx, cityCommand, {})
   })
 
-  // telegramBot.command('cancel', ctx => undefined)
+  bot.command(CHANGE_COMMAND, ctx => {
+    runCommand(ctx, changeCityCommand, {})
+  })
 
-  telegramBot.on(message('text'), ctx => {
+  bot.command(CANCEL_COMMAND, ctx => {
+    runCommand(ctx, cancelCommand, {})
+  })
+
+  bot.on(message('text'), ctx => {
+    messageManager.handleUserMessage(ctx)
     runCommand(ctx, userMessageCommand, { message: ctx.message.text.trim() })
   })
 
-  telegramBot.launch(() => {
-    ShutdownManager.addTask(() => telegramBot.stop('Server went down'))
-    logInfo(`Telegram bot ${telegramBot.botInfo?.username} is started`)
+  bot.action(SHOW_MORE_ACTION, async ctx => {
+    await ctx.answerCbQuery()
+    messageManager.handleShowMoreAction(ctx)
   })
+
+  bot.action(CANCEL_ACTION, async ctx => {
+    await ctx.answerCbQuery()
+    runCommand(ctx, cancelCommand, {})
+  })
+
+  bot.action(SELECT_CITY_ACTION, async ctx => {
+    await ctx.answerCbQuery()
+    const selectedCityId = ctx.match?.[1]
+    if (selectedCityId) runCommand(ctx, selectCityCommand, { selectedCityId })
+  })
+
+  Promise.resolve()
+    .then(() => {
+      return bot.telegram.setMyCommands(COMMANDS.map(command => ({ command, description: COMMANDS_MAP[command] })))
+    })
+    .then(() => {
+      return bot.launch(() => {
+        ShutdownManager.addTask(() => bot.stop('Server went down'))
+        logInfo(`Telegram bot ${bot.botInfo?.username} is started`)
+      })
+    })
 }

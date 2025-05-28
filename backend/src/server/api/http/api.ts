@@ -1,5 +1,6 @@
 import { buildChannel, buildPublicDomain } from './builder'
 import * as changeCityRequestHandlers from './change-city-request'
+import * as cityHandlers from './city'
 import * as productsRequestHandlers from './products-request'
 import * as userHandlers from './user'
 
@@ -15,6 +16,11 @@ export const publicHttpApi = buildPublicDomain({
     },
     CHANNEL: {
       getById: buildChannel(changeCityRequestHandlers.getById, () => undefined),
+    },
+  },
+  city: {
+    GET: {
+      byTelegramId: cityHandlers.getByTelegramId,
     },
   },
   productsRequest: {

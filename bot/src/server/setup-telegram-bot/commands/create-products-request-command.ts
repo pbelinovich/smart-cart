@@ -1,15 +1,16 @@
 import { IProductsRequestEntity, ProductsRequestStatus } from '@server'
 import { buildCommand } from '../builder'
 import { getSessionByTelegramId } from '../../external'
-import { formatProductsRequest } from '../tools'
+import { formatCollectedProductsRequest, formatProductsRequest } from '../tools'
+import { updateSessionCommand } from './update-session-command'
 
 export interface IProductsRequestCommandParams {
   message: string
 }
 
-export const productsRequestCommand = buildCommand(
-  async ({ readExecutor, tgUser, publicHttpApi, sendMessage, log, updateSession }, params: IProductsRequestCommandParams) => {
-    const exceptionUnsubs: (() => Promise<void> | void)[] = []
+export const createProductsRequestCommand = buildCommand(
+  async ({ readExecutor, tgUser, publicHttpApi, send, sendBatch, log }, params: IProductsRequestCommandParams, { runCommand }) => {
+    const exceptionUnsubs: (() => Promise<any> | void)[] = []
 
     try {
       log(`PRODUCTS REQUEST → "${params.message}"`)
@@ -20,21 +21,25 @@ export const productsRequestCommand = buildCommand(
         return
       }
 
-      exceptionUnsubs.push(() => updateSession({ id: session.id, state: 'idle' }))
+      exceptionUnsubs.push(() => runCommand(updateSessionCommand, { state: 'idle' }))
 
       let prevProductsRequest: IProductsRequestEntity | undefined
 
-      const sendProductsRequestUpdate = async (productsRequest: IProductsRequestEntity) => {
+      const sendProductsRequestUpdate = (productsRequest: IProductsRequestEntity) => {
         if (prevProductsRequest?.status === productsRequest.status && prevProductsRequest.error === productsRequest.error) {
           return
         }
 
         prevProductsRequest = productsRequest
 
+        if (productsRequest.status === 'productsCollected') {
+          return sendBatch(formatCollectedProductsRequest(productsRequest))
+        }
+
         const formatted = formatProductsRequest(productsRequest)
 
         if (formatted) {
-          await sendMessage(formatted.message, formatted.options)
+          send(formatted.message, formatted.options)
         }
       }
 
@@ -43,21 +48,19 @@ export const productsRequestCommand = buildCommand(
         query: params.message,
       })
 
-      await Promise.all([
-        sendProductsRequestUpdate(productsRequest),
-        updateSession({
-          id: session.id,
-          state: 'creatingProductsRequest',
-          activeProductsRequestId: productsRequest.id,
-        }),
-      ])
+      sendProductsRequestUpdate(productsRequest)
+
+      await runCommand(updateSessionCommand, {
+        state: 'creatingProductsRequest',
+        activeProductsRequestId: productsRequest.id,
+      })
 
       const productsRequestChannel = await publicHttpApi.productsRequest.CHANNEL.getById({
         id: productsRequest.id,
         userId: session.userId,
       })
 
-      await sendProductsRequestUpdate(productsRequestChannel.getValue())
+      sendProductsRequestUpdate(productsRequestChannel.getValue())
 
       let prev: IProductsRequestEntity | undefined
 
@@ -73,17 +76,17 @@ export const productsRequestCommand = buildCommand(
 
         if (needUnsub) {
           unsubFromProductsRequest()
-          await Promise.all([productsRequestChannel.destroy(), updateSession({ id: session.id, state: 'idle' })])
+          await Promise.all([productsRequestChannel.destroy(), runCommand(updateSessionCommand, { state: 'idle' })])
         }
 
-        await sendProductsRequestUpdate(next)
+        sendProductsRequestUpdate(next)
       })
 
       exceptionUnsubs.push(unsubFromProductsRequest, productsRequestChannel.destroy)
     } catch (e) {
       await Promise.all(exceptionUnsubs.map(unsub => unsub()))
       log(e instanceof Error ? e.message : String(e))
-      await sendMessage('Произошла ошибка при попытке получить список продуктов. Попробуй позже, пж')
+      send('Произошла ошибка при попытке получить список продуктов. Попробуй позже, пж')
     }
   }
 )

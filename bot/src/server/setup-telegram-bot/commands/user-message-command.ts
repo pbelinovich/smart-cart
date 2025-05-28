@@ -1,8 +1,7 @@
 import { buildCommand } from '../builder'
 import { createSession, getSessionByTelegramId } from '../../external'
-import { productsRequestCommand } from './products-request-command'
-import { changeCityRequestCommand } from './change-city-request-command'
-import { selectCityCommand } from './select-city-command'
+import { createProductsRequestCommand } from './create-products-request-command'
+import { createChangeCityRequestCommand } from './create-change-city-request-command'
 
 export interface IUserMessageCommandParams {
   message: string
@@ -11,12 +10,12 @@ export interface IUserMessageCommandParams {
 const MAX_MSG_LENGTH = 300
 
 export const userMessageCommand = buildCommand(
-  async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, sendMessage, log }, params: IUserMessageCommandParams, commandRunner) => {
+  async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, send, log }, params: IUserMessageCommandParams, { runCommand }) => {
     try {
       log('USER MESSAGE')
 
       if (params.message.length > MAX_MSG_LENGTH) {
-        return sendMessage('Слишком длинное сообщение. Сократи до 300 символов, пж')
+        return send('Слишком длинное сообщение. Сократи до 300 символов, пж')
       }
 
       let session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
@@ -41,19 +40,15 @@ export const userMessageCommand = buildCommand(
       }
 
       if (session.state === 'idle') {
-        return commandRunner.runCommand(productsRequestCommand, { message: params.message })
+        return runCommand(createProductsRequestCommand, { message: params.message })
       }
 
       if (session.state === 'creatingChangeCityRequest') {
-        return commandRunner.runCommand(changeCityRequestCommand, { message: params.message })
-      }
-
-      if (session.state === 'choosingCity') {
-        return commandRunner.runCommand(selectCityCommand, { message: params.message })
+        return runCommand(createChangeCityRequestCommand, { message: params.message })
       }
     } catch (e) {
       log(e instanceof Error ? e.message : String(e))
-      return sendMessage('Произошла ошибка при обработке вашего сообщения. Попробуй позже, пж')
+      return send('Произошла ошибка при обработке вашего сообщения. Попробуй позже, пж')
     }
   }
 )

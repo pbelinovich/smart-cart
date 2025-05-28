@@ -4,7 +4,7 @@ import { createSession, getSessionByTelegramId, SessionState, updateSession } fr
 import { formatCommand, formatUser } from '../tools'
 import { CITY_COMMAND } from '../common'
 
-export const startCommand = buildCommand(async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, sendMessage, log }) => {
+export const startCommand = buildCommand(async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, send, log }) => {
   try {
     log('START')
 
@@ -41,9 +41,7 @@ export const startCommand = buildCommand(async ({ readExecutor, writeExecutor, t
 
         const userName = formatUser(user)
 
-        return sendMessage(
-          `Привет${userName ? `, ${html.bold(userName)}` : ''}! Напиши список продуктов или выбери город через ${cityCommand}`
-        )
+        return send(`Привет${userName ? `, ${html.bold(userName)}` : ''}! Напиши список продуктов или выбери город через ${cityCommand}`)
       }
 
       await writeExecutor.execute(createSession, {
@@ -53,9 +51,9 @@ export const startCommand = buildCommand(async ({ readExecutor, writeExecutor, t
       })
     }
 
-    return sendMessage(`Ты уже зарегистрирован. Напиши список продуктов или выбери город через ${cityCommand}`)
+    send(`Ты уже зарегистрирован. Напиши список продуктов или выбери город через ${cityCommand}`)
   } catch (e) {
     log(e instanceof Error ? e.message : String(e))
-    return sendMessage('Произошла ошибка при регистрации. Попробуйте позже.')
+    send('Произошла ошибка при регистрации. Попробуйте позже.')
   }
 })

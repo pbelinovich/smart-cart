@@ -80,6 +80,7 @@ export interface ICoordinates {
 
 export interface ICity {
   id: string
+  marketplaceId: string
   name: string
   region: string
   slug: string

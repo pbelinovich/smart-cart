@@ -1,14 +1,14 @@
 import { Context } from 'telegraf'
-import { createSession, getSessionByTelegramId, logInfo, QueueMaster, updateSession } from '../external'
+import { logInfo } from '../external'
 import { SetupTelegramBotParams } from '../types'
 import { CommandHandler, ICommandRunner, IDefaultCommandContext, ITgUser } from './common'
+import { MessageManager } from './message-manager'
 
 // <tg-emoji emoji-id="5397631056109117802"></tg-emoji>
 
-export const buildCommandRunner = (botParams: SetupTelegramBotParams) => {
-  const executors = botParams.app.getExecutors({})
-  const queueMastersMap: Record<string, QueueMaster> = {}
-  const runnersMap: Record<string, { kind: 'doing' } | { kind: 'delayed'; timeoutId: any }> = {}
+export const buildCommandRunner = ({ app, publicHttpApi }: SetupTelegramBotParams, messageManager: MessageManager) => {
+  const executors = app.getExecutors({})
+  const runners = new Map<number, { kind: 'doing' } | { kind: 'delayed'; timeoutId: any }>()
 
   const runCommand = <TContext extends Context, TParams, TResult>(
     ctx: TContext,
@@ -34,42 +34,11 @@ export const buildCommandRunner = (botParams: SetupTelegramBotParams) => {
         ...executors,
         chatId,
         tgUser,
-        publicHttpApi: botParams.publicHttpApi,
-        sendMessage: (message, { parseMode = 'HTML', replyMarkup } = {}) => {
-          if (!queueMastersMap[chatId]) {
-            queueMastersMap[chatId] = new QueueMaster()
-          }
-
-          return queueMastersMap[chatId].enqueue(async () => {
-            await ctx.telegram.sendMessage(chatId, message, { ...replyMarkup, parse_mode: parseMode })
-          })
-        },
+        publicHttpApi,
+        send: (message, options) => messageManager.send(ctx, message, options),
+        sendBatch: messagesInfos => messageManager.sendBatch(ctx, messagesInfos),
         log: message => {
           return logInfo(`[command${handler.name ? `/${handler.name}` : ''} | ${tgUser.login ? ` (${tgUser.login})` : ''}]: ${message}`)
-        },
-        updateSession: async params => {
-          const session = await executors.readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
-
-          if (session) {
-            await executors.writeExecutor.execute(updateSession, params)
-          } else {
-            let user = await botParams.publicHttpApi.user.GET.byTelegramId({ telegramId: tgUser.id })
-
-            if (!user) {
-              user = await botParams.publicHttpApi.user.POST.create({
-                telegramId: tgUser.id,
-                telegramLogin: tgUser.login,
-                telegramFirstName: tgUser.firstName,
-                telegramLastName: tgUser.lastName,
-              })
-            }
-
-            await executors.writeExecutor.execute(createSession, {
-              ...params,
-              userId: user.id,
-              telegramId: tgUser.id,
-            })
-          }
         },
       }
 
@@ -89,28 +58,30 @@ export const buildCommandRunner = (botParams: SetupTelegramBotParams) => {
     runCommand: <TContext extends Context, TParams, TResult>(ctx: TContext, handler: CommandHandler<TParams, TResult>, params: TParams) => {
       try {
         const chatId = ctx.chat?.id
-        const telegramId = ctx.from?.id
 
-        if (!chatId || !telegramId) {
+        if (!chatId) {
           return
         }
 
-        const runner = runnersMap[chatId]
+        const runner = runners.get(chatId)
 
-        if (!runner || runner.kind === 'delayed') {
-          if (runner?.kind === 'delayed') {
-            clearTimeout(runner.timeoutId)
+        if (runner) {
+          if (runner.kind === 'doing') {
+            return
           }
 
-          const timeoutId = setTimeout(async () => {
-            runnersMap[chatId] = { kind: 'doing' }
-            await runCommand(ctx, handler, params)
-            delete runnersMap[chatId]
-          }, 1000)
-
-          runnersMap[chatId] = { kind: 'delayed', timeoutId }
-          return
+          if (runner.kind === 'delayed') {
+            clearTimeout(runner.timeoutId)
+          }
         }
+
+        const timeoutId = setTimeout(async () => {
+          runners.set(chatId, { kind: 'doing' })
+          await runCommand(ctx, handler, params)
+          runners.delete(chatId)
+        }, 400)
+
+        runners.set(chatId, { kind: 'delayed', timeoutId })
       } catch (e) {}
     },
   }

@@ -2,14 +2,15 @@ import { ChangeCityRequestStatus, IChangeCityRequestEntity } from '@server'
 import { buildCommand } from '../builder'
 import { getSessionByTelegramId } from '../../external'
 import { formatChangeCityRequest } from '../tools'
+import { updateSessionCommand } from './update-session-command'
 
 export interface IChangeCityRequestCommandParams {
   message: string
 }
 
-export const changeCityRequestCommand = buildCommand(
-  async ({ readExecutor, tgUser, publicHttpApi, sendMessage, log, updateSession }, params: IChangeCityRequestCommandParams) => {
-    const exceptionUnsubs: (() => Promise<void> | void)[] = []
+export const createChangeCityRequestCommand = buildCommand(
+  async ({ readExecutor, tgUser, publicHttpApi, send, log }, params: IChangeCityRequestCommandParams, { runCommand }) => {
+    const exceptionUnsubs: (() => Promise<any> | void)[] = []
 
     try {
       log(`CHANGE CITY → "${params.message}"`)
@@ -20,11 +21,11 @@ export const changeCityRequestCommand = buildCommand(
         return
       }
 
-      exceptionUnsubs.push(() => updateSession({ id: session.id, state: 'idle' }))
+      exceptionUnsubs.push(() => runCommand(updateSessionCommand, { state: 'idle' }))
 
       let prevChangeCityRequest: IChangeCityRequestEntity | undefined
 
-      const sendChangeCityRequestUpdate = async (changeCityRequest: IChangeCityRequestEntity) => {
+      const sendChangeCityRequestUpdate = (changeCityRequest: IChangeCityRequestEntity) => {
         if (prevChangeCityRequest?.status === changeCityRequest.status && prevChangeCityRequest.error === changeCityRequest.error) {
           return
         }
@@ -34,7 +35,7 @@ export const changeCityRequestCommand = buildCommand(
         const formatted = formatChangeCityRequest(changeCityRequest)
 
         if (formatted) {
-          await sendMessage(formatted.message, formatted.options)
+          send(formatted.message, formatted.options)
         }
       }
 
@@ -43,21 +44,19 @@ export const changeCityRequestCommand = buildCommand(
         query: params.message,
       })
 
-      await Promise.all([
-        sendChangeCityRequestUpdate(changeCityRequest),
-        updateSession({
-          id: session.id,
-          state: 'creatingChangeCityRequest',
-          activeChangeCityRequestId: changeCityRequest.id,
-        }),
-      ])
+      sendChangeCityRequestUpdate(changeCityRequest)
+
+      await runCommand(updateSessionCommand, {
+        state: 'creatingChangeCityRequest',
+        activeChangeCityRequestId: changeCityRequest.id,
+      })
 
       const changeCityRequestChannel = await publicHttpApi.changeCityRequest.CHANNEL.getById({
         id: changeCityRequest.id,
         userId: session.userId,
       })
 
-      await sendChangeCityRequestUpdate(changeCityRequestChannel.getValue())
+      sendChangeCityRequestUpdate(changeCityRequestChannel.getValue())
 
       let prev: IChangeCityRequestEntity | undefined
 
@@ -78,22 +77,21 @@ export const changeCityRequestCommand = buildCommand(
 
           await Promise.all([
             needUnsub ? changeCityRequestChannel.destroy() : undefined,
-            updateSession({
-              id: session.id,
+            runCommand(updateSessionCommand, {
               state: needUnsub ? 'idle' : 'choosingCity',
               activeChangeCityRequestId: needUnsub ? undefined : changeCityRequest.id,
             }),
           ])
         }
 
-        await sendChangeCityRequestUpdate(next)
+        sendChangeCityRequestUpdate(next)
       })
 
       exceptionUnsubs.push(unsubFromChangeCityRequest, changeCityRequestChannel.destroy)
     } catch (e) {
       await Promise.all(exceptionUnsubs.map(unsub => unsub()))
       log(e instanceof Error ? e.message : String(e))
-      await sendMessage('Произошла ошибка при попытке получить список городов. Попробуй позже, пж')
+      send('Произошла ошибка при попытке получить список городов. Попробуй позже, пж')
     }
   }
 )
