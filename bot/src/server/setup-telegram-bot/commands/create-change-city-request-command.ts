@@ -9,6 +9,7 @@ export interface IChangeCityRequestCommandParams {
 }
 
 export const createChangeCityRequestCommand = buildCommand(
+  'createChangeCityRequestCommand',
   async ({ readExecutor, tgUser, publicHttpApi, send, log }, params: IChangeCityRequestCommandParams, { runCommand }) => {
     const exceptionUnsubs: (() => Promise<any> | void)[] = []
 

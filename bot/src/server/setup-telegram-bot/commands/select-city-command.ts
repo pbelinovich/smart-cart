@@ -7,6 +7,7 @@ export interface ISelectCityCommandParams {
 }
 
 export const selectCityCommand = buildCommand(
+  'selectCityCommand',
   async ({ readExecutor, tgUser, publicHttpApi, send, log }, params: ISelectCityCommandParams, { runCommand }) => {
     const exceptionUnsubs: (() => Promise<any> | void)[] = []
 

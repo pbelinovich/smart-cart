@@ -9,6 +9,7 @@ export interface IProductsRequestCommandParams {
 }
 
 export const createProductsRequestCommand = buildCommand(
+  'createProductsRequestCommand',
   async ({ readExecutor, tgUser, publicHttpApi, send, sendBatch, log }, params: IProductsRequestCommandParams, { runCommand }) => {
     const exceptionUnsubs: (() => Promise<any> | void)[] = []
 

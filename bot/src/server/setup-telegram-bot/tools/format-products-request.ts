@@ -21,7 +21,7 @@ const statusToFormatterMap: StatusToFormatterMap = {
       return formatError('Произошла ошибка во время создания запроса на сбор корзин')
     }
 
-    return { message: '☑️ Создал запрос на сбор корзин. Ожидай, бро', options: { kind: 'edit' } }
+    return '☑️ Создал запрос на сбор корзин. Ожидай, бро'
   },
   productsParsing: productsRequest => {
     if (productsRequest.error) {

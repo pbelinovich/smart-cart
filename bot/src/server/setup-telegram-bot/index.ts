@@ -21,18 +21,18 @@ export const setupTelegramBot = (params: SetupTelegramBotParams) => {
   const bot = new Telegraf(params.telegramBotToken)
   const messageManager = new MessageManager()
 
-  const { runCommand } = buildCommandRunner(params, messageManager)
+  const { runCommand, runCommandOnce } = buildCommandRunner(params, messageManager)
 
   bot.command(START_COMMAND, ctx => {
-    runCommand(ctx, startCommand, {})
+    runCommandOnce(ctx, startCommand, {})
   })
 
   bot.command(CITY_COMMAND, ctx => {
-    runCommand(ctx, cityCommand, {})
+    runCommandOnce(ctx, cityCommand, {})
   })
 
   bot.command(CHANGE_COMMAND, ctx => {
-    runCommand(ctx, changeCityCommand, {})
+    runCommandOnce(ctx, changeCityCommand, {})
   })
 
   bot.command(CANCEL_COMMAND, ctx => {
@@ -41,7 +41,7 @@ export const setupTelegramBot = (params: SetupTelegramBotParams) => {
 
   bot.on(message('text'), ctx => {
     messageManager.handleUserMessage(ctx)
-    runCommand(ctx, userMessageCommand, { message: ctx.message.text.trim() })
+    runCommandOnce(ctx, userMessageCommand, { message: ctx.message.text.trim() })
   })
 
   bot.action(SHOW_MORE_ACTION, async ctx => {
@@ -57,7 +57,7 @@ export const setupTelegramBot = (params: SetupTelegramBotParams) => {
   bot.action(SELECT_CITY_ACTION, async ctx => {
     await ctx.answerCbQuery()
     const selectedCityId = ctx.match?.[1]
-    if (selectedCityId) runCommand(ctx, selectCityCommand, { selectedCityId })
+    if (selectedCityId) runCommandOnce(ctx, selectCityCommand, { selectedCityId })
   })
 
   Promise.resolve()

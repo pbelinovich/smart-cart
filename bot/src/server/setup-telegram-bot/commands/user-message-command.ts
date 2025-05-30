@@ -2,6 +2,7 @@ import { buildCommand } from '../builder'
 import { createSession, getSessionByTelegramId } from '../../external'
 import { createProductsRequestCommand } from './create-products-request-command'
 import { createChangeCityRequestCommand } from './create-change-city-request-command'
+import { cancelCommand } from './cancel-command'
 
 export interface IUserMessageCommandParams {
   message: string
@@ -10,6 +11,7 @@ export interface IUserMessageCommandParams {
 const MAX_MSG_LENGTH = 300
 
 export const userMessageCommand = buildCommand(
+  'userMessageCommand',
   async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, send, log }, params: IUserMessageCommandParams, { runCommand }) => {
     try {
       log('USER MESSAGE')
@@ -45,6 +47,11 @@ export const userMessageCommand = buildCommand(
 
       if (session.state === 'creatingChangeCityRequest') {
         return runCommand(createChangeCityRequestCommand, { message: params.message })
+      }
+
+      if (session.state === 'choosingCity' || session.state === 'confirmingCity') {
+        await runCommand(cancelCommand, {})
+        return runCommand(createProductsRequestCommand, { message: params.message })
       }
     } catch (e) {
       log(e instanceof Error ? e.message : String(e))

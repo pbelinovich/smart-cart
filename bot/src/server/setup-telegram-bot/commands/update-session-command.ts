@@ -2,6 +2,7 @@ import { buildCommand } from '../builder'
 import { createSession, getSessionByTelegramId, IUpdateSessionParams, updateSession } from '../../external'
 
 export const updateSessionCommand = buildCommand(
+  'updateSessionCommand',
   async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, send, log }, params: Omit<IUpdateSessionParams, 'id'>) => {
     try {
       const session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })

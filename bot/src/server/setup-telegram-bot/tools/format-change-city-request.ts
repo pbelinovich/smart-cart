@@ -71,7 +71,7 @@ const statusToFormatterMap: StatusToFormatterMap = {
     }
   },
   canceledByUser: () => {
-    return { message: '❌ Выбор города отменен', options: { kind: 'edit' } }
+    return '❌ Выбор города отменен'
   },
 }
 

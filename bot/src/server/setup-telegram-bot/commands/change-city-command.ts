@@ -4,7 +4,7 @@ import { CITY_COMMAND } from '../common'
 import { formatCommand } from '../tools'
 import { updateSessionCommand } from './update-session-command'
 
-export const changeCityCommand = buildCommand(async ({ readExecutor, tgUser, send, log }, _, { runCommand }) => {
+export const changeCityCommand = buildCommand('changeCityCommand', async ({ readExecutor, tgUser, send, log }, _, { runCommand }) => {
   try {
     log('CITY')
 

@@ -4,7 +4,7 @@ import { createSession, getSessionByTelegramId, SessionState, updateSession } fr
 import { formatCommand, formatUser } from '../tools'
 import { CITY_COMMAND } from '../common'
 
-export const startCommand = buildCommand(async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, send, log }) => {
+export const startCommand = buildCommand('startCommand', async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, send, log }) => {
   try {
     log('START')
 

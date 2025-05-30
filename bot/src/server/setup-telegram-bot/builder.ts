@@ -8,9 +8,19 @@ import { MessageManager } from './message-manager'
 
 export const buildCommandRunner = ({ app, publicHttpApi }: SetupTelegramBotParams, messageManager: MessageManager) => {
   const executors = app.getExecutors({})
-  const runners = new Map<number, { kind: 'doing' } | { kind: 'delayed'; timeoutId: any }>()
+  const runners = new Map<
+    number,
+    (
+      | { kind: 'doing'; command: string }
+      | {
+          kind: 'delayed'
+          command: string
+          timeoutId?: any
+        }
+    )[]
+  >()
 
-  const runCommand = <TContext extends Context, TParams, TResult>(
+  const run = <TContext extends Context, TParams, TResult>(
     ctx: TContext,
     handler: CommandHandler<TParams, TResult>,
     params: TParams
@@ -43,7 +53,7 @@ export const buildCommandRunner = ({ app, publicHttpApi }: SetupTelegramBotParam
       }
 
       const commandRunner: ICommandRunner = {
-        runCommand: (commandHandler, commandParams) => runCommand(ctx, commandHandler, commandParams),
+        runCommand: (commandHandler, commandParams) => run(ctx, commandHandler, commandParams),
       }
 
       return handler(context, params, commandRunner)
@@ -54,42 +64,83 @@ export const buildCommandRunner = ({ app, publicHttpApi }: SetupTelegramBotParam
     }
   }
 
+  const runCommand = async <TContext extends Context, TParams, TResult>(
+    ctx: TContext,
+    handler: CommandHandler<TParams, TResult>,
+    params: TParams
+  ) => {
+    const chatId = ctx.chat?.id
+
+    if (!chatId) {
+      return
+    }
+
+    const runner = runners.get(chatId) || []
+
+    runners.set(chatId, [...runner, { command: handler.name, kind: 'doing' }])
+
+    await run(ctx, handler, params)
+    runners.delete(chatId)
+  }
+
+  const runCommandOnce = async <TContext extends Context, TParams, TResult>(
+    ctx: TContext,
+    handler: CommandHandler<TParams, TResult>,
+    params: TParams
+  ) => {
+    const chatId = ctx.chat?.id
+
+    if (!chatId) {
+      return
+    }
+
+    const runner = runners.get(chatId) || []
+
+    if (runner.some(x => x.kind === 'doing' || x.kind === 'delayed')) {
+      return
+    }
+
+    await runCommand(ctx, handler, params)
+  }
+
   return {
-    runCommand: <TContext extends Context, TParams, TResult>(ctx: TContext, handler: CommandHandler<TParams, TResult>, params: TParams) => {
-      try {
-        const chatId = ctx.chat?.id
+    runCommand,
+    runCommandOnce,
+    runCommandDelayed: <TContext extends Context, TParams, TResult>(
+      ctx: TContext,
+      handler: CommandHandler<TParams, TResult>,
+      params: TParams
+    ) => {
+      const chatId = ctx.chat?.id
 
-        if (!chatId) {
-          return
+      if (!chatId) {
+        return
+      }
+
+      const runner = runners.get(chatId) || []
+
+      runner.forEach(x => {
+        if (x.command === handler.name && x.kind === 'delayed') {
+          clearTimeout(x.timeoutId)
         }
+      })
 
-        const runner = runners.get(chatId)
-
-        if (runner) {
-          if (runner.kind === 'doing') {
-            return
-          }
-
-          if (runner.kind === 'delayed') {
-            clearTimeout(runner.timeoutId)
-          }
-        }
-
-        const timeoutId = setTimeout(async () => {
-          runners.set(chatId, { kind: 'doing' })
-          await runCommand(ctx, handler, params)
-          runners.delete(chatId)
-        }, 400)
-
-        runners.set(chatId, { kind: 'delayed', timeoutId })
-      } catch (e) {}
+      const timeoutId = setTimeout(() => runCommandOnce(ctx, handler, params), 400)
+      runners.set(chatId, [...runner, { kind: 'delayed', command: handler.name, timeoutId }])
     },
   }
 }
 
-export const buildCommand = <TParams, TResult>(handler: CommandHandler<TParams, TResult>) => {
-  return (context: IDefaultCommandContext, params: TParams, commandRunner: ICommandRunner) => {
+export const buildCommand = <TCommand extends string, TParams, TResult>(command: TCommand, handler: CommandHandler<TParams, TResult>) => {
+  const currentHandler = (context: IDefaultCommandContext, params: TParams, commandRunner: ICommandRunner) => {
     context.log(JSON.stringify(params))
     return handler(context, params, commandRunner)
   }
+
+  Object.defineProperty(currentHandler, 'name', {
+    value: command,
+    writable: true,
+  })
+
+  return currentHandler
 }
