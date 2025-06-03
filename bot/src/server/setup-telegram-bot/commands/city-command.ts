@@ -12,6 +12,10 @@ export const cityCommand = buildCommand(
 
       const session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
 
+      if (session && session.state !== 'idle') {
+        await runCommand(cancelCommand, {})
+      }
+
       if (!session) {
         let user = await publicHttpApi.user.GET.byTelegramId({ telegramId: tgUser.id })
 
@@ -31,7 +35,7 @@ export const cityCommand = buildCommand(
         })
       }
 
-      const [city] = await Promise.all([publicHttpApi.city.GET.byTelegramId({ telegramId: tgUser.id }), runCommand(cancelCommand, {})])
+      const city = await publicHttpApi.city.GET.byTelegramId({ telegramId: tgUser.id })
 
       send(`🏙️ Твой текущий город: ${city.name}`)
     } catch (e) {
