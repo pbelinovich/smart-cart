@@ -6,34 +6,27 @@ export interface ISelectCityCommandParams {
   selectedCityId: string
 }
 
-export const selectCityCommand = buildCommand(
-  'selectCityCommand',
-  async ({ readExecutor, tgUser, publicHttpApi, send, log }, params: ISelectCityCommandParams, { runCommand }) => {
-    const exceptionUnsubs: (() => Promise<any> | void)[] = []
+export const selectCityCommand = buildCommand({
+  name: 'selectCityCommand',
+  handler: async ({ readExecutor, tgUser, publicHttpApi }, params: ISelectCityCommandParams, { runCommand }) => {
+    const session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
 
-    try {
-      log(`SELECT CITY → "${params.selectedCityId}"`)
+    if (!session || session.state !== 'choosingCity' || !session.activeChangeCityRequestId) {
+      return
+    }
 
-      const session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
-
-      if (!session || session.state !== 'choosingCity' || !session.activeChangeCityRequestId) {
-        return
-      }
-
-      await runCommand(updateSessionCommand, { state: 'confirmingCity' })
-      exceptionUnsubs.push(() => runCommand(updateSessionCommand, { state: 'idle' }))
-
-      await publicHttpApi.changeCityRequest.POST.selectCity({
+    await Promise.all([
+      runCommand(updateSessionCommand, { state: 'confirmingCity' }),
+      publicHttpApi.changeCityRequest.POST.selectCity({
         changeCityRequestId: session.activeChangeCityRequestId,
         userId: session.userId,
         selectedCityId: params.selectedCityId,
-      })
+      }),
+    ])
 
-      await runCommand(updateSessionCommand, { state: 'idle' })
-    } catch (e) {
-      await Promise.all(exceptionUnsubs.map(unsub => unsub()))
-      log(e instanceof Error ? e.message : String(e))
-      send('Произошла ошибка при попытке получить список городов. Попробуй позже, пж')
-    }
-  }
-)
+    return runCommand(updateSessionCommand, { state: 'idle' })
+  },
+  errorHandler: ({ send }) => {
+    send('Произошла ошибка при попытке получить список городов. Попробуй позже, пж')
+  },
+})

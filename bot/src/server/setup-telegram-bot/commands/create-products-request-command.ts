@@ -8,86 +8,65 @@ export interface IProductsRequestCommandParams {
   message: string
 }
 
-export const createProductsRequestCommand = buildCommand(
-  'createProductsRequestCommand',
-  async ({ readExecutor, tgUser, publicHttpApi, send, sendBatch, log }, params: IProductsRequestCommandParams, { runCommand }) => {
-    const exceptionUnsubs: (() => Promise<any> | void)[] = []
+const statusesToUnsub: ProductsRequestStatus[] = ['productsCollected']
 
-    try {
-      log(`PRODUCTS REQUEST → "${params.message}"`)
+export const createProductsRequestCommand = buildCommand({
+  name: 'createProductsRequestCommand',
+  handler: async (
+    { readExecutor, chatId, tgUser, publicHttpApi, send, sendBatch, subscriptionManager },
+    params: IProductsRequestCommandParams,
+    { runCommand }
+  ) => {
+    const session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
 
-      const session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
+    if (!session || session.state !== 'idle') {
+      return
+    }
 
-      if (!session || session.state !== 'idle') {
+    const sendProductsRequestUpdate = (next: IProductsRequestEntity, prev?: IProductsRequestEntity) => {
+      if (prev?.status === next.status && prev.error === next.error) {
         return
       }
 
-      exceptionUnsubs.push(() => runCommand(updateSessionCommand, { state: 'idle' }))
-
-      let prevProductsRequest: IProductsRequestEntity | undefined
-
-      const sendProductsRequestUpdate = (productsRequest: IProductsRequestEntity) => {
-        if (prevProductsRequest?.status === productsRequest.status && prevProductsRequest.error === productsRequest.error) {
-          return
-        }
-
-        prevProductsRequest = productsRequest
-
-        if (productsRequest.status === 'productsCollected') {
-          return sendBatch(formatCollectedProductsRequest(productsRequest))
-        }
-
-        const formatted = formatProductsRequest(productsRequest)
-
-        if (formatted) {
-          send(formatted.message, formatted.options)
-        }
+      if (next.status === 'productsCollected') {
+        return sendBatch(formatCollectedProductsRequest(next))
       }
 
-      const productsRequest = await publicHttpApi.productsRequest.POST.create({
-        userId: session.userId,
-        query: params.message,
-      })
+      const formatted = formatProductsRequest(next)
 
-      sendProductsRequestUpdate(productsRequest)
-
-      await runCommand(updateSessionCommand, {
-        state: 'creatingProductsRequest',
-        activeProductsRequestId: productsRequest.id,
-      })
-
-      const productsRequestChannel = await publicHttpApi.productsRequest.CHANNEL.getById({
-        id: productsRequest.id,
-        userId: session.userId,
-      })
-
-      sendProductsRequestUpdate(productsRequestChannel.getValue())
-
-      let prev: IProductsRequestEntity | undefined
-
-      const unsubFromProductsRequest = productsRequestChannel.subscribe(async next => {
-        if (prev?.status === next.status && prev.error === next.error) {
-          return
-        }
-
-        prev = next
-
-        const statusesToUnsub: ProductsRequestStatus[] = ['productsCollected']
-        const needUnsub = next.error || statusesToUnsub.includes(next.status)
-
-        if (needUnsub) {
-          unsubFromProductsRequest()
-          await Promise.all([productsRequestChannel.destroy(), runCommand(updateSessionCommand, { state: 'idle' })])
-        }
-
-        sendProductsRequestUpdate(next)
-      })
-
-      exceptionUnsubs.push(unsubFromProductsRequest, productsRequestChannel.destroy)
-    } catch (e) {
-      await Promise.all(exceptionUnsubs.map(unsub => unsub()))
-      log(e instanceof Error ? e.message : String(e))
-      send('Произошла ошибка при попытке получить список продуктов. Попробуй позже, пж')
+      if (formatted) {
+        send(formatted.message, formatted.options)
+      }
     }
-  }
-)
+
+    const productsRequest = await publicHttpApi.productsRequest.POST.create({
+      userId: session.userId,
+      query: params.message,
+    })
+
+    sendProductsRequestUpdate(productsRequest)
+
+    const [channel] = await Promise.all([
+      publicHttpApi.productsRequest.CHANNEL.getById({ id: productsRequest.id, userId: session.userId }),
+      runCommand(updateSessionCommand, { state: 'creatingProductsRequest', activeProductsRequestId: productsRequest.id }),
+    ])
+
+    sendProductsRequestUpdate(channel.getValue(), productsRequest)
+
+    subscriptionManager.add(chatId, {
+      unsub: channel.subscribe((next, prev) => {
+        sendProductsRequestUpdate(next, prev)
+
+        if (next.error || statusesToUnsub.includes(next.status)) {
+          return subscriptionManager.cleanup(chatId)
+        }
+      }),
+      destroy: () => {
+        return Promise.all([channel.destroy(), runCommand(updateSessionCommand, { state: 'idle' })])
+      },
+    })
+  },
+  errorHandler: ({ send }) => {
+    send('Произошла ошибка при попытке получить список продуктов. Попробуй позже, пж')
+  },
+})

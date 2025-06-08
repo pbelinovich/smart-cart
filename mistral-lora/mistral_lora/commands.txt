@@ -1,0 +1,24 @@
+
+# билд докер образа
+docker build -t mistral-lora .
+
+# запуск докер контейнера
+docker run --gpus all -it \
+  --shm-size=8g \
+  -v /path/to/your/data:/app/data \
+  mistral-lora
+
+# это смотреть логи во время обучения в консоли
+tensorboard --logdir=./output/logs
+
+# После успешного обучения запустите
+python mistral_lora/export_model.py
+# дальше скопировать exported_model к себе
+
+# на сервере
+cd mistral_lora
+./prepare_model.sh
+
+# на локальной машине
+cd model_archives
+./download_model.sh your-server.com username /path/to/model_archives

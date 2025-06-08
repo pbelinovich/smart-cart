@@ -23,8 +23,12 @@
     "resolveJsonModule": true,
     "baseUrl": "",
     "paths": {
-      "@server": ["../backend/src/server"],
-      "@shared": ["../backend/src/shared"],
+      "@server": [
+        "../backend/src/server"
+      ],
+      "@shared": [
+        "../backend/src/shared"
+      ]
     }
   },
   "exclude": [
@@ -33,7 +37,6 @@
     "server",
     "common",
     "worker",
-    "processes",
-    "src/dev/mobile"
+    "processes"
   ]
 }

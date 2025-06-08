@@ -5,7 +5,7 @@ import { chunkArray } from './chunk-array'
 import { formatError } from './format-error'
 import { MessageInfo } from '../message-manager'
 
-type StatusToFormatterMap = Record<ChangeCityRequestStatus, (changeCityRequest: IChangeCityRequestEntity) => MessageInfo | string>
+type StatusToFormatterMap = { [key in ChangeCityRequestStatus]?: (changeCityRequest: IChangeCityRequestEntity) => MessageInfo | string }
 
 const statusToFormatterMap: StatusToFormatterMap = {
   created: changeCityRequest => {
@@ -69,9 +69,6 @@ const statusToFormatterMap: StatusToFormatterMap = {
       message: `✅ Установил город${selectedCity ? ` ${html.bold(selectedCity.name)}` : ''}`,
       options: { kind: 'edit' },
     }
-  },
-  canceledByUser: () => {
-    return '❌ Выбор города отменен'
   },
 }
 

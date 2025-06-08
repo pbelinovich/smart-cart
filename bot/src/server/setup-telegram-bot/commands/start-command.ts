@@ -1,28 +1,22 @@
 import { html } from 'teleform'
 import { buildCommand } from '../builder'
-import { createSession, getSessionByTelegramId, SessionState, updateSession } from '../../external'
+import { createSession, getSessionByTelegramId } from '../../external'
 import { formatCommand, formatUser } from '../tools'
 import { CITY_COMMAND } from '../common'
+import { cancelCommand } from './cancel-command'
 
-export const startCommand = buildCommand('startCommand', async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, send, log }) => {
-  try {
-    log('START')
+const cityCommand = formatCommand(CITY_COMMAND)
 
+export const startCommand = buildCommand({
+  name: 'startCommand',
+  handler: async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, send }, _, { runCommand }) => {
     const session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
-    const cityCommand = formatCommand(CITY_COMMAND)
 
-    if (session) {
-      const statusesToCancel: SessionState[] = ['creatingChangeCityRequest', 'choosingCity', 'confirmingCity']
+    if (session && session.state !== 'idle') {
+      return runCommand(cancelCommand, {})
+    }
 
-      if (statusesToCancel.includes(session.state) && session.activeChangeCityRequestId) {
-        await publicHttpApi.changeCityRequest.POST.cancel({
-          changeCityRequestId: session.activeChangeCityRequestId,
-          userId: session.userId,
-        })
-      }
-
-      await writeExecutor.execute(updateSession, { id: session.id, state: 'idle' })
-    } else {
+    if (!session) {
       let user = await publicHttpApi.user.GET.byTelegramId({ telegramId: tgUser.id })
 
       if (!user) {
@@ -52,8 +46,8 @@ export const startCommand = buildCommand('startCommand', async ({ readExecutor, 
     }
 
     send(`Ты уже зарегистрирован. Напиши список продуктов или выбери город через ${cityCommand}`)
-  } catch (e) {
-    log(e instanceof Error ? e.message : String(e))
+  },
+  errorHandler: ({ send }) => {
     send('Произошла ошибка при регистрации. Попробуйте позже.')
-  }
+  },
 })

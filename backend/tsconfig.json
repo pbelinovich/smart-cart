@@ -35,7 +35,6 @@
     "server",
     "common",
     "worker",
-    "processes",
-    "src/dev/mobile"
+    "processes"
   ]
 }

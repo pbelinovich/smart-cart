@@ -1,8 +1,9 @@
 import { buildCommand } from '../builder'
-import { createSession, getSessionByTelegramId } from '../../external'
+import { getSessionByTelegramId } from '../../external'
 import { createProductsRequestCommand } from './create-products-request-command'
 import { createChangeCityRequestCommand } from './create-change-city-request-command'
 import { cancelCommand } from './cancel-command'
+import { updateSessionCommand } from './update-session-command'
 
 export interface IUserMessageCommandParams {
   message: string
@@ -10,52 +11,39 @@ export interface IUserMessageCommandParams {
 
 const MAX_MSG_LENGTH = 300
 
-export const userMessageCommand = buildCommand(
-  'userMessageCommand',
-  async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, send, log }, params: IUserMessageCommandParams, { runCommand }) => {
-    try {
-      log('USER MESSAGE')
-
-      if (params.message.length > MAX_MSG_LENGTH) {
-        return send('Слишком длинное сообщение. Сократи до 300 символов, пж')
-      }
-
-      let session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
-
-      if (!session) {
-        let user = await publicHttpApi.user.GET.byTelegramId({ telegramId: tgUser.id })
-
-        if (!user) {
-          user = await publicHttpApi.user.POST.create({
-            telegramId: tgUser.id,
-            telegramLogin: tgUser.login,
-            telegramFirstName: tgUser.firstName,
-            telegramLastName: tgUser.lastName,
-          })
-        }
-
-        session = await writeExecutor.execute(createSession, {
-          userId: user.id,
-          telegramId: tgUser.id,
-          state: 'idle',
-        })
-      }
-
-      if (session.state === 'idle') {
-        return runCommand(createProductsRequestCommand, { message: params.message })
-      }
-
-      if (session.state === 'creatingChangeCityRequest') {
-        return runCommand(createChangeCityRequestCommand, { message: params.message })
-      }
-
-      if (session.state === 'choosingCity' || session.state === 'confirmingCity') {
-        await runCommand(cancelCommand, {})
-        return runCommand(createProductsRequestCommand, { message: params.message })
-      }
-    } catch (e) {
-      log(e instanceof Error ? e.message : String(e))
-      return send('Произошла ошибка при обработке вашего сообщения. Попробуй позже, пж')
+export const userMessageCommand = buildCommand({
+  name: 'userMessageCommand',
+  handler: async ({ readExecutor, tgUser, send }, params: IUserMessageCommandParams, { runCommand }) => {
+    if (params.message.length > MAX_MSG_LENGTH) {
+      return send('Слишком длинное сообщение. Сократи до 300 символов, пж')
     }
-  }
-)
+
+    let session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
+
+    if (!session) {
+      const nextSession = await runCommand(updateSessionCommand, { state: 'idle' })
+
+      if (!nextSession) {
+        return
+      }
+
+      session = nextSession
+    }
+
+    if (session.state === 'idle') {
+      return runCommand(createProductsRequestCommand, { message: params.message })
+    }
+
+    if (session.state === 'creatingChangeCityRequest') {
+      return runCommand(createChangeCityRequestCommand, { message: params.message })
+    }
+
+    if (session.state === 'choosingCity' || session.state === 'confirmingCity') {
+      await runCommand(cancelCommand, {})
+      return runCommand(createProductsRequestCommand, { message: params.message })
+    }
+  },
+  errorHandler: ({ send }) => {
+    send('Произошла ошибка при обработке вашего сообщения. Попробуй позже, пж')
+  },
+})

@@ -3,7 +3,39 @@ import { logInfo } from '../../external'
 import { productsListSchema } from './helpers'
 import { IModelAdapter, IPromptBuilder } from './types'
 
+interface INormalizer {
+  normalize: (input: string) => string
+}
+
+class SeparatorNormalizer implements INormalizer {
+  constructor(private readonly pattern: RegExp, private readonly replacement: string) {}
+
+  normalize = (input: string): string => {
+    return input.replace(this.pattern, this.replacement)
+  }
+}
+
+class InputNormalizer {
+  private readonly normalizers: INormalizer[] = [
+    new SeparatorNormalizer(/\s+/g, ' '), // multiple spaces
+    new SeparatorNormalizer(/,+/g, ','), // multiple commas
+    new SeparatorNormalizer(/\.+/g, '.'), // multiple dots
+    new SeparatorNormalizer(/\n+/g, '\n'), // multiple newlines
+    new SeparatorNormalizer(/\t+/g, ' '), // multiple tabs
+    new SeparatorNormalizer(/\s*,\s*/g, ', '), // spaces around commas
+    new SeparatorNormalizer(/\s*\.\s*/g, '. '), // spaces around dots
+    new SeparatorNormalizer(/\s*\n\s*/g, '\n'), // spaces around newlines
+  ]
+
+  normalize = (input: string): string => {
+    const result = this.normalizers.reduce((acc: string, normalizer: INormalizer) => normalizer.normalize(acc), input)
+    return result.trim()
+  }
+}
+
 export abstract class AIRepo {
+  private readonly inputNormalizer = new InputNormalizer()
+
   protected constructor(private readonly model: IModelAdapter, private readonly promptBuilder: IPromptBuilder) {}
 
   private convertRawToAIProduct = (rawProduct: IRawAIProduct): IAIProduct => {
@@ -15,12 +47,12 @@ export abstract class AIRepo {
   }
 
   private tryParse = async (input: string) => {
-    const prompt = this.promptBuilder.buildPrompt(input)
+    const normalizedInput = this.inputNormalizer.normalize(input)
+    const prompt = this.promptBuilder.buildPrompt(normalizedInput)
     const output = await this.model.generate(prompt)
-    const preparedOutput = output.replace(/\s+/g, ' ')
 
     try {
-      const parsedRawProducts = JSON.parse(preparedOutput) as IRawAIProduct[]
+      const parsedRawProducts = JSON.parse(output) as IRawAIProduct[]
       const validationResult = productsListSchema.validate(parsedRawProducts, { abortEarly: true })
 
       if (validationResult.error) {

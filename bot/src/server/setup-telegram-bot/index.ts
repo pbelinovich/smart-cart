@@ -4,6 +4,7 @@ import { message } from 'telegraf/filters'
 import { cancelCommand, changeCityCommand, cityCommand, selectCityCommand, startCommand, userMessageCommand } from './commands'
 import { logInfo, ShutdownManager } from '../external'
 import { buildCommandRunner } from './builder'
+import { MessageManager } from './message-manager'
 import {
   CANCEL_COMMAND,
   CHANGE_COMMAND,
@@ -15,7 +16,6 @@ import {
   CANCEL_ACTION,
   CITY_COMMAND,
 } from './common'
-import { MessageManager } from './message-manager'
 
 export const setupTelegramBot = (params: SetupTelegramBotParams) => {
   const bot = new Telegraf(params.telegramBotToken)

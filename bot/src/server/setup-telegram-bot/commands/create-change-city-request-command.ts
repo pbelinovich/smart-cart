@@ -8,91 +8,68 @@ export interface IChangeCityRequestCommandParams {
   message: string
 }
 
-export const createChangeCityRequestCommand = buildCommand(
-  'createChangeCityRequestCommand',
-  async ({ readExecutor, tgUser, publicHttpApi, send, log }, params: IChangeCityRequestCommandParams, { runCommand }) => {
-    const exceptionUnsubs: (() => Promise<any> | void)[] = []
+const statusesToUnsub: ChangeCityRequestStatus[] = ['userCityUpdated', 'canceledByUser']
 
-    try {
-      log(`CHANGE CITY → "${params.message}"`)
+export const createChangeCityRequestCommand = buildCommand({
+  name: 'createChangeCityRequestCommand',
+  handler: async (
+    { readExecutor, chatId, tgUser, publicHttpApi, send, subscriptionManager },
+    params: IChangeCityRequestCommandParams,
+    { runCommand }
+  ) => {
+    const session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
 
-      const session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
+    if (!session || session.state !== 'creatingChangeCityRequest') {
+      return
+    }
 
-      if (!session || session.state !== 'creatingChangeCityRequest') {
+    const sendChangeCityRequestUpdate = (next: IChangeCityRequestEntity, prev?: IChangeCityRequestEntity) => {
+      if (prev?.status === next.status && prev.error === next.error) {
         return
       }
 
-      exceptionUnsubs.push(() => runCommand(updateSessionCommand, { state: 'idle' }))
+      const formatted = formatChangeCityRequest(next)
 
-      let prevChangeCityRequest: IChangeCityRequestEntity | undefined
-
-      const sendChangeCityRequestUpdate = (changeCityRequest: IChangeCityRequestEntity) => {
-        if (prevChangeCityRequest?.status === changeCityRequest.status && prevChangeCityRequest.error === changeCityRequest.error) {
-          return
-        }
-
-        prevChangeCityRequest = changeCityRequest
-
-        const formatted = formatChangeCityRequest(changeCityRequest)
-
-        if (formatted) {
-          send(formatted.message, formatted.options)
-        }
+      if (formatted) {
+        send(formatted.message, formatted.options)
       }
+    }
 
-      const changeCityRequest = await publicHttpApi.changeCityRequest.POST.create({
-        userId: session.userId,
-        query: params.message,
-      })
+    const changeCityRequest = await publicHttpApi.changeCityRequest.POST.create({
+      userId: session.userId,
+      query: params.message,
+    })
 
-      sendChangeCityRequestUpdate(changeCityRequest)
+    sendChangeCityRequestUpdate(changeCityRequest)
 
-      await runCommand(updateSessionCommand, {
-        state: 'creatingChangeCityRequest',
-        activeChangeCityRequestId: changeCityRequest.id,
-      })
-
-      const changeCityRequestChannel = await publicHttpApi.changeCityRequest.CHANNEL.getById({
+    const [channel] = await Promise.all([
+      publicHttpApi.changeCityRequest.CHANNEL.getById({
         id: changeCityRequest.id,
         userId: session.userId,
-      })
+      }),
+      runCommand(updateSessionCommand, { state: 'creatingChangeCityRequest', activeChangeCityRequestId: changeCityRequest.id }),
+    ])
 
-      sendChangeCityRequestUpdate(changeCityRequestChannel.getValue())
+    sendChangeCityRequestUpdate(channel.getValue(), changeCityRequest)
 
-      let prev: IChangeCityRequestEntity | undefined
+    subscriptionManager.add(chatId, {
+      unsub: channel.subscribe((next, prev) => {
+        sendChangeCityRequestUpdate(next, prev)
 
-      const unsubFromChangeCityRequest = changeCityRequestChannel.subscribe(async next => {
-        if (prev?.status === next.status && prev.error === next.error) {
-          return
+        if (next.error || statusesToUnsub.includes(next.status)) {
+          return subscriptionManager.cleanup(chatId)
         }
 
-        prev = next
-
-        const statusesToUnsub: ChangeCityRequestStatus[] = ['userCityUpdated', 'canceledByUser']
-        const needUnsub = next.error || statusesToUnsub.includes(next.status)
-
-        if (needUnsub || next.status === 'citiesFound') {
-          if (needUnsub) {
-            unsubFromChangeCityRequest()
-          }
-
-          await Promise.all([
-            needUnsub ? changeCityRequestChannel.destroy() : undefined,
-            runCommand(updateSessionCommand, {
-              state: needUnsub ? 'idle' : 'choosingCity',
-              activeChangeCityRequestId: needUnsub ? undefined : changeCityRequest.id,
-            }),
-          ])
+        if (next.status === 'citiesFound') {
+          return runCommand(updateSessionCommand, { state: 'choosingCity', activeChangeCityRequestId: changeCityRequest.id })
         }
-
-        sendChangeCityRequestUpdate(next)
-      })
-
-      exceptionUnsubs.push(unsubFromChangeCityRequest, changeCityRequestChannel.destroy)
-    } catch (e) {
-      await Promise.all(exceptionUnsubs.map(unsub => unsub()))
-      log(e instanceof Error ? e.message : String(e))
-      send('Произошла ошибка при попытке получить список городов. Попробуй позже, пж')
-    }
-  }
-)
+      }),
+      destroy: () => {
+        return Promise.all([channel.destroy(), runCommand(updateSessionCommand, { state: 'idle' })])
+      },
+    })
+  },
+  errorHandler: ({ send }) => {
+    send('Произошла ошибка при попытке получить список городов. Попробуй позже, пж')
+  },
+})

@@ -3,6 +3,7 @@ import { SetupTelegramBotParams } from '../types'
 import { Markup } from 'telegraf'
 import { ParseMode } from '@telegraf/types/message'
 import { MessageInfo } from './message-manager'
+import { SubscriptionManager } from './subscription-manager'
 
 export type StartCommandName = 'start'
 export type CityCommandName = 'city'
@@ -32,6 +33,7 @@ export interface IDefaultCommandContext extends IAppExecutors {
   publicHttpApi: SetupTelegramBotParams['publicHttpApi']
   chatId: number
   tgUser: ITgUser
+  subscriptionManager: SubscriptionManager
   send: (message: string, options?: ISendMessageOptions) => void
   sendBatch: (messagesInfos: MessageInfo[]) => void
   log: (message: string) => void
@@ -41,9 +43,18 @@ export type CommandHandler<TParams, TResult> = (
   context: IDefaultCommandContext,
   params: TParams,
   commandRunner: ICommandRunner
-) => Promise<TResult>
+) => Promise<TResult> | TResult
 
-export type CommandRunnerHandler = <TParams, TResult>(handler: CommandHandler<TParams, TResult>, params: TParams) => Promise<TResult | void>
+export type BuildCommandHandler<TCommand extends string, TParams, TResult> = {
+  name: TCommand
+  handler: CommandHandler<TParams, TResult>
+  errorHandler?: CommandHandler<TParams, void>
+}
+
+export type CommandRunnerHandler = <TCommand extends string, TParams, TResult>(
+  handler: BuildCommandHandler<TCommand, TParams, TResult>,
+  params: TParams
+) => Promise<TResult | void>
 
 export interface ICommandRunner {
   runCommand: CommandRunnerHandler

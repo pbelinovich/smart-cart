@@ -4,41 +4,35 @@ import { CITY_COMMAND } from '../common'
 import { formatCommand } from '../tools'
 import { updateSessionCommand } from './update-session-command'
 
-export const cancelCommand = buildCommand(
-  'cancelCommand',
-  async ({ readExecutor, tgUser, publicHttpApi, send, log }, _, { runCommand }) => {
-    try {
-      log('CANCEL')
+export const cancelCommand = buildCommand({
+  name: 'cancelCommand',
+  handler: async ({ readExecutor, tgUser, publicHttpApi, send }, _, { runCommand }) => {
+    const session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
 
-      const session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
-
-      if (session) {
-        if (session.state === 'creatingProductsRequest') {
-          return runCommand(updateSessionCommand, { state: 'idle' })
-        }
-
-        if (session.state === 'creatingChangeCityRequest') {
-          await runCommand(updateSessionCommand, { state: 'idle' })
-          return send('❌ Выбор города отменен')
-        }
-
-        if (session.state === 'choosingCity' || session.state === 'confirmingCity') {
-          if (session.activeChangeCityRequestId) {
-            await publicHttpApi.changeCityRequest.POST.cancel({
-              changeCityRequestId: session.activeChangeCityRequestId,
-              userId: session.userId,
-            })
-          }
-
-          return runCommand(updateSessionCommand, { state: 'idle' })
-        }
+    if (session) {
+      if (session.state === 'idle') {
+        return
       }
 
-      await runCommand(updateSessionCommand, { state: 'idle' })
-      send('💁‍♂️ Нечего отменять, бро')
-    } catch (e) {
-      log(e instanceof Error ? e.message : String(e))
-      send(`Произошла ошибка при выполнении команды ${formatCommand(CITY_COMMAND)}. Попробуйте позже, пж`)
+      if (session.state === 'creatingProductsRequest') {
+        send('❌ Запрос на поиск продуктов отменен')
+      }
+
+      if (session.state === 'creatingChangeCityRequest' || session.state === 'choosingCity' || session.state === 'confirmingCity') {
+        if (session.activeChangeCityRequestId) {
+          await publicHttpApi.changeCityRequest.POST.cancel({
+            changeCityRequestId: session.activeChangeCityRequestId,
+            userId: session.userId,
+          })
+        }
+
+        send('❌ Выбор города отменен')
+      }
     }
-  }
-)
+
+    await runCommand(updateSessionCommand, { state: 'idle' })
+  },
+  errorHandler: ({ send }) => {
+    send(`Произошла ошибка при выполнении команды ${formatCommand(CITY_COMMAND)}. Попробуйте позже, пж`)
+  },
+})
