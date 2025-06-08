@@ -5,6 +5,7 @@
   "plugins": [
     "import"
   ],
+  "ignorePatterns": ["node_modules/**"],
   "env": {
     "node": true,
     "browser": true

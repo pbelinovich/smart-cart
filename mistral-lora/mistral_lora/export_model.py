@@ -27,7 +27,7 @@ def export_model(
     
     # Объединяем веса адаптеров с базовой моделью
     print("Merging adapters with base model...")
-    model = model.merge_and_unload()
+    model = model.merge_and_unload()  # type: ignore
     
     # Оптимизация модели для инференса
     print("Optimizing model for inference...")

@@ -21,7 +21,7 @@ def test_environment():
     # Проверка CUDA
     logger.info(f"CUDA available: {torch.cuda.is_available()}")
     if torch.cuda.is_available():
-        logger.info(f"CUDA version: {torch.version.cuda}")
+        logger.info(f"CUDA version: {torch.cuda.get_device_capability(0)}")
         logger.info(f"GPU device: {torch.cuda.get_device_name(0)}")
     
     # Проверка памяти

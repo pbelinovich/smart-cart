@@ -2,8 +2,10 @@ import os
 import torch
 from datasets import load_dataset, concatenate_datasets
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer, \
-    DataCollatorForLanguageModeling
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers.training_args import TrainingArguments
+from transformers.trainer import Trainer
+from transformers.data.data_collator import DataCollatorForLanguageModeling
 from tqdm import tqdm
 import psutil
 import GPUtil
@@ -12,6 +14,7 @@ from pathlib import Path
 import json
 import logging
 from datetime import datetime
+from typing import Sized
 
 # Настройка логирования
 logging.basicConfig(
@@ -57,7 +60,8 @@ def load_all_jsonl_files(directory):
         if filename.endswith('.jsonl'):
             file_path = os.path.join(directory, filename)
             dataset = load_dataset('json', data_files=file_path)
-            datasets.append(dataset['train'])
+            train_dataset = dataset['train']  # type: ignore
+            datasets.append(train_dataset)
     return concatenate_datasets(datasets)
 
 # Функция для токенизации данных
@@ -173,8 +177,12 @@ class OptimizedTrainer(Trainer):
 
     def train(self, *args, **kwargs):
         self._current_step = 0
+        if not hasattr(self.train_dataset, '__len__'):
+            raise ValueError("train_dataset must have a length")
+        assert self.train_dataset is not None
+        dataset: Sized = self.train_dataset  # type: ignore
         total_steps = int(
-            len(self.train_dataset) / 
+            len(dataset) / 
             (training_args.per_device_train_batch_size * training_args.gradient_accumulation_steps)
         ) * training_args.num_train_epochs
         
@@ -190,7 +198,7 @@ class OptimizedTrainer(Trainer):
             return super().train(*args, **kwargs)
 
     def log_metrics(self, split, metrics, epoch=None):
-        super().log_metrics(split, metrics, epoch)
+        super().log_metrics(split, metrics)
         if split == "train":
             # Логируем использование ресурсов
             gpu = GPUtil.getGPUs()[0]
