@@ -303,6 +303,11 @@ if device == "cuda":
 # Загрузка токенизатора и модели
 tokenizer = AutoTokenizer.from_pretrained(Config.MODEL_NAME, trust_remote_code=True)
 
+# Configure tokenizer
+if tokenizer.pad_token is None:
+    tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.pad_token_id = tokenizer.eos_token_id
+
 # Configure 8-bit quantization
 quantization_config = BitsAndBytesConfig(
     load_in_8bit=True,
