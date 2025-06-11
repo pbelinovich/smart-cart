@@ -20,7 +20,7 @@ psutil = "5.9.8"
 GPUtil = "1.4.0"
 tensorboard = "2.15.1"
 bitsandbytes = {version = "0.41.1", platform = "linux"}
-typing-extensions = "4.9.0"
+typing-extensions = "4.12.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "7.4.4"
