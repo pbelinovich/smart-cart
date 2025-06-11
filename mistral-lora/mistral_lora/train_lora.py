@@ -10,7 +10,7 @@ from transformers.data.data_collator import DataCollatorForLanguageModeling
 from tqdm import tqdm
 import psutil
 import GPUtil
-from torch.cuda.amp import autocast, GradScaler
+from torch.cuda.amp import autocast
 from pathlib import Path
 import json
 import logging
@@ -131,7 +131,7 @@ def clean_old_logs(log_dir, retention_days=Config.LOG_RETENTION_DAYS):
 class OptimizedTrainer(Trainer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.scaler = GradScaler()
+        self.scaler = torch.cuda.amp.GradScaler()
         self.start_time = datetime.now()
         self.last_log_time = time.time()
         self.steps_since_last_log = 0
@@ -140,7 +140,7 @@ class OptimizedTrainer(Trainer):
         self.last_disk_io = get_disk_io()
         self._current_step = 0  # Initialize the step counter
         
-    def training_step(self, model, inputs):
+    def training_step(self, model, inputs, num_items_in_batch=None):
         self._current_step += 1
         self.steps_since_last_log += 1
         
