@@ -30,11 +30,18 @@ ENV PATH="/app/venv/bin:$PATH"
 
 # Устанавливаем зависимости
 RUN . /app/venv/bin/activate \
-    && pip install --no-cache-dir typing-extensions==4.12.2 \
+    # && pip install --no-cache-dir typing-extensions==4.12.2 \
     && pip install --no-cache-dir torch==2.7.1+cu128 torchvision==0.22.1+cu128 torchaudio==2.7.1+cu128 --index-url https://download.pytorch.org/whl/cu128 \
-    && pip install --no-cache-dir bitsandbytes==0.46.0 \
-    && pip install --no-cache-dir tokenizers==0.13.3 \
-    && pip install --no-cache-dir transformers==4.34.1 \
+    # && pip install --no-cache-dir bitsandbytes==0.46.0 \
+    # && pip install --no-cache-dir tokenizers==0.13.3 \
+    # && pip install --no-cache-dir transformers==4.34.1 \
+    # && pip install --no-cache-dir peft==0.7.1 \
+    # && pip install --no-cache-dir accelerate==0.26.1 \
+    # && pip install --no-cache-dir scipy==1.12.0 \
+    # && pip install --no-cache-dir tqdm==4.66.1 \
+    # && pip install --no-cache-dir psutil==5.9.8 \
+    # && pip install --no-cache-dir GPUtil==1.4.0 \
+    # && pip install --no-cache-dir tensorboard==2.15.1 \
     && poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi --no-cache --no-root \
     && python3 -c "import torch; print(f'PyTorch version: {torch.__version__}, CUDA available: {torch.cuda.is_available()}, CUDA version: {torch.version.cuda if torch.cuda.is_available() else \"N/A\"}')" \
