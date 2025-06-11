@@ -1,8 +1,8 @@
-FROM nvidia/cuda:12.8.0-cudnn-devel-ubuntu22.04
+FROM python:3.10-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-venv python3-pip python3-dev git curl build-essential \
-    ca-certificates openssl libssl-dev libffi-dev python3-setuptools \
+    git curl build-essential \
+    ca-certificates openssl libssl-dev libffi-dev \
     libjpeg-dev libpng-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -13,7 +13,6 @@ RUN curl -sSL https://install.python-poetry.org | python3 - \
 ENV PATH="/root/.local/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    CUDA_HOME=/usr/local/cuda \
     TORCH_CUDA_ARCH_LIST="8.9" \
     PYTORCH_CUDA_ALLOC_CONF="max_split_size_mb:512" \
     PYTORCH_NO_CUDA_MEMORY_CACHING=1 \
