@@ -25,7 +25,7 @@ class Config:
     MODEL_NAME = os.getenv('MODEL_NAME', "mistralai/Mistral-7B-v0.1")
     DATASET_PATH = os.getenv('DATASET_PATH', "./data/converted")
     OUTPUT_DIR = os.getenv('OUTPUT_DIR', "./output")
-    PROMPT_PATH = os.getenv('PROMPT_PATH', "../../backend/src/shared/parse-products.json")
+    PROMPT_PATH = os.getenv('PROMPT_PATH', os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "backend/src/shared/parse-products.json"))
     TRANSFORMERS_CACHE = os.getenv('TRANSFORMERS_CACHE', "/tmp/transformers_cache")
     
     # Параметры обучения
