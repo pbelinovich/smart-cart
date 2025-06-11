@@ -45,7 +45,7 @@ def check_pytorch():
     logger.info(f"PyTorch version: {torch.__version__}")
     logger.info(f"CUDA available: {torch.cuda.is_available()}")
     if torch.cuda.is_available():
-        logger.info(f"CUDA version: {torch.version.cuda}")
+        logger.info(f"CUDA version: {torch.cuda.get_device_capability(0)}")
         logger.info(f"GPU device: {torch.cuda.get_device_name(0)}")
         logger.info(f"GPU capability: {torch.cuda.get_device_capability(0)}")
 
