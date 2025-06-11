@@ -34,7 +34,7 @@ RUN . /app/venv/bin/activate \
     && pip install --no-cache-dir torch==2.7.1+cu128 torchvision==0.22.1+cu128 torchaudio==2.7.1+cu128 --index-url https://download.pytorch.org/whl/cu128 \
     && pip install --no-cache-dir bitsandbytes==0.41.1 \
     && poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi --no-cache \
+    && poetry install --no-interaction --no-ansi --no-cache --no-root \
     && python3 -c "import torch; print(f'PyTorch version: {torch.__version__}, CUDA available: {torch.cuda.is_available()}, CUDA version: {torch.version.cuda if torch.cuda.is_available() else \"N/A\"}')" \
     && rm -rf /root/.cache/pip /root/.cache/poetry /tmp/* /var/tmp/*
 
