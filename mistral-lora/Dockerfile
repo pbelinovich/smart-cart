@@ -30,6 +30,7 @@ ENV PATH="/app/venv/bin:$PATH"
 
 # Устанавливаем зависимости
 RUN . /app/venv/bin/activate \
+    && pip install --no-cache-dir typing-extensions==4.9.0 \
     && pip install --no-cache-dir torch==2.7.1+cu128 torchvision==0.22.1+cu128 torchaudio==2.7.1+cu128 --index-url https://download.pytorch.org/whl/cu128 \
     && pip install --no-cache-dir bitsandbytes==0.41.1 \
     && poetry config virtualenvs.create false \
