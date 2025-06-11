@@ -24,8 +24,8 @@ import glob
 class Config:
     # Пути
     MODEL_NAME = os.getenv('MODEL_NAME', "mistralai/Mistral-7B-v0.1")
-    DATASET_PATH = os.getenv('DATASET_PATH', "./data/converted")
-    OUTPUT_DIR = os.getenv('OUTPUT_DIR', "./output")
+    DATASET_PATH = os.getenv('DATASET_PATH', os.path.join(os.path.dirname(os.path.dirname(__file__)), "data/converted"))
+    OUTPUT_DIR = os.getenv('OUTPUT_DIR', os.path.join(os.path.dirname(os.path.dirname(__file__)), "output"))
     PROMPT_PATH = os.getenv('PROMPT_PATH', os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "backend/src/shared/parse-products.json"))
     TRANSFORMERS_CACHE = os.getenv('TRANSFORMERS_CACHE', "/tmp/transformers_cache")
     
@@ -254,6 +254,13 @@ TRAINING_PROMPT = load_prompt()
 
 # Загружаем все JSONL файлы из директории
 def load_all_jsonl_files(directory):
+    # Create directory if it doesn't exist
+    os.makedirs(directory, exist_ok=True)
+    
+    # Check if directory is empty
+    if not os.listdir(directory):
+        raise Exception(f"No JSONL files found in {directory}. Please add your training data files to this directory.")
+    
     datasets = []
     for filename in os.listdir(directory):
         if filename.endswith('.jsonl'):
