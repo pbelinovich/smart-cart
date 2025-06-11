@@ -3,6 +3,7 @@ import torch
 from datasets import load_dataset, concatenate_datasets
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers.utils.quantization_config import BitsAndBytesConfig
 from transformers.training_args import TrainingArguments
 from transformers.trainer import Trainer
 from transformers.data.data_collator import DataCollatorForLanguageModeling
@@ -294,9 +295,17 @@ if device == "cuda":
 
 # Загрузка токенизатора и модели
 tokenizer = AutoTokenizer.from_pretrained(Config.MODEL_NAME, trust_remote_code=True)
+
+# Configure 8-bit quantization
+quantization_config = BitsAndBytesConfig(
+    load_in_8bit=True,
+    llm_int8_threshold=6.0,
+    llm_int8_has_fp16_weight=False,
+)
+
 model = AutoModelForCausalLM.from_pretrained(
     Config.MODEL_NAME,
-    torch_dtype=torch.float16,
+    quantization_config=quantization_config,
     device_map="auto",
     use_cache=False,
     low_cpu_mem_usage=True
