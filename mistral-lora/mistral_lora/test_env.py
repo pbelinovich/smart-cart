@@ -4,8 +4,12 @@ from pathlib import Path
 import psutil
 import GPUtil
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers.modeling_utils import PreTrainedModel
+from transformers.tokenization_utils import PreTrainedTokenizer
 from transformers.utils.quantization_config import BitsAndBytesConfig
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training, PeftModel, PeftMixedModel
+import bitsandbytes as bnb
+from typing import Union
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -17,6 +21,7 @@ def test_environment():
     # Проверка Python и PyTorch
     logger.info(f"Python version: {torch.__version__}")
     logger.info(f"PyTorch version: {torch.__version__}")
+    logger.info(f"BitsAndBytes version: {bnb.__version__}")
     
     # Проверка CUDA
     logger.info(f"CUDA available: {torch.cuda.is_available()}")
@@ -36,21 +41,30 @@ def test_environment():
         
         # Загрузка токенизатора
         logger.info("Loading tokenizer...")
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+        tokenizer: PreTrainedTokenizer = AutoTokenizer.from_pretrained(
+            model_name,
+            trust_remote_code=True,
+            padding_side="right"
+        )
+        tokenizer.pad_token = tokenizer.eos_token
         
-        # Загрузка модели в режиме 8-bit
+        # Загрузка модели в режиме 8-bit с использованием bitsandbytes
         logger.info("Loading model in 8-bit mode...")
         quantization_config = BitsAndBytesConfig(
             load_in_8bit=True,
             llm_int8_threshold=6.0,
             llm_int8_has_fp16_weight=False,
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_type="nf4"
         )
         
-        model = AutoModelForCausalLM.from_pretrained(
+        base_model: PreTrainedModel = AutoModelForCausalLM.from_pretrained(
             model_name,
             quantization_config=quantization_config,
             device_map="auto",
-            torch_dtype=torch.float16
+            torch_dtype=torch.float16,
+            trust_remote_code=True
         )
         
         # Настройка LoRA
@@ -66,8 +80,8 @@ def test_environment():
         
         # Подготовка модели
         logger.info("Preparing model for training...")
-        model = prepare_model_for_kbit_training(model)
-        model = get_peft_model(model, lora_config)
+        prepared_model = prepare_model_for_kbit_training(base_model)
+        model: Union[PeftModel, PeftMixedModel] = get_peft_model(prepared_model, lora_config)
         
         logger.info("Environment test completed successfully!")
         

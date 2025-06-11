@@ -1,5 +1,8 @@
 FROM python:3.10-slim
 
+# Recommended run command:
+# docker run --gpus all --shm-size=8g -it your-image-name
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git curl build-essential \
     ca-certificates openssl libssl-dev libffi-dev \
@@ -27,7 +30,8 @@ ENV PATH="/app/venv/bin:$PATH"
 
 # Устанавливаем зависимости
 RUN . /app/venv/bin/activate \
-    && pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 \
+    && pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 \
+    && pip install --no-cache-dir bitsandbytes==0.41.1 \
     && poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi --no-cache \
     && python3 -c "import torch; print(f'PyTorch version: {torch.__version__}, CUDA available: {torch.cuda.is_available()}, CUDA version: {torch.version.cuda if torch.cuda.is_available() else \"N/A\"}')" \
@@ -43,6 +47,8 @@ RUN echo '#!/bin/bash\n\
     python3 -c "import torch; print(torch.__version__)"\n\
     echo "\nCUDA status:"\n\
     python3 -c "import torch; print(f\"CUDA available: {torch.cuda.is_available()}\")"\n\
+    echo "\nBitsAndBytes version:"\n\
+    python3 -c "import bitsandbytes; print(bitsandbytes.__version__)"\n\
     echo "\nInstalled packages:"\n\
     poetry show\n\
     echo "\nMemory usage:"\n\
