@@ -30,6 +30,7 @@ torchaudio = "2.7.1"
 scipy = "1.15.3"
 fastapi = "^0.115.12"
 uvicorn = "^0.34.3"
+tiktoken = "^0.9.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

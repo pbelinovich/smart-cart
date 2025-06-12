@@ -2,11 +2,15 @@
 # билд докер образа
 docker build -t mistral-lora .
 
+# билд докер образа (mac)
+docker buildx build --platform=linux/arm64 -t mistral-api .
+docker run -p 6012:6012 mistral-api
+
 # запуск докер контейнера
-docker run --gpus all -it \
-  --shm-size=8g \
-  -v /path/to/your/data:/app/data \
-  mistral-lora
+docker run --gpus all -it --shm-size=8g -v /path/to/your/data:/app/data mistral-lora
+
+# запуск докер контейнера (mac)
+docker run -it -p 6012:6012 mistral-api mistral-api
 
 # это смотреть логи во время обучения в консоли
 tensorboard --logdir=./output/logs

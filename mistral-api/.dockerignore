@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+.git/
+.wandb/
+.cache/
+*.log
+*.tmp
+*.pt
+*.bin

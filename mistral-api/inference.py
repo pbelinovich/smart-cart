@@ -7,8 +7,10 @@ import os
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 from typing import Optional
+import uvicorn
 
 app = FastAPI()
+model_path = os.path.join(os.path.dirname(__file__), "pretrained/model")
 
 class PromptRequest(BaseModel):
     prompt: str
@@ -17,7 +19,7 @@ class PromptRequest(BaseModel):
     temperature: Optional[float] = 0.7
     top_p: Optional[float] = 0.95
 
-def load_model(model_path=os.path.join(os.path.dirname(__file__), "output/model"), device="auto"):
+def load_model(device="auto"):
     print("Loading model and tokenizer...", file=sys.stderr)
 
     # Определяем устройство
@@ -82,9 +84,13 @@ def generate_text(prompt, model, tokenizer, device, max_length=300, temperature=
     return response
 
 
-def optimize_model_for_requests(model_path="./exported_model", device="auto"):
-    # Загружаем модель один раз при старте
-    model, tokenizer, device = load_model(model_path, device)
+def optimize_model_for_requests(device="auto"):
+    try:
+        # Загружаем модель один раз при старте
+        model, tokenizer, device = load_model(device)
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        raise e
 
     def generate_with_cleanup(prompt, device, max_length, temperature, top_p):
         return generate_text(prompt, model, tokenizer, device, max_length, temperature, top_p)
@@ -98,3 +104,6 @@ generate = optimize_model_for_requests()
 @app.post("/generate")
 async def generate_api(req: PromptRequest):
     return generate(req.prompt, req.device, req.max_new_tokens, req.temperature, req.top_p)
+
+if __name__ == "__main__":
+    uvicorn.run("inference:app", host="0.0.0.0", port=6012)

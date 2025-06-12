@@ -1,0 +1,7 @@
+/dist
+.env
+*.deb
+*.log
+/venv
+/pretrained
+/__pycache__

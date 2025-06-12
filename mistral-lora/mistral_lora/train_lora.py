@@ -34,7 +34,7 @@ class Config:
     GRADIENT_ACCUMULATION_STEPS = int(os.getenv('GRADIENT_ACCUMULATION_STEPS', "16"))
     EPOCHS = int(os.getenv('EPOCHS', "3"))
     LEARNING_RATE = float(os.getenv('LEARNING_RATE', "2e-5"))
-    MAX_LENGTH = int(os.getenv('MAX_LENGTH', "512"))
+    MAX_LENGTH = int(os.getenv('MAX_LENGTH', "2048"))
     WARMUP_STEPS = int(os.getenv('WARMUP_STEPS', "100"))
     WEIGHT_DECAY = float(os.getenv('WEIGHT_DECAY', "0.01"))
     SAVE_STEPS = int(os.getenv('SAVE_STEPS', "100"))
@@ -271,9 +271,9 @@ def load_all_jsonl_files(directory):
     return concatenate_datasets(datasets)
 
 # Функция для токенизации данных
-def tokenize_function(examples):
+def tokenize_function_old(examples):
     # Форматируем входные данные
-    inputs = [TRAINING_PROMPT.replace('${input}', input_text) for input_text in examples['input']]
+    inputs = [f"{TRAINING_PROMPT}{input_text}" for input_text in examples['input']]
     
     # Форматируем выходные данные как JSON
     outputs = [json.dumps(output, ensure_ascii=False) for output in examples['output']]
@@ -289,6 +289,65 @@ def tokenize_function(examples):
         max_length=Config.MAX_LENGTH,
         return_tensors="pt"
     )
+
+count = 0
+
+def tokenize_function(batch):
+    results = {
+        "input_ids": [],
+        "attention_mask": [],
+        "labels": []
+    }
+
+    for input_text, output_obj in zip(batch["input"], batch["output"]):
+        output_text = json.dumps(output_obj, ensure_ascii=False)
+        input_with_prompt = f"{TRAINING_PROMPT}{input_text}"
+        full_text = f"{input_with_prompt}{output_text}"
+
+        full_tokens = tokenizer(full_text, truncation=False, return_tensors="pt")
+        full_len = full_tokens["input_ids"].shape[1]
+
+        if full_len > Config.MAX_LENGTH:
+            input_lines = input_text.strip().split("\n")
+            original_input = input_text
+            while len(input_lines) > 1:
+                input_lines = input_lines[:-1]
+                new_input = "\n".join(input_lines)
+                new_input_with_prompt = f"{TRAINING_PROMPT}{new_input}"
+                new_full_text = f"{new_input_with_prompt}\n\nОтвет: {output_text.strip()}"
+                new_tokens = tokenizer(new_full_text, truncation=False, return_tensors="pt")
+                if new_tokens["input_ids"].shape[1] <= Config.MAX_LENGTH:
+                    input_with_prompt = new_input_with_prompt
+                    break
+            print("---")
+            print("input was truncated:")
+            print("was:", original_input)
+            print("now:", input_with_prompt.replace(TRAINING_PROMPT, ""))
+
+        tokenized = tokenizer(
+            input_with_prompt,
+            max_length=Config.MAX_LENGTH,
+            truncation=True,
+            padding="max_length",
+        )
+        labels = tokenizer(
+            output_text,
+            max_length=Config.MAX_LENGTH,
+            truncation=True,
+            padding="max_length",
+        )
+
+        if count < 10:
+            print("---")
+            print("input_with_prompt:", input_with_prompt)
+            print("output_text:", output_text)
+            count += 1
+
+        results["input_ids"].append(tokenized["input_ids"])
+        results["attention_mask"].append(tokenized["attention_mask"])
+        results["labels"].append(labels["input_ids"])
+
+    return results
 
 # Проверка CUDA и оптимизация
 device = "cuda" if torch.cuda.is_available() else "cpu"
