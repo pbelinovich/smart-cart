@@ -17,6 +17,6 @@ export class DefaultPromptBuilder implements IPromptBuilder {
   }
 
   buildPrompt = (input: string) => {
-    return this.prompt.replace('${input}', input).trim()
+    return `${this.prompt}${input}`.trim()
   }
 }
