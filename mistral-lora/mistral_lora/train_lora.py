@@ -20,6 +20,8 @@ import time
 import shutil
 import glob
 
+print_count = 0
+
 # Конфигурация через переменные окружения
 class Config:
     # Пути
@@ -290,7 +292,6 @@ def tokenize_function_old(examples):
         return_tensors="pt"
     )
 
-count = 0
 
 def tokenize_function(batch):
     results = {
@@ -337,11 +338,11 @@ def tokenize_function(batch):
             padding="max_length",
         )
 
-        if count < 10:
+        if print_count < 10:
             print("---")
             print("input_with_prompt:", input_with_prompt)
             print("output_text:", output_text)
-            count += 1
+            print_count += 1
 
         results["input_ids"].append(tokenized["input_ids"])
         results["attention_mask"].append(tokenized["attention_mask"])
