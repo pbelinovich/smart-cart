@@ -19,7 +19,10 @@ import {
   createProductsResponse,
   ICollectedProduct,
   ProductsRequestStatus,
+  IProduct,
 } from '../../external'
+
+const MAX_PRODUCTS_COUNT = 10
 
 const getPriceFromPriceValue = (priceValue?: EdadealPriceValue) => {
   if (priceValue) {
@@ -86,8 +89,8 @@ export const collectProducts = buildProcessHandler(async ({ readExecutor, writeE
     return presentProductsMap[hash] || absentProductsMap[hash]
   })
 
-  const presentProductsCreationPromises: (() => Promise<void>)[] = []
-  const absentProductsCreationPromises: (() => Promise<void>)[] = []
+  const presentProductsCreationPromises: (() => Promise<any>)[] = []
+  const absentProductsCreationPromises: (() => Promise<any>)[] = []
 
   if (!everyProductIsCached) {
     let response: IEdadealProductsSearchResponse | undefined
@@ -144,24 +147,40 @@ export const collectProducts = buildProcessHandler(async ({ readExecutor, writeE
     }
 
     shops.forEach(shop => {
-      const shopItem = shopToItemsMap[shop.marketplaceId]
+      const shopItem = shopToItemsMap[shop.marketplaceId] || []
       const hash = shopMarketplaceIdToHashMap[shop.marketplaceId]
-      const price = shopItem && shopItem[0] ? getPrice(shopItem[0]) : 0
+      const products: IProduct[] = []
 
-      if (shopItem && shopItem[0] && price > 0) {
-        presentProductsCreationPromises.push(async () => {
-          await writeExecutor.execute(createPresentProduct, {
+      let counter = 0
+
+      while (products.length < MAX_PRODUCTS_COUNT) {
+        if (counter > shopItem.length - 1) {
+          break
+        }
+
+        const item = shopItem[counter]
+        const price = getPrice(item)
+
+        if (item.title && price > 0) {
+          products.push({ name: item.title, price })
+        }
+
+        counter++
+      }
+
+      if (products.length > 0) {
+        presentProductsCreationPromises.push(() => {
+          return writeExecutor.execute(createPresentProduct, {
             cityId: city.id,
             shopId: shop.id,
             queryName: params.product.name,
-            productName: shopItem[0].title || '',
-            productPrice: price,
             hash,
+            products,
           })
         })
       } else {
-        absentProductsCreationPromises.push(async () => {
-          await writeExecutor.execute(createAbsentProduct, {
+        absentProductsCreationPromises.push(() => {
+          return writeExecutor.execute(createAbsentProduct, {
             cityId: city.id,
             shopId: shop.id,
             queryName: params.product.name,

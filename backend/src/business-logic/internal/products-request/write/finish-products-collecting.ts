@@ -78,13 +78,13 @@ export const finishProductsCollecting = buildWriteOperation(
         const cart = shopIdToCartMap[shop.id]
 
         cart.productsInStock.push({
-          name: presentProduct.productName,
+          name: presentProduct.products[0].name,
           quantity: collectedProduct.quantity,
           priceCategory: collectedProduct.priceCategory,
-          price: presentProduct.productPrice,
+          price: presentProduct.products[0].price,
         })
 
-        cart.totalPrice += presentProduct.productPrice * collectedProduct.quantity
+        cart.totalPrice += presentProduct.products[0].price * collectedProduct.quantity
 
         return
       }

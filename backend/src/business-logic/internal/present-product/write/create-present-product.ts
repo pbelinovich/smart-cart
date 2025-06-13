@@ -1,14 +1,13 @@
 import { dateTime } from '@shared'
 import { buildWriteOperation } from '../../../common/write'
-import { IPresentProductEntity } from '../../../external'
+import { IPresentProductEntity, IProduct } from '../../../external'
 
 export interface ICreatePresentProductParams {
   cityId: string
   shopId: string
   queryName: string
-  productName: string
-  productPrice: number
   hash: string
+  products: IProduct[]
 }
 
 export const createPresentProduct = buildWriteOperation(async (context, params: ICreatePresentProductParams) => {
@@ -25,9 +24,8 @@ export const createPresentProduct = buildWriteOperation(async (context, params: 
     createDate: dateTime.utc().toISOString(),
     expiresAt: Math.floor(Date.now() / 1000) + 60 * 60 * 6, // 6 hours
     queryName: params.queryName,
-    productName: params.productName,
-    productPrice: params.productPrice,
     hash: params.hash,
+    products: params.products,
   }
 
   return context.presentProductRepo.create(presentProduct)
