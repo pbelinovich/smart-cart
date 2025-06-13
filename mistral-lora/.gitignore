@@ -4,3 +4,6 @@ poetry.lock
 *.deb
 *.log
 /venv
+/exported_model
+/model_archives
+/output

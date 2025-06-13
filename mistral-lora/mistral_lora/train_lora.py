@@ -55,7 +55,7 @@ class Config:
     
     # Параметры GPU
     TORCH_CUDA_ARCH_LIST = os.getenv('TORCH_CUDA_ARCH_LIST', "8.9")
-    PYTORCH_CUDA_ALLOC_CONF = os.getenv('PYTORCH_CUDA_ALLOC_CONF', "max_split_size_mb:512")
+    PYTORCH_CUDA_ALLOC_CONF = os.getenv('PYTORCH_CUDA_ALLOC_CONF', "max_split_size_mb:1024")
     PYTORCH_NO_CUDA_MEMORY_CACHING = int(os.getenv('PYTORCH_NO_CUDA_MEMORY_CACHING', "1"))
 
 # Настройка логирования
