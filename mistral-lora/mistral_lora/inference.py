@@ -37,19 +37,18 @@ def load_model(device="auto"):
             print("Using CPU for inference (no GPU available)", file=sys.stderr)
 
     # Загрузка токенизатора и модели
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
         # torch_dtype=torch.float16 if device == "cuda" else torch.float32,
         torch_dtype=torch.float16, # только float16, на float32 нужно ~26–28 VRAM на видеокарте
-        device_map="auto" if device == "cuda" else None,
-        low_cpu_mem_usage=True
+        device_map="auto",
+        low_cpu_mem_usage=True,
+        local_files_only=True
     )
 
     # Перевод модели в режим eval
     model.eval()
-    if device == "cuda":
-        model = model.cuda()
 
     return model, tokenizer, device
 
