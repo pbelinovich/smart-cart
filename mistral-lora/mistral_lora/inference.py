@@ -54,7 +54,12 @@ def load_model(device="auto"):
 
 
 def generate_text(prompt, model, tokenizer, device, max_length=300, temperature=0.7, top_p=0.9):
-    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=max_length)
+    inputs = tokenizer(
+        prompt, 
+        return_tensors="pt", 
+        truncation=True, 
+        # max_length=max_length
+    )
     if device == "cuda":
         inputs = {k: v.cuda() for k, v in inputs.items()}
 
@@ -62,7 +67,7 @@ def generate_text(prompt, model, tokenizer, device, max_length=300, temperature=
         with torch.cuda.amp.autocast(enabled=(device == "cuda")):
             outputs = model.generate(
                 **inputs,
-                max_length=max_length,
+                # max_length=max_length,
                 num_return_sequences=1,
                 temperature=temperature,
                 top_p=top_p,
