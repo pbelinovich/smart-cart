@@ -282,12 +282,8 @@ def tokenize_function(batch):
     }
 
     for input_text, output_obj in zip(batch["input"], batch["output"]):
-        output_text = json.dumps(output_obj, ensure_ascii=False)
-        # Добавляем EOS-токен к output
-        output_text += tokenizer.eos_token
-
+        output_text = json.dumps(output_obj, ensure_ascii=False) + tokenizer.eos_token
         prompt_input = f"{TRAINING_PROMPT}{input_text}\nОтвет: "
-
         # Формируем полный текст: промт + вопрос + ответ
         full_text = f"{prompt_input}{output_text}"
 
@@ -299,7 +295,16 @@ def tokenize_function(batch):
             padding="max_length",
         )
 
-        # Определяем границу между prompt+input и output
+        # Токенизируем только output_text для labels
+        output_tokenized = tokenizer(
+            output_text,
+            max_length=Config.MAX_LENGTH,
+            truncation=True,
+            padding="max_length",
+        )
+        output_token_ids = output_tokenized["input_ids"]
+
+        # Определяем длину prompt_input
         prompt_input_tokens = tokenizer(
             prompt_input,
             max_length=Config.MAX_LENGTH,
@@ -308,12 +313,10 @@ def tokenize_function(batch):
         )
         prompt_input_len = sum([1 for id in prompt_input_tokens["input_ids"] if id != tokenizer.pad_token_id])
 
-        # В labels для prompt+input ставим -100, для output — реальные id
+        # В labels для prompt_input ставим -100, для output — реальные id
         labels = [-100] * prompt_input_len
-        output_len = Config.MAX_LENGTH - prompt_input_len
-        output_token_ids = tokenized["input_ids"][prompt_input_len:prompt_input_len+output_len]
-        labels += output_token_ids
-        # Обрезаем/дополняем до max_length
+        # Добавляем токены ответа (output_text), обрезая/дополняя до max_length
+        labels += output_token_ids[:Config.MAX_LENGTH - prompt_input_len]
         labels = labels[:Config.MAX_LENGTH]
         if len(labels) < Config.MAX_LENGTH:
             labels += [-100] * (Config.MAX_LENGTH - len(labels))
