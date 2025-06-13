@@ -35,17 +35,17 @@ class Config:
     BATCH_SIZE = int(os.getenv('BATCH_SIZE', "4"))
     GRADIENT_ACCUMULATION_STEPS = int(os.getenv('GRADIENT_ACCUMULATION_STEPS', "16"))
     EPOCHS = int(os.getenv('EPOCHS', "3"))
-    LEARNING_RATE = float(os.getenv('LEARNING_RATE', "5e-5"))
+    LEARNING_RATE = float(os.getenv('LEARNING_RATE', "3e-5"))
     MAX_LENGTH = int(os.getenv('MAX_LENGTH', "2048"))
-    WARMUP_STEPS = int(os.getenv('WARMUP_STEPS', "50"))
+    WARMUP_STEPS = int(os.getenv('WARMUP_STEPS', "0"))
     WEIGHT_DECAY = float(os.getenv('WEIGHT_DECAY', "0.01"))
     SAVE_STEPS = int(os.getenv('SAVE_STEPS', "100"))
     LOGGING_STEPS = int(os.getenv('LOGGING_STEPS', "10"))
-    MAX_GRAD_NORM = float(os.getenv('MAX_GRAD_NORM', "2.0"))
+    MAX_GRAD_NORM = float(os.getenv('MAX_GRAD_NORM', "3.0"))
     
     # LoRA параметры
     LORA_R = int(os.getenv('LORA_R', "16"))
-    LORA_ALPHA = int(os.getenv('LORA_ALPHA', "16"))
+    LORA_ALPHA = int(os.getenv('LORA_ALPHA', "8"))
     LORA_DROPOUT = float(os.getenv('LORA_DROPOUT', "0.05"))
     
     # Параметры кэша
@@ -60,6 +60,9 @@ class Config:
     TORCH_CUDA_ARCH_LIST = os.getenv('TORCH_CUDA_ARCH_LIST', "8.9")
     PYTORCH_CUDA_ALLOC_CONF = os.getenv('PYTORCH_CUDA_ALLOC_CONF', "max_split_size_mb:1024")
     PYTORCH_NO_CUDA_MEMORY_CACHING = int(os.getenv('PYTORCH_NO_CUDA_MEMORY_CACHING', "1"))
+
+print("Config:")
+print(Config.__dict__)
 
 # Настройка логирования
 logging.basicConfig(
@@ -301,8 +304,6 @@ def tokenize_function(batch):
         "labels": []
     }
 
-    print_count = 0
-
     for input_text, output_obj in zip(batch["input"], batch["output"]):
         output_text = json.dumps(output_obj, ensure_ascii=False)
         input_with_prompt = f"{TRAINING_PROMPT}{input_text}"
@@ -340,12 +341,6 @@ def tokenize_function(batch):
             truncation=True,
             padding="max_length",
         )
-
-        if print_count < 5:
-            print("---")
-            print("input_with_prompt:", input_with_prompt)
-            print("output_text:", output_text)
-            print_count += 1
 
         results["input_ids"].append(tokenized["input_ids"])
         results["attention_mask"].append(tokenized["attention_mask"])
