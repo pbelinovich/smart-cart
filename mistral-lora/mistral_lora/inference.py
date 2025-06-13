@@ -10,14 +10,14 @@ from typing import Optional
 import uvicorn
 
 app = FastAPI()
-model_path = os.path.join(os.path.dirname(__file__), "pretrained/model")
+model_path = os.path.join(os.path.dirname(__file__), "../exported_model")
 
 class PromptRequest(BaseModel):
     prompt: str
     device: Optional[str] = "auto"
     max_new_tokens: Optional[int] = 200
-    temperature: Optional[float] = 0.7
-    top_p: Optional[float] = 0.95
+    temperature: Optional[float] = 0.1
+    top_p: Optional[float] = 1
 
 def load_model(device="auto"):
     print("Loading model and tokenizer...", file=sys.stderr)
@@ -54,11 +54,11 @@ def load_model(device="auto"):
 
 
 def generate_text(prompt, model, tokenizer, device, max_length=300, temperature=0.7, top_p=0.9):
+    # prompt теперь приходит уже с промптом, ничего не добавляем
     inputs = tokenizer(
-        prompt, 
-        return_tensors="pt", 
-        truncation=True, 
-        # max_length=max_length
+        prompt,
+        return_tensors="pt",
+        truncation=True,
     )
     if device == "cuda":
         inputs = {k: v.cuda() for k, v in inputs.items()}
@@ -67,15 +67,17 @@ def generate_text(prompt, model, tokenizer, device, max_length=300, temperature=
         with torch.cuda.amp.autocast(enabled=(device == "cuda")):
             outputs = model.generate(
                 **inputs,
-                # max_length=max_length,
                 num_return_sequences=1,
-                temperature=temperature,
-                top_p=top_p,
-                do_sample=True,
+                do_sample=False,  # строгий вывод
+                temperature=0.1,
+                top_p=1.0,
+                max_new_tokens=max_length,
                 pad_token_id=tokenizer.eos_token_id,
+                eos_token_id=tokenizer.eos_token_id,
                 use_cache=True
             )
 
+    # Получаем полный ответ
     response = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
     # Очистка памяти

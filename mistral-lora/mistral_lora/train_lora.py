@@ -283,8 +283,13 @@ def tokenize_function(batch):
 
     for input_text, output_obj in zip(batch["input"], batch["output"]):
         output_text = json.dumps(output_obj, ensure_ascii=False)
+        # Добавляем EOS-токен к output
+        output_text += tokenizer.eos_token
+
+        prompt_input = f"{TRAINING_PROMPT}{input_text}\nОтвет: "
+
         # Формируем полный текст: промт + вопрос + ответ
-        full_text = f"{TRAINING_PROMPT}{input_text}{output_text}"
+        full_text = f"{prompt_input}{output_text}"
 
         # Токенизируем весь текст
         tokenized = tokenizer(
@@ -295,7 +300,6 @@ def tokenize_function(batch):
         )
 
         # Определяем границу между prompt+input и output
-        prompt_input = f"{TRAINING_PROMPT}{input_text}"
         prompt_input_tokens = tokenizer(
             prompt_input,
             max_length=Config.MAX_LENGTH,
