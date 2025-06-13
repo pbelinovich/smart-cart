@@ -20,8 +20,6 @@ import time
 import shutil
 import glob
 
-
-
 # Конфигурация через переменные окружения
 class Config:
     # Пути
@@ -276,27 +274,6 @@ def load_all_jsonl_files(directory):
             datasets.append(train_dataset)
     return concatenate_datasets(datasets)
 
-# Функция для токенизации данных
-def tokenize_function_old(examples):
-    # Форматируем входные данные
-    inputs = [f"{TRAINING_PROMPT}{input_text}" for input_text in examples['input']]
-    
-    # Форматируем выходные данные как JSON
-    outputs = [json.dumps(output, ensure_ascii=False) for output in examples['output']]
-    
-    # Объединяем вход и выход
-    combined_texts = [f"{input_text}{output_text}" for input_text, output_text in zip(inputs, outputs)]
-    
-    # Токенизируем
-    return tokenizer(
-        combined_texts,
-        padding="max_length",
-        truncation=True,
-        max_length=Config.MAX_LENGTH,
-        return_tensors="pt"
-    )
-
-
 def tokenize_function(batch):
     results = {
         "input_ids": [],
@@ -306,45 +283,40 @@ def tokenize_function(batch):
 
     for input_text, output_obj in zip(batch["input"], batch["output"]):
         output_text = json.dumps(output_obj, ensure_ascii=False)
-        input_with_prompt = f"{TRAINING_PROMPT}{input_text}"
-        full_text = f"{input_with_prompt}{output_text}"
+        # Формируем полный текст: промт + вопрос + ответ
+        full_text = f"{TRAINING_PROMPT}{input_text}{output_text}"
 
-        full_tokens = tokenizer(full_text, truncation=False, return_tensors="pt")
-        full_len = full_tokens["input_ids"].shape[1]
-
-        if full_len > Config.MAX_LENGTH:
-            input_lines = input_text.strip().split("\n")
-            original_input = input_text
-            while len(input_lines) > 1:
-                input_lines = input_lines[:-1]
-                new_input = "\n".join(input_lines)
-                new_input_with_prompt = f"{TRAINING_PROMPT}{new_input}"
-                new_full_text = f"{new_input_with_prompt}\n\nОтвет: {output_text.strip()}"
-                new_tokens = tokenizer(new_full_text, truncation=False, return_tensors="pt")
-                if new_tokens["input_ids"].shape[1] <= Config.MAX_LENGTH:
-                    input_with_prompt = new_input_with_prompt
-                    break
-            print("---")
-            print("input was truncated:")
-            print("was:", original_input)
-            print("now:", input_with_prompt.replace(TRAINING_PROMPT, ""))
-
+        # Токенизируем весь текст
         tokenized = tokenizer(
-            input_with_prompt,
+            full_text,
             max_length=Config.MAX_LENGTH,
             truncation=True,
             padding="max_length",
         )
-        labels = tokenizer(
-            output_text,
+
+        # Определяем границу между prompt+input и output
+        prompt_input = f"{TRAINING_PROMPT}{input_text}"
+        prompt_input_tokens = tokenizer(
+            prompt_input,
             max_length=Config.MAX_LENGTH,
             truncation=True,
             padding="max_length",
         )
+        prompt_input_len = sum([1 for id in prompt_input_tokens["input_ids"] if id != tokenizer.pad_token_id])
+
+        # В labels для prompt+input ставим -100, для output — реальные id
+        labels = [-100] * prompt_input_len
+        output_len = Config.MAX_LENGTH - prompt_input_len
+        output_token_ids = tokenized["input_ids"][prompt_input_len:prompt_input_len+output_len]
+        labels += output_token_ids
+        # Обрезаем/дополняем до max_length
+        labels = labels[:Config.MAX_LENGTH]
+        if len(labels) < Config.MAX_LENGTH:
+            labels += [-100] * (Config.MAX_LENGTH - len(labels))
 
         results["input_ids"].append(tokenized["input_ids"])
         results["attention_mask"].append(tokenized["attention_mask"])
-        results["labels"].append(labels["input_ids"])
+        results["labels"].append(labels)
 
     return results
 
