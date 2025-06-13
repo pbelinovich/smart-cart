@@ -41,10 +41,11 @@ class Config:
     WEIGHT_DECAY = float(os.getenv('WEIGHT_DECAY', "0.01"))
     SAVE_STEPS = int(os.getenv('SAVE_STEPS', "100"))
     LOGGING_STEPS = int(os.getenv('LOGGING_STEPS', "10"))
+    MAX_GRAD_NORM = float(os.getenv('MAX_GRAD_NORM', "1.0"))
     
     # LoRA параметры
     LORA_R = int(os.getenv('LORA_R', "16"))
-    LORA_ALPHA = int(os.getenv('LORA_ALPHA', "32"))
+    LORA_ALPHA = int(os.getenv('LORA_ALPHA', "16"))
     LORA_DROPOUT = float(os.getenv('LORA_DROPOUT', "0.05"))
     
     # Параметры кэша
@@ -436,6 +437,7 @@ training_args = TrainingArguments(
     group_by_length=True,
     ddp_find_unused_parameters=False,
     torch_compile=True,
+    max_grad_norm=Config.MAX_GRAD_NORM,
 )
 
 # Data collator
