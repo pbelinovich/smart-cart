@@ -20,7 +20,7 @@ import time
 import shutil
 import glob
 
-print_count = 0
+
 
 # Конфигурация через переменные окружения
 class Config:
@@ -300,6 +300,8 @@ def tokenize_function(batch):
         "labels": []
     }
 
+    print_count = 0
+
     for input_text, output_obj in zip(batch["input"], batch["output"]):
         output_text = json.dumps(output_obj, ensure_ascii=False)
         input_with_prompt = f"{TRAINING_PROMPT}{input_text}"
@@ -338,7 +340,7 @@ def tokenize_function(batch):
             padding="max_length",
         )
 
-        if print_count < 10:
+        if print_count < 5:
             print("---")
             print("input_with_prompt:", input_with_prompt)
             print("output_text:", output_text)
