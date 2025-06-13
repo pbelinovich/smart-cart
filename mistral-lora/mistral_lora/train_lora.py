@@ -35,13 +35,13 @@ class Config:
     BATCH_SIZE = int(os.getenv('BATCH_SIZE', "4"))
     GRADIENT_ACCUMULATION_STEPS = int(os.getenv('GRADIENT_ACCUMULATION_STEPS', "16"))
     EPOCHS = int(os.getenv('EPOCHS', "3"))
-    LEARNING_RATE = float(os.getenv('LEARNING_RATE', "2e-5"))
+    LEARNING_RATE = float(os.getenv('LEARNING_RATE', "5e-5"))
     MAX_LENGTH = int(os.getenv('MAX_LENGTH', "2048"))
-    WARMUP_STEPS = int(os.getenv('WARMUP_STEPS', "100"))
+    WARMUP_STEPS = int(os.getenv('WARMUP_STEPS', "50"))
     WEIGHT_DECAY = float(os.getenv('WEIGHT_DECAY', "0.01"))
     SAVE_STEPS = int(os.getenv('SAVE_STEPS', "100"))
     LOGGING_STEPS = int(os.getenv('LOGGING_STEPS', "10"))
-    MAX_GRAD_NORM = float(os.getenv('MAX_GRAD_NORM', "1.0"))
+    MAX_GRAD_NORM = float(os.getenv('MAX_GRAD_NORM', "2.0"))
     
     # LoRA параметры
     LORA_R = int(os.getenv('LORA_R', "16"))
