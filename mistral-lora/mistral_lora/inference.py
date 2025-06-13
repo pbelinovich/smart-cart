@@ -6,11 +6,14 @@ import json
 import os
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Any
 import uvicorn
 
 app = FastAPI()
 model_path = os.path.join(os.path.dirname(__file__), "../exported_model")
+
+# Глобальные переменные для хранения модели и токенизатора
+model_ref: dict[str, Any] = {"model": None, "tokenizer": None, "device": None}
 
 class PromptRequest(BaseModel):
     prompt: str
@@ -50,6 +53,10 @@ def load_model(device="auto"):
     # Перевод модели в режим eval
     model.eval()
 
+    # Сохраняем ссылки для shutdown
+    model_ref["model"] = model
+    model_ref["tokenizer"] = tokenizer
+    model_ref["device"] = device
     return model, tokenizer, device
 
 
@@ -110,6 +117,25 @@ generate = optimize_model_for_requests()
 @app.post("/generate")
 async def generate_api(req: PromptRequest):
     return generate(req.prompt, req.device, req.max_new_tokens, req.temperature, req.top_p)
+
+@app.on_event("shutdown")
+def shutdown_event():
+    print("Shutdown: выгружаю модель и очищаю память...", file=sys.stderr)
+    model = model_ref.get("model")
+    tokenizer = model_ref.get("tokenizer")
+    device = model_ref.get("device")
+    try:
+        if model is not None:
+            del model
+        if tokenizer is not None:
+            del tokenizer
+        gc.collect()
+        if device == "cuda" and torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.ipc_collect()
+        print("Модель и ресурсы успешно выгружены.", file=sys.stderr)
+    except Exception as e:
+        print(f"Ошибка при выгрузке модели: {e}", file=sys.stderr)
 
 if __name__ == "__main__":
     uvicorn.run("inference:app", host="0.0.0.0", port=6012)
