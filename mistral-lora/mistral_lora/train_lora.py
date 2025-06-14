@@ -23,8 +23,8 @@ import glob
 # Конфигурация через переменные окружения
 class Config:
     # Пути
-    # MODEL_NAME = os.getenv('MODEL_NAME', "mistralai/Mistral-7B-Instruct-v0.3")
-    MODEL_NAME = os.getenv('MODEL_NAME', os.path.join(os.path.dirname(os.path.dirname(__file__)), "exported_model/model"))
+    MODEL_NAME = os.getenv('MODEL_NAME', "mistralai/Mistral-7B-Instruct-v0.3")
+    # MODEL_NAME = os.getenv('MODEL_NAME', os.path.join(os.path.dirname(os.path.dirname(__file__)), "exported_model/model"))
     DATASET_PATH = os.getenv('DATASET_PATH', os.path.join(os.path.dirname(os.path.dirname(__file__)), "data/converted"))
     OUTPUT_DIR = os.getenv('OUTPUT_DIR', os.path.join(os.path.dirname(os.path.dirname(__file__)), "output_new"))
     PROMPT_PATH = os.getenv('PROMPT_PATH', os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "backend/src/shared/parse-products.json"))
@@ -359,6 +359,11 @@ print("bos_token_id", tokenizer.bos_token_id)
 print("eos_token_id", tokenizer.eos_token_id)
 print("pad_token_id", tokenizer.pad_token_id)
 print("pad_token", tokenizer.pad_token)
+
+print("--------------------------------")
+print("молоко, хлеб, сыр")
+print(tokenizer("молоко, хлеб, сыр"))
+print("--------------------------------")
 
 # Configure 8-bit quantization
 quantization_config = BitsAndBytesConfig(
