@@ -49,6 +49,7 @@ def load_model(device="auto"):
     # Загрузка токенизатора и модели
     tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
 
+    # TODO удалить эту хню при запуске дотренированной модели
     tokenizer.pad_token = tokenizer.unk_token
 
     model = AutoModelForCausalLM.from_pretrained(
@@ -117,7 +118,7 @@ def generate_text(input_text, model, tokenizer, device, max_length, temperature,
                 # do_sample=False,  # строгий вывод
                 temperature=temperature,
                 top_p=top_p,
-                # max_new_tokens=max_length,
+                max_new_tokens=max_length,
                 pad_token_id=tokenizer.unk_token_id,
                 eos_token_id=tokenizer.eos_token_id,
                 repetition_penalty=1.2,
