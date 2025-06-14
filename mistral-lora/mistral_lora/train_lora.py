@@ -336,7 +336,7 @@ def tokenize_function(batch):
         print("eos_token_id:", tokenizer.eos_token_id)
         print("last token id:", tokenized["input_ids"][-1])
         print("tokens:", tokenizer.convert_ids_to_tokens(tokenized["input_ids"]))
-        print("labels:", tokenizer.convert_ids_to_tokens(labels))
+        print("labels:", labels)
         print("!! --------------------------------")
 
         results["input_ids"].append(tokenized["input_ids"])
