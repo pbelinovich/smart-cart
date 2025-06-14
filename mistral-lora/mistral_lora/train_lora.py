@@ -296,6 +296,7 @@ def tokenize_function(batch):
             max_length=Config.MAX_LENGTH,
             truncation=True,
             padding="max_length",
+            add_special_tokens=True
         )
         print(f"tokenized input_ids (длина): {len(tokenized['input_ids'])}")
         print(f"tokenized input_ids (первые 30): {tokenized['input_ids'][:30]}")
@@ -316,6 +317,9 @@ def tokenize_function(batch):
         print(f"inst_close_tokenized input_ids (последние 10): {inst_close_tokenized['input_ids'][-10:]}")
         inst_close_len = len(inst_close_tokenized["input_ids"])
         print(f"inst_close_len: {inst_close_len}")
+        if inst_close_len >= Config.MAX_LENGTH - 10:
+            print("Пропущен слишком длинный пример!")
+            continue
         # Маскируем всё до и включая [/INST] как -100, остальное — реальные id
         labels = [-100] * inst_close_len + [
             tid if tid != tokenizer.pad_token_id else -100
@@ -350,6 +354,11 @@ tokenizer = AutoTokenizer.from_pretrained(Config.MODEL_NAME, trust_remote_code=T
 if tokenizer.pad_token is None:
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.pad_token_id = tokenizer.eos_token_id
+
+print("bos_token_id", tokenizer.bos_token_id)
+print("eos_token_id", tokenizer.eos_token_id)
+print("pad_token_id", tokenizer.pad_token_id)
+print("pad_token", tokenizer.pad_token)
 
 # Configure 8-bit quantization
 quantization_config = BitsAndBytesConfig(
