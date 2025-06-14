@@ -72,7 +72,7 @@ def generate_text(prompt, model, tokenizer, device, max_length, temperature, top
         return_tensors="pt",
         truncation=True,
         max_length=512,
-        add_special_tokens=True
+        add_special_tokens=False
     )
     if device == "cuda":
         inputs = {k: v.cuda() for k, v in inputs.items()}
@@ -135,7 +135,7 @@ TRAINING_PROMPT = load_prompt()
 
 @app.post("/generate")
 async def generate_api(req: PromptRequest):
-    prompt = f"[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{req.prompt.strip()} [/INST]"
+    prompt = f"<s> [INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{req.prompt.strip()} [/INST] </s>"
     print("--------------------------------")
     print("prompt")
     print(prompt)

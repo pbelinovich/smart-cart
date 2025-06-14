@@ -286,7 +286,7 @@ def tokenize_function(batch):
         print(f"\n=== Пример {idx+1} ===")
         output_text = json.dumps(output_obj, ensure_ascii=False)
         full_text = (
-            f"[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text.strip()} [/INST]{output_text.strip()}"
+            f"<s> [INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text.strip()} [/INST]{output_text.strip()} </s>"
         )
         print(f"full_text (символов): {len(full_text)}")
         print(f"full_text: {full_text}")
@@ -294,7 +294,7 @@ def tokenize_function(batch):
             full_text,
             max_length=Config.MAX_LENGTH,
             truncation=True,
-            add_special_tokens=True
+            add_special_tokens=False
         )
         print(f"tokenized input_ids (длина): {len(tokenized['input_ids'])}")
         print(f"tokenized input_ids (первые 30): {tokenized['input_ids'][:30]}")
