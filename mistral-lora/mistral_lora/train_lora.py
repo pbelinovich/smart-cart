@@ -284,10 +284,9 @@ def tokenize_function(batch):
 
     for idx, (input_text, output_obj) in enumerate(zip(batch["input"], batch["output"])):
         print(f"\n=== Пример {idx+1} ===")
-        output_text = json.dumps(output_obj, ensure_ascii=False) + tokenizer.eos_token
-        print(f"output_text: {output_text}")
+        output_text = json.dumps(output_obj, ensure_ascii=False)
         full_text = (
-            f"<s>[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text} [/INST]{output_text}</s>"
+            f"[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text} [/INST]{output_text}"
         )
         print(f"full_text (символов): {len(full_text)}")
         print(f"full_text: {full_text}")
@@ -302,7 +301,7 @@ def tokenize_function(batch):
         print(f"tokenized input_ids (первые 30): {tokenized['input_ids'][:30]}")
         # Определяем длину токенизированной части до и включая [/INST]
         full_text_raw = (
-            f"<s>[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text} [/INST]"
+            f"[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text} [/INST]"
         )
         print(f"full_text_raw (символов): {len(full_text_raw)}")
         print(f"full_text_raw: {full_text_raw}")
