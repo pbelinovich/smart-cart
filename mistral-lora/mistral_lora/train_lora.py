@@ -334,6 +334,15 @@ def tokenize_function(batch):
         results["attention_mask"].append(tokenized["attention_mask"])
         results["labels"].append(labels)
 
+    print("max label:", max([l for batch in results['labels'] for l in batch if l != -100]))
+    print("vocab_size:", tokenizer.vocab_size)
+    print("pad_token_id:", tokenizer.pad_token_id)
+
+    for batch in results['labels']:
+        for l in batch:
+            if l != -100 and (l < 0 or l >= tokenizer.vocab_size):
+                print("BAD LABEL:", l)
+
     return results
 
 # Проверка CUDA и оптимизация
