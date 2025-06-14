@@ -59,6 +59,8 @@ def load_model(device="auto"):
     # Перевод модели в режим eval
     model.eval()
 
+    print("!! model device:", next(model.parameters()).device)
+
     # Сохраняем ссылки для shutdown
     model_ref["model"] = model
     model_ref["tokenizer"] = tokenizer
