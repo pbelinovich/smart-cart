@@ -306,6 +306,10 @@ def tokenize_function(batch):
             truncation=True,
             add_special_tokens=False
         )
+        # Преобразуем тензоры в списки
+        input_ids = tokenized["input_ids"].squeeze().tolist()
+        attention_mask = tokenized["attention_mask"].squeeze().tolist()
+
         # Определяем длину токенизированной части до и включая [/INST]
         user_messages = [user_message]
         full_text_raw = tokenizer.apply_chat_template(user_messages, tokenize=False, add_generation_prompt=False)
@@ -317,14 +321,14 @@ def tokenize_function(batch):
             truncation=True,
             add_special_tokens=False
         )
-        inst_close_len = len(inst_close_tokenized["input_ids"])
+        inst_close_len = len(inst_close_tokenized["input_ids"].squeeze().tolist())
         if inst_close_len >= Config.MAX_LENGTH - 10:
             print("Пропущен слишком длинный пример!")
             continue
         # Маскируем всё до и включая [/INST] как -100, остальное — реальные id
         labels = [-100] * inst_close_len + [
             tid if tid != tokenizer.pad_token_id else -100
-            for tid in tokenized["input_ids"][inst_close_len:]
+            for tid in input_ids[inst_close_len:]
         ]
         labels = labels[:Config.MAX_LENGTH]
         if len(labels) < Config.MAX_LENGTH:
@@ -334,13 +338,13 @@ def tokenize_function(batch):
         print("!! --------------------------------")
         print("pad_token_id:", tokenizer.pad_token_id)
         print("eos_token_id:", tokenizer.eos_token_id)
-        print("last token id:", tokenized["input_ids"][-1])
-        print("tokens:", tokenizer.convert_ids_to_tokens(tokenized["input_ids"]))
-        print("labels:", labels)
+        print("last token id:", input_ids[-1])
+        print("tokens:", tokenizer.convert_ids_to_tokens(input_ids))
+        print("labels:", tokenizer.convert_ids_to_tokens(labels))
         print("!! --------------------------------")
 
-        results["input_ids"].append(tokenized["input_ids"])
-        results["attention_mask"].append(tokenized["attention_mask"])
+        results["input_ids"].append(input_ids)
+        results["attention_mask"].append(attention_mask)
         results["labels"].append(labels)
 
     return results
