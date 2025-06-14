@@ -11,7 +11,8 @@ import uvicorn
 
 app = FastAPI()
 # model_path = os.path.join(os.path.dirname(__file__), "../model")
-model_path = "mistralai/Mistral-7B-Instruct-v0.3"
+# model_path = "mistralai/Mistral-7B-Instruct-v0.3"
+model_path = "mistralai/Mistral-7B-v0.1"
 
 # Глобальные переменные для хранения модели и токенизатора
 model_ref: dict[str, Any] = {"model": None, "tokenizer": None, "device": None}
