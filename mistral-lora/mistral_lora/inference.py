@@ -78,7 +78,7 @@ def generate_text(input_text, model, tokenizer, device, max_length, temperature,
         add_generation_prompt=True
     )
 
-    prompt = f"<s>[INST] <instruction>\n{TRAINING_PROMPT}\n\n<input>\n{input_text.strip()}[/INST]"
+    prompt = f"<s>[INST] {TRAINING_PROMPT}{input_text.strip()}[/INST]"
 
     print("--------------------------------")
     print("prompt")
