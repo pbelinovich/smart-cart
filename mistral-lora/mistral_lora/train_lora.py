@@ -250,7 +250,7 @@ def load_prompt():
     try:
         with open(Config.PROMPT_PATH, 'r', encoding='utf-8') as f:
             data = json.load(f)
-            return data['prompt']
+            return data['prompt'].strip()
     except Exception as e:
         raise Exception(f"Failed to load prompt from {Config.PROMPT_PATH}: {e}")
 
@@ -286,7 +286,7 @@ def tokenize_function(batch):
         print(f"\n=== Пример {idx+1} ===")
         output_text = json.dumps(output_obj, ensure_ascii=False)
         full_text = (
-            f"[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text} [/INST]{output_text}"
+            f"[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text.strip()} [/INST]{output_text}"
         )
         print(f"full_text (символов): {len(full_text)}")
         print(f"full_text: {full_text}")
@@ -300,7 +300,7 @@ def tokenize_function(batch):
         print(f"tokenized input_ids (первые 30): {tokenized['input_ids'][:30]}")
         # Определяем длину токенизированной части до и включая [/INST]
         full_text_raw = (
-            f"[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text} [/INST]"
+            f"[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text.strip()} [/INST]"
         )
         print(f"full_text_raw (символов): {len(full_text_raw)}")
         print(f"full_text_raw: {full_text_raw}")
