@@ -364,6 +364,13 @@ tokenizer = AutoTokenizer.from_pretrained(Config.MODEL_NAME, trust_remote_code=T
     # tokenizer.pad_token = '<pad>'
     # tokenizer.pad_token_id = tokenizer.convert_tokens_to_ids('<pad>')
 
+# Найти свободный id (например, 0, если он не занят)
+if tokenizer.pad_token is None or tokenizer.pad_token_id >= tokenizer.vocab_size:
+    tokenizer.add_special_tokens({'pad_token': '<pad>'})
+    tokenizer.pad_token = '<pad>'
+    tokenizer.pad_token_id = tokenizer.convert_tokens_to_ids('<pad>')
+    print("pad_token_id после добавления:", tokenizer.pad_token_id)
+
 print("bos_token_id", tokenizer.bos_token_id)
 print("eos_token_id", tokenizer.eos_token_id)
 print("pad_token_id", tokenizer.pad_token_id)
