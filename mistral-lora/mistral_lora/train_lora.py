@@ -287,7 +287,7 @@ def tokenize_function(batch):
 
         output_text = json.dumps(output_obj, ensure_ascii=False)
 
-        user_content = f"{TRAINING_PROMPT}{input_text.strip()}"
+        user_content = TRAINING_PROMPT.replace("${input}", input_text.strip())
         user_message = {"role": "user", "content": user_content}
 
         # messages формата Mistral

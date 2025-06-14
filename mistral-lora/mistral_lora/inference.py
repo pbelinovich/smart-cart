@@ -70,7 +70,7 @@ def load_model(device="auto"):
 
 def generate_text(input_text, model, tokenizer, device, max_length, temperature, top_p):
     messages = [
-        {"role": "user", "content": f"{TRAINING_PROMPT}{input_text.strip()}"},
+        {"role": "user", "content": TRAINING_PROMPT.replace("${input}", input_text.strip())},
         {"role": "assistant", "content": ""}
     ]
 
