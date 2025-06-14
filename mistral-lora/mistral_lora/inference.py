@@ -71,11 +71,13 @@ def generate_text(input_text, model, tokenizer, device, max_length, temperature,
         {"role": "assistant", "content": ""}
     ]
 
-    prompt = tokenizer.apply_chat_template(
+    prompt2 = tokenizer.apply_chat_template(
         messages,
         tokenize=False,
         add_generation_prompt=True
     )
+
+    prompt = f"<s>[INST] <instruction>\n{TRAINING_PROMPT}\n\n<input>\n{input_text.strip()}[/INST]"
 
     print("--------------------------------")
     print("prompt")
