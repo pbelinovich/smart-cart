@@ -358,43 +358,27 @@ if device == "cuda":
 # Загрузка токенизатора и модели
 tokenizer = AutoTokenizer.from_pretrained(Config.MODEL_NAME, trust_remote_code=True)
 
-# Configure tokenizer
-# if tokenizer.pad_token is None or tokenizer.pad_token == tokenizer.eos_token or tokenizer.pad_token == tokenizer.bos_token:
-    # tokenizer.add_special_tokens({'pad_token': '<pad>'})
-    # tokenizer.pad_token = '<pad>'
-    # tokenizer.pad_token_id = tokenizer.convert_tokens_to_ids('<pad>')
-
-# Найти свободный id (например, 0, если он не занят)
+# Добавляем pad_token, если его нет
 if tokenizer.pad_token is None or tokenizer.pad_token_id >= tokenizer.vocab_size:
     tokenizer.add_special_tokens({'pad_token': '<pad>'})
-    tokenizer.pad_token = '<pad>'
-    tokenizer.pad_token_id = tokenizer.convert_tokens_to_ids('<pad>')
-    print("pad_token_id после добавления:", tokenizer.pad_token_id)
 
-print("bos_token_id", tokenizer.bos_token_id)
-print("eos_token_id", tokenizer.eos_token_id)
-print("pad_token_id", tokenizer.pad_token_id)
-print("pad_token", tokenizer.pad_token)
+print("pad_token_id:", tokenizer.pad_token_id)
+print("vocab_size (tokenizer):", tokenizer.vocab_size)
 
-print("--------------------------------")
-print("молоко, хлеб, сыр")
-print(tokenizer("молоко, хлеб, сыр"))
-print("--------------------------------")
-
-# Configure 8-bit quantization
-quantization_config = BitsAndBytesConfig(
-    load_in_8bit=True,
-    llm_int8_threshold=6.0,
-    llm_int8_has_fp16_weight=False,
-)
-
+# Загружаем модель
 model = AutoModelForCausalLM.from_pretrained(
     Config.MODEL_NAME,
+    trust_remote_code=True,
     quantization_config=quantization_config,
     device_map="auto",
     use_cache=False,
     low_cpu_mem_usage=True
 )
+
+# Расширяем эмбеддинги модели под новый размер словаря
+model.resize_token_embeddings(len(tokenizer))
+
+print("vocab_size (model):", model.get_input_embeddings().weight.shape[0])
 
 # Настройка LoRA
 lora_config = LoraConfig(
