@@ -77,6 +77,11 @@ def generate_text(input_text, model, tokenizer, device, max_length, temperature,
         add_generation_prompt=True
     )
 
+    print("--------------------------------")
+    print("prompt")
+    print(prompt)
+    print("--------------------------------")
+
     inputs = tokenizer(
         prompt,
         return_tensors="pt",
