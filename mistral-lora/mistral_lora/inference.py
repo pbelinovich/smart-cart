@@ -15,12 +15,17 @@ model_path = os.path.join(os.path.dirname(__file__), "../exported_model")
 # Глобальные переменные для хранения модели и токенизатора
 model_ref: dict[str, Any] = {"model": None, "tokenizer": None, "device": None}
 
+# Конфигурация через переменные окружения
+class Config:
+    # Пути
+    PROMPT_PATH = os.getenv('PROMPT_PATH', os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "backend/src/shared/parse-products.json"))
+
 class PromptRequest(BaseModel):
     prompt: str
     device: Optional[str] = "auto"
     max_new_tokens: Optional[int] = 200
-    temperature: Optional[float] = 0.1
-    top_p: Optional[float] = 1
+    temperature: Optional[float] = 0.7
+    top_p: Optional[float] = 0.95
 
 def load_model(device="auto"):
     print("Loading model and tokenizer...", file=sys.stderr)
@@ -114,9 +119,22 @@ def optimize_model_for_requests(device="auto"):
 # Создаем оптимизированную функцию
 generate = optimize_model_for_requests()
 
+# Загружаем промпт из JSON файла
+def load_prompt():
+    try:
+        with open(Config.PROMPT_PATH, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return data['prompt']
+    except Exception as e:
+        raise Exception(f"Failed to load prompt from {Config.PROMPT_PATH}: {e}")
+
+# Загружаем промпт
+TRAINING_PROMPT = load_prompt()
+
 @app.post("/generate")
 async def generate_api(req: PromptRequest):
-    return generate(req.prompt, req.device, req.max_new_tokens, req.temperature, req.top_p)
+    prompt = f"<s>[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{req.prompt.strip()} [/INST]"
+    return generate(prompt, req.device, req.max_new_tokens, req.temperature, req.top_p)
 
 @app.on_event("shutdown")
 def shutdown_event():
