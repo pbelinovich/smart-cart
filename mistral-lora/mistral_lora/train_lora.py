@@ -301,6 +301,7 @@ def tokenize_function(batch):
 
         tokenized = tokenizer(
             full_text,
+            return_tensors="pt",
             max_length=Config.MAX_LENGTH,
             truncation=True,
             add_special_tokens=False
@@ -311,6 +312,7 @@ def tokenize_function(batch):
         
         inst_close_tokenized = tokenizer(
             full_text_raw,
+            return_tensors="pt",
             max_length=Config.MAX_LENGTH,
             truncation=True,
             add_special_tokens=False
