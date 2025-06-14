@@ -283,19 +283,35 @@ def tokenize_function(batch):
 
     for input_text, output_obj in zip(batch["input"], batch["output"]):
         output_text = json.dumps(output_obj, ensure_ascii=False) + tokenizer.eos_token
-        # Новый формат инструкции
         full_text = (
             f"<s>[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text} [/INST]{output_text}</s>"
         )
-        # Токенизируем весь текст
         tokenized = tokenizer(
             full_text,
             max_length=Config.MAX_LENGTH,
             truncation=True,
             padding="max_length",
         )
-        # Для labels: все токены кроме <pad> — реальные id
-        labels = [tid if tid != tokenizer.pad_token_id else -100 for tid in tokenized["input_ids"]]
+        # Определяем длину токенизированной части до и включая [/INST]
+        full_text_raw = (
+            f"<s>[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text} [/INST]"
+        )
+        inst_close_tokenized = tokenizer(
+            full_text_raw,
+            max_length=Config.MAX_LENGTH,
+            truncation=True,
+            padding="max_length",
+            add_special_tokens=False
+        )
+        inst_close_len = len(inst_close_tokenized["input_ids"])
+        # Маскируем всё до и включая [/INST] как -100, остальное — реальные id
+        labels = [-100] * inst_close_len + [
+            tid if tid != tokenizer.pad_token_id else -100
+            for tid in tokenized["input_ids"][inst_close_len:]
+        ]
+        labels = labels[:Config.MAX_LENGTH]
+        if len(labels) < Config.MAX_LENGTH:
+            labels += [-100] * (Config.MAX_LENGTH - len(labels))
         results["input_ids"].append(tokenized["input_ids"])
         results["attention_mask"].append(tokenized["attention_mask"])
         results["labels"].append(labels)
