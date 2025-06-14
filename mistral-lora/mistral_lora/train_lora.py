@@ -351,9 +351,10 @@ if device == "cuda":
 tokenizer = AutoTokenizer.from_pretrained(Config.MODEL_NAME, trust_remote_code=True)
 
 # Configure tokenizer
-if tokenizer.pad_token is None:
-    tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.pad_token_id = tokenizer.eos_token_id
+if tokenizer.pad_token is None or tokenizer.pad_token == tokenizer.eos_token or tokenizer.pad_token == tokenizer.bos_token:
+    tokenizer.add_special_tokens({'pad_token': '<pad>'})
+    tokenizer.pad_token = '<pad>'
+    tokenizer.pad_token_id = tokenizer.convert_tokens_to_ids('<pad>')
 
 print("bos_token_id", tokenizer.bos_token_id)
 print("eos_token_id", tokenizer.eos_token_id)
