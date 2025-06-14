@@ -53,13 +53,15 @@ def load_model(device="auto"):
         # torch_dtype=torch.float16 if device == "cuda" else torch.float32,
         torch_dtype=torch.float16, # только float16, на float32 нужно ~26–28 VRAM на видеокарте
         device_map="auto",
-        low_cpu_mem_usage=True,
+        # low_cpu_mem_usage=True,
         local_files_only=True
     )
 
-    model = torch.compile(model)
     model.generation_config.cache_implementation = "static"
     model.generation_config.stop = ["[/INST]"]
+
+    model = torch.compile(model, mode="reduce-overhead", fullgraph=True)
+    
     
     # Перевод модели в режим eval
     # model.eval()
@@ -95,8 +97,10 @@ def generate_text(input_text, model, tokenizer, device, max_length, temperature,
     inputs = tokenizer(
         prompt,
         return_tensors="pt",
+        padding=True,
         truncation=True,
         max_length=512,
+        pad_to_multiple_of=8,
         add_special_tokens=False
     )
     if device == "cuda":
@@ -113,7 +117,7 @@ def generate_text(input_text, model, tokenizer, device, max_length, temperature,
                 # max_new_tokens=max_length,
                 pad_token_id=tokenizer.unk_token_id,
                 eos_token_id=tokenizer.eos_token_id,
-                repetition_penalty=1.1,
+                repetition_penalty=1.2,
                 return_dict_in_generate=True,
                 # use_cache=True
             )
