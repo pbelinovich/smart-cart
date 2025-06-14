@@ -10,7 +10,7 @@ from typing import Optional, Any
 import uvicorn
 
 app = FastAPI()
-model_path = os.path.join(os.path.dirname(__file__), "../exported_model")
+model_path = os.path.join(os.path.dirname(__file__), "../exported_model/model")
 
 # Глобальные переменные для хранения модели и токенизатора
 model_ref: dict[str, Any] = {"model": None, "tokenizer": None, "device": None}
