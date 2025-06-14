@@ -23,17 +23,18 @@ import glob
 # Конфигурация через переменные окружения
 class Config:
     # Пути
-    MODEL_NAME = os.getenv('MODEL_NAME', "mistralai/Mistral-7B-Instruct-v0.3")
+    # MODEL_NAME = os.getenv('MODEL_NAME', "mistralai/Mistral-7B-Instruct-v0.3")
+    MODEL_NAME = os.getenv('MODEL_NAME', os.path.join(os.path.dirname(os.path.dirname(__file__)), "../exported_model"))
     DATASET_PATH = os.getenv('DATASET_PATH', os.path.join(os.path.dirname(os.path.dirname(__file__)), "data/converted"))
-    OUTPUT_DIR = os.getenv('OUTPUT_DIR', os.path.join(os.path.dirname(os.path.dirname(__file__)), "output"))
+    OUTPUT_DIR = os.getenv('OUTPUT_DIR', os.path.join(os.path.dirname(os.path.dirname(__file__)), "output_new"))
     PROMPT_PATH = os.getenv('PROMPT_PATH', os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "backend/src/shared/parse-products.json"))
     TRANSFORMERS_CACHE = os.getenv('TRANSFORMERS_CACHE', "/tmp/transformers_cache")
     
     # Параметры обучения
     BATCH_SIZE = int(os.getenv('BATCH_SIZE', "4"))
     GRADIENT_ACCUMULATION_STEPS = int(os.getenv('GRADIENT_ACCUMULATION_STEPS', "16"))
-    EPOCHS = int(os.getenv('EPOCHS', "3"))
-    LEARNING_RATE = float(os.getenv('LEARNING_RATE', "5e-5"))
+    EPOCHS = int(os.getenv('EPOCHS', "2"))
+    LEARNING_RATE = float(os.getenv('LEARNING_RATE', "1e-5"))
     MAX_LENGTH = int(os.getenv('MAX_LENGTH', "2048"))
     WARMUP_STEPS = int(os.getenv('WARMUP_STEPS', "50"))
     WEIGHT_DECAY = float(os.getenv('WEIGHT_DECAY', "0.01"))
@@ -286,16 +287,25 @@ def tokenize_function(batch):
         full_text = (
             f"<s>[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text} [/INST]{output_text}</s>"
         )
+        print("full_text", len(full_text))
+        print(full_text)
+        print("--------------------------------")
         tokenized = tokenizer(
             full_text,
             max_length=Config.MAX_LENGTH,
             truncation=True,
             padding="max_length",
         )
+        print("tokenized", len(tokenized["input_ids"]))
+        print(tokenized["input_ids"])
+        print("--------------------------------")
         # Определяем длину токенизированной части до и включая [/INST]
         full_text_raw = (
             f"<s>[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text} [/INST]"
         )
+        print("full_text_raw", len(full_text_raw))
+        print(full_text_raw)
+        print("--------------------------------")
         inst_close_tokenized = tokenizer(
             full_text_raw,
             max_length=Config.MAX_LENGTH,
@@ -303,6 +313,9 @@ def tokenize_function(batch):
             padding="max_length",
             add_special_tokens=False
         )
+        print("inst_close_tokenized", len(inst_close_tokenized["input_ids"]))
+        print(inst_close_tokenized["input_ids"])
+        print("--------------------------------")
         inst_close_len = len(inst_close_tokenized["input_ids"])
         # Маскируем всё до и включая [/INST] как -100, остальное — реальные id
         labels = [-100] * inst_close_len + [
@@ -348,7 +361,8 @@ model = AutoModelForCausalLM.from_pretrained(
     quantization_config=quantization_config,
     device_map="auto",
     use_cache=False,
-    low_cpu_mem_usage=True
+    low_cpu_mem_usage=True,
+    local_files_only=True
 )
 
 # Настройка LoRA
@@ -420,9 +434,9 @@ trainer = OptimizedTrainer(
     data_collator=data_collator
 )
 
-trainer.train()
+# trainer.train()
 
 # Сохранение модели
-print("Saving model...")
-trainer.save_model()
-tokenizer.save_pretrained(Config.OUTPUT_DIR)
+# print("Saving model...")
+# trainer.save_model()
+# tokenizer.save_pretrained(Config.OUTPUT_DIR)

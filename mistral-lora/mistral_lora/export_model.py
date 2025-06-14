@@ -6,7 +6,7 @@ from peft import PeftModel
 def export_model(
     base_model_name="mistralai/Mistral-7B-v0.1",
     adapter_path="./output",
-    output_path="./exported_model"
+    output_path="./exported_model_new"
 ):
     # Создаем директорию для экспорта
     os.makedirs(output_path, exist_ok=True)
