@@ -24,8 +24,8 @@ class PromptRequest(BaseModel):
     prompt: str
     device: Optional[str] = "auto"
     max_new_tokens: Optional[int] = 200
-    temperature: Optional[float] = 0.7
-    top_p: Optional[float] = 0.95
+    temperature: Optional[float] = 0.1
+    top_p: Optional[float] = 1.0
 
 def load_model(device="auto"):
     print("Loading model and tokenizer...", file=sys.stderr)
@@ -71,6 +71,7 @@ def generate_text(prompt, model, tokenizer, device, max_length, temperature, top
         prompt,
         return_tensors="pt",
         truncation=True,
+        max_length=2048,
     )
     if device == "cuda":
         inputs = {k: v.cuda() for k, v in inputs.items()}
@@ -84,7 +85,7 @@ def generate_text(prompt, model, tokenizer, device, max_length, temperature, top
                 temperature=temperature,
                 top_p=top_p,
                 max_new_tokens=max_length,
-                pad_token_id=tokenizer.eos_token_id,
+                pad_token_id=tokenizer.pad_token_id,
                 eos_token_id=tokenizer.eos_token_id,
                 # use_cache=True
             )
