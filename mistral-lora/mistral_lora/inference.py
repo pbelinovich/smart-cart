@@ -48,6 +48,9 @@ def load_model(device="auto"):
 
     # Загрузка токенизатора и модели
     tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
+
+    tokenizer.pad_token = tokenizer.unk_token
+
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
         # torch_dtype=torch.float16 if device == "cuda" else torch.float32,
