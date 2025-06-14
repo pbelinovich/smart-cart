@@ -65,8 +65,18 @@ def load_model(device="auto"):
     return model, tokenizer, device
 
 
-def generate_text(prompt, model, tokenizer, device, max_length, temperature, top_p):
-    # prompt теперь приходит уже с промптом, ничего не добавляем
+def generate_text(input_text, model, tokenizer, device, max_length, temperature, top_p):
+    messages = [
+        {"role": "user", "content": f"{TRAINING_PROMPT}{input_text.strip()}"},
+        {"role": "assistant", "content": ""}
+    ]
+
+    prompt = tokenizer.apply_chat_template(
+        messages,
+        tokenize=False,
+        add_generation_prompt=True
+    )
+
     inputs = tokenizer(
         prompt,
         return_tensors="pt",
@@ -92,7 +102,9 @@ def generate_text(prompt, model, tokenizer, device, max_length, temperature, top
             )
 
     # Получаем полный ответ
-    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    decoded = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    # response = decoded.split("[/INST]")[1].strip()
+    response = decoded.strip()
 
     # Очистка памяти
     del outputs
@@ -135,12 +147,7 @@ TRAINING_PROMPT = load_prompt()
 
 @app.post("/generate")
 async def generate_api(req: PromptRequest):
-    prompt = f"<s> [INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{req.prompt.strip()} [/INST] </s>"
-    print("--------------------------------")
-    print("prompt")
-    print(prompt)
-    print("--------------------------------")
-    return generate(prompt, req.device, req.max_new_tokens, req.temperature, req.top_p)
+    return generate(req.prompt, req.device, req.max_new_tokens, req.temperature, req.top_p)
 
 @app.on_event("shutdown")
 def shutdown_event():

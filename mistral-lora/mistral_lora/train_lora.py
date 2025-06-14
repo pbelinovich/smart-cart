@@ -275,7 +275,7 @@ def load_all_jsonl_files(directory):
             datasets.append(train_dataset)
     return concatenate_datasets(datasets)
 
-def tokenize_function(batch):
+def tokenize_function_old(batch):
     results = {
         "input_ids": [],
         "attention_mask": [],
@@ -283,37 +283,27 @@ def tokenize_function(batch):
     }
 
     for idx, (input_text, output_obj) in enumerate(zip(batch["input"], batch["output"])):
-        print(f"\n=== Пример {idx+1} ===")
         output_text = json.dumps(output_obj, ensure_ascii=False)
         full_text = (
-            f"<s> [INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text.strip()} [/INST]{output_text.strip()} </s>"
+            f"<s>[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text.strip()} [/INST]{output_text.strip()}</s>"
         )
-        print(f"full_text (символов): {len(full_text)}")
-        print(f"full_text: {full_text}")
         tokenized = tokenizer(
             full_text,
             max_length=Config.MAX_LENGTH,
             truncation=True,
             add_special_tokens=False
         )
-        print(f"tokenized input_ids (длина): {len(tokenized['input_ids'])}")
-        print(f"tokenized input_ids (первые 30): {tokenized['input_ids'][:30]}")
         # Определяем длину токенизированной части до и включая [/INST]
         full_text_raw = (
-            f"[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text.strip()} [/INST]"
+            f"<s>[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text.strip()} [/INST]"
         )
-        print(f"full_text_raw (символов): {len(full_text_raw)}")
-        print(f"full_text_raw: {full_text_raw}")
         inst_close_tokenized = tokenizer(
             full_text_raw,
             max_length=Config.MAX_LENGTH,
             truncation=True,
             add_special_tokens=False
         )
-        print(f"inst_close_tokenized input_ids (длина): {len(inst_close_tokenized['input_ids'])}")
-        print(f"inst_close_tokenized input_ids (последние 10): {inst_close_tokenized['input_ids'][-10:]}")
         inst_close_len = len(inst_close_tokenized["input_ids"])
-        print(f"inst_close_len: {inst_close_len}")
         if inst_close_len >= Config.MAX_LENGTH - 10:
             print("Пропущен слишком длинный пример!")
             continue
@@ -327,6 +317,71 @@ def tokenize_function(batch):
             print("cutting labels!", len(labels), Config.MAX_LENGTH)
             labels += [-100] * (Config.MAX_LENGTH - len(labels))
 
+        results["input_ids"].append(tokenized["input_ids"])
+        results["attention_mask"].append(tokenized["attention_mask"])
+        results["labels"].append(labels)
+
+    for batch in results['labels']:
+        for l in batch:
+            if l != -100 and (l < 0 or l >= tokenizer.vocab_size):
+                print("BAD LABEL:", l)
+
+    return results
+
+def tokenize_function(batch):
+    results = {
+        "input_ids": [],
+        "attention_mask": [],
+        "labels": []
+    }
+
+    for input_text, output_obj in zip(batch["input"], batch["output"]):
+        output_text = json.dumps(output_obj, ensure_ascii=False)
+
+        # messages формата Mistral
+        messages = [
+            {"role": "user", "content": f"{TRAINING_PROMPT}{input_text.strip()}"},
+            {"role": "assistant", "content": output_text.strip()}
+        ]
+
+        # Генерация текста с шаблоном чата (встроенный [INST] … [/INST])
+        full_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+
+        tokenized = tokenizer(
+            full_text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=Config.MAX_LENGTH,
+            add_special_tokens=False
+        )
+
+        # Маскируем токены user как -100, assistant — оставляем
+        # Найдём токенизированную длину до начала ответа ассистента
+        assistant_index = next(
+            (i for i, msg in enumerate(messages) if msg["role"] == "assistant"), None
+        )
+
+        partial_messages = messages[:assistant_index]  # Только user
+        user_only_text = tokenizer.apply_chat_template(
+            partial_messages, tokenize=False, add_generation_prompt=False
+        )
+
+        user_tokenized = tokenizer(
+            user_only_text,
+            truncation=True,
+            max_length=Config.MAX_LENGTH,
+            add_special_tokens=False
+        )
+        user_len = len(user_tokenized["input_ids"])
+
+        labels = [-100] * user_len + [
+            tid if tid != tokenizer.pad_token_id else -100
+            for tid in tokenized["input_ids"][user_len:]
+        ]
+        labels = labels[:Config.MAX_LENGTH]
+        if len(labels) < Config.MAX_LENGTH:
+            labels += [-100] * (Config.MAX_LENGTH - len(labels))
+
         print("!! --------------------------------")
         print("pad_token_id:", tokenizer.pad_token_id)
         print("eos_token_id:", tokenizer.eos_token_id)
@@ -335,23 +390,9 @@ def tokenize_function(batch):
         print("labels:", tokenizer.convert_ids_to_tokens(labels))
         print("!! --------------------------------")
 
-        print(f"labels (длина): {len(labels)}")
-        print(f"labels (первые 30): {labels[:30]}")
-        print(f"labels (последние 30): {labels[-30:]}")
-        print("labels (ответ):", labels[inst_close_len:inst_close_len+10])
-        print("tokenized (ответ):", tokenized["input_ids"][inst_close_len:inst_close_len+10])
         results["input_ids"].append(tokenized["input_ids"])
         results["attention_mask"].append(tokenized["attention_mask"])
         results["labels"].append(labels)
-
-    print("max label:", max([l for batch in results['labels'] for l in batch if l != -100]))
-    print("vocab_size:", tokenizer.vocab_size)
-    print("pad_token_id:", tokenizer.pad_token_id)
-
-    for batch in results['labels']:
-        for l in batch:
-            if l != -100 and (l < 0 or l >= tokenizer.vocab_size):
-                print("BAD LABEL:", l)
 
     return results
 
