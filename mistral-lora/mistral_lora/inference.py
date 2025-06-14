@@ -11,8 +11,8 @@ import uvicorn
 
 app = FastAPI()
 # model_path = os.path.join(os.path.dirname(__file__), "../model")
-# model_path = "mistralai/Mistral-7B-Instruct-v0.3"
-model_path = "mistralai/Mistral-7B-v0.1"
+model_path = "mistralai/Mistral-7B-Instruct-v0.3"
+# model_path = "mistralai/Mistral-7B-v0.1"
 
 # Глобальные переменные для хранения модели и токенизатора
 model_ref: dict[str, Any] = {"model": None, "tokenizer": None, "device": None}
@@ -57,8 +57,11 @@ def load_model(device="auto"):
         local_files_only=True
     )
 
+    model = torch.compile(model)
+    model.generation_config.cache_implementation = "static"
+    
     # Перевод модели в режим eval
-    model.eval()
+    # model.eval()
 
     # Сохраняем ссылки для shutdown
     model_ref["model"] = model
@@ -80,8 +83,8 @@ def generate_text(input_text, model, tokenizer, device, max_length, temperature,
     #     add_generation_prompt=True
     # )
 
-    # prompt = f"<s>[INST] {prepared_text}[/INST]"
-    prompt = prepared_text
+    prompt = f"<s>[INST] {prepared_text}[/INST]"
+    # prompt = prepared_text
 
     print("--------------------------------")
     print("prompt")
