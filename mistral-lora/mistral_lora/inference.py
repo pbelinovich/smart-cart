@@ -69,16 +69,16 @@ def load_model(device="auto"):
 
 def generate_text(input_text, model, tokenizer, device, max_length, temperature, top_p):
     prepared_text = TRAINING_PROMPT.replace("${input}", input_text.strip())
-    messages = [
-        {"role": "user", "content": prepared_text},
-        {"role": "assistant", "content": ""}
-    ]
+    # messages = [
+    #     {"role": "user", "content": prepared_text},
+    #     {"role": "assistant", "content": ""}
+    # ]
 
-    prompt2 = tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True
-    )
+    # prompt2 = tokenizer.apply_chat_template(
+    #     messages,
+    #     tokenize=False,
+    #     add_generation_prompt=True
+    # )
 
     # prompt = f"<s>[INST] {prepared_text}[/INST]"
     prompt = prepared_text
