@@ -26,7 +26,7 @@ class Config:
     MODEL_NAME = os.getenv('MODEL_NAME', "mistralai/Mistral-7B-Instruct-v0.3")
     # MODEL_NAME = os.getenv('MODEL_NAME', os.path.join(os.path.dirname(os.path.dirname(__file__)), "exported_model/model"))
     DATASET_PATH = os.getenv('DATASET_PATH', os.path.join(os.path.dirname(os.path.dirname(__file__)), "data/converted"))
-    OUTPUT_DIR = os.getenv('OUTPUT_DIR', os.path.join(os.path.dirname(os.path.dirname(__file__)), "output_new"))
+    OUTPUT_DIR = os.getenv('OUTPUT_DIR', os.path.join(os.path.dirname(os.path.dirname(__file__)), "output"))
     PROMPT_PATH = os.getenv('PROMPT_PATH', os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "backend/src/shared/parse-products.json"))
     TRANSFORMERS_CACHE = os.getenv('TRANSFORMERS_CACHE', "/tmp/transformers_cache")
     
@@ -35,7 +35,7 @@ class Config:
     GRADIENT_ACCUMULATION_STEPS = int(os.getenv('GRADIENT_ACCUMULATION_STEPS', "16"))
     EPOCHS = int(os.getenv('EPOCHS', "2"))
     LEARNING_RATE = float(os.getenv('LEARNING_RATE', "1e-5"))
-    MAX_LENGTH = int(os.getenv('MAX_LENGTH', "2048"))
+    MAX_LENGTH = int(os.getenv('MAX_LENGTH', "512"))
     WARMUP_STEPS = int(os.getenv('WARMUP_STEPS', "50"))
     WEIGHT_DECAY = float(os.getenv('WEIGHT_DECAY', "0.01"))
     SAVE_STEPS = int(os.getenv('SAVE_STEPS', "100"))
@@ -286,7 +286,7 @@ def tokenize_function(batch):
         print(f"\n=== Пример {idx+1} ===")
         output_text = json.dumps(output_obj, ensure_ascii=False)
         full_text = (
-            f"[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text.strip()} [/INST]{output_text}"
+            f"[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text.strip()} [/INST]{output_text.strip()}"
         )
         print(f"full_text (символов): {len(full_text)}")
         print(f"full_text: {full_text}")
@@ -324,7 +324,17 @@ def tokenize_function(batch):
         ]
         labels = labels[:Config.MAX_LENGTH]
         if len(labels) < Config.MAX_LENGTH:
+            print("cutting labels!", len(labels), Config.MAX_LENGTH)
             labels += [-100] * (Config.MAX_LENGTH - len(labels))
+
+        print("!! --------------------------------")
+        print("pad_token_id:", tokenizer.pad_token_id)
+        print("eos_token_id:", tokenizer.eos_token_id)
+        print("last token id:", tokenized["input_ids"][-1])
+        print("tokens:", tokenizer.convert_ids_to_tokens(tokenized["input_ids"]))
+        print("labels:", tokenizer.convert_ids_to_tokens(labels))
+        print("!! --------------------------------")
+
         print(f"labels (длина): {len(labels)}")
         print(f"labels (первые 30): {labels[:30]}")
         print(f"labels (последние 30): {labels[-30:]}")

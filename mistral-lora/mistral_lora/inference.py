@@ -10,7 +10,7 @@ from typing import Optional, Any
 import uvicorn
 
 app = FastAPI()
-model_path = os.path.join(os.path.dirname(__file__), "../exported_model/model")
+model_path = os.path.join(os.path.dirname(__file__), "../model")
 
 # Глобальные переменные для хранения модели и токенизатора
 model_ref: dict[str, Any] = {"model": None, "tokenizer": None, "device": None}
@@ -71,7 +71,7 @@ def generate_text(prompt, model, tokenizer, device, max_length, temperature, top
         prompt,
         return_tensors="pt",
         truncation=True,
-        max_length=2048,
+        max_length=512,
         add_special_tokens=True
     )
     if device == "cuda":
