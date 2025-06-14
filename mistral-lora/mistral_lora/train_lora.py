@@ -328,6 +328,8 @@ def tokenize_function(batch):
         print(f"labels (длина): {len(labels)}")
         print(f"labels (первые 30): {labels[:30]}")
         print(f"labels (последние 30): {labels[-30:]}")
+        print("labels (ответ):", labels[inst_close_len:inst_close_len+10])
+        print("tokenized (ответ):", tokenized["input_ids"][inst_close_len:inst_close_len+10])
         results["input_ids"].append(tokenized["input_ids"])
         results["attention_mask"].append(tokenized["attention_mask"])
         results["labels"].append(labels)
