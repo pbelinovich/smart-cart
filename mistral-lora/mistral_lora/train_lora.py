@@ -33,8 +33,8 @@ class Config:
     # Параметры обучения
     BATCH_SIZE = int(os.getenv('BATCH_SIZE', "4"))
     GRADIENT_ACCUMULATION_STEPS = int(os.getenv('GRADIENT_ACCUMULATION_STEPS', "16"))
-    EPOCHS = int(os.getenv('EPOCHS', "2"))
-    LEARNING_RATE = float(os.getenv('LEARNING_RATE', "1e-5"))
+    EPOCHS = int(os.getenv('EPOCHS', "3"))
+    LEARNING_RATE = float(os.getenv('LEARNING_RATE', "5e-5"))
     MAX_LENGTH = int(os.getenv('MAX_LENGTH', "512"))
     WARMUP_STEPS = int(os.getenv('WARMUP_STEPS', "50"))
     WEIGHT_DECAY = float(os.getenv('WEIGHT_DECAY', "0.01"))
@@ -287,17 +287,19 @@ def tokenize_function(batch):
 
         output_text = json.dumps(output_obj, ensure_ascii=False)
 
-        user_content = TRAINING_PROMPT.replace("${input}", input_text.strip())
-        user_message = {"role": "user", "content": user_content}
+        # user_content = TRAINING_PROMPT.replace("${input}", input_text.strip())
+        #user_message = {"role": "user", "content": user_content}
 
         # messages формата Mistral
-        common_messages = [
-            user_message,
-            {"role": "assistant", "content": output_text.strip()}
-        ]
+        # common_messages = [
+        #     user_message,
+        #     {"role": "assistant", "content": output_text.strip()}
+        # ]
 
         # Генерация текста с шаблоном чата (встроенный [INST] … [/INST])
-        full_text = tokenizer.apply_chat_template(common_messages, tokenize=False, add_generation_prompt=True)
+        # full_text = tokenizer.apply_chat_template(common_messages, tokenize=False, add_generation_prompt=True)
+        mess = TRAINING_PROMPT.replace("${input}", input_text.strip())
+        full_text = f"<s>[INST]{mess}[/INST]{output_text.strip()}</s>"
 
         print("!! --------------------------------")
         print("full_text")
@@ -316,8 +318,8 @@ def tokenize_function(batch):
         attention_mask = tokenized["attention_mask"].squeeze().tolist()
 
         # Определяем длину токенизированной части до и включая [/INST]
-        user_messages = [user_message]
-        full_text_raw = tokenizer.apply_chat_template(user_messages, tokenize=False, add_generation_prompt=False)
+        # user_messages = [user_message]
+        full_text_raw = f"<s>[INST]{mess}[/INST]"
         
         inst_close_tokenized = tokenizer(
             full_text_raw,
@@ -337,7 +339,6 @@ def tokenize_function(batch):
         ]
         labels = labels[:Config.MAX_LENGTH]
         if len(labels) < Config.MAX_LENGTH:
-            print("cutting labels!", len(labels), Config.MAX_LENGTH)
             labels += [-100] * (Config.MAX_LENGTH - len(labels))
 
         results["input_ids"].append(input_ids)
@@ -399,14 +400,6 @@ def tokenize_function_old(batch):
         labels = labels[:Config.MAX_LENGTH]
         if len(labels) < Config.MAX_LENGTH:
             labels += [-100] * (Config.MAX_LENGTH - len(labels))
-
-        print("!! --------------------------------")
-        print("pad_token_id:", tokenizer.pad_token_id)
-        print("eos_token_id:", tokenizer.eos_token_id)
-        print("last token id:", tokenized["input_ids"][-1])
-        print("tokens:", tokenizer.convert_ids_to_tokens(tokenized["input_ids"]))
-        print("labels:", tokenizer.convert_ids_to_tokens(labels))
-        print("!! --------------------------------")
 
         results["input_ids"].append(tokenized["input_ids"])
         results["attention_mask"].append(tokenized["attention_mask"])

@@ -50,7 +50,7 @@ def load_model(device="auto"):
     tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
 
     # TODO удалить эту хню при запуске дотренированной модели
-    tokenizer.pad_token = tokenizer.unk_token
+    # tokenizer.pad_token = tokenizer.unk_token
 
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
@@ -62,7 +62,7 @@ def load_model(device="auto"):
     )
 
     model.generation_config.cache_implementation = "static"
-    model.generation_config.stop = ["[/INST]"]
+    model.generation_config.stop = ["[INST]", "[/INST]"]
 
     model = torch.compile(model, mode="reduce-overhead", fullgraph=True)
     
