@@ -340,7 +340,9 @@ def tokenize_function(batch):
         print("eos_token_id:", tokenizer.eos_token_id)
         print("last token id:", input_ids[-1])
         print("tokens:", tokenizer.convert_ids_to_tokens(input_ids))
-        print("labels:", tokenizer.convert_ids_to_tokens(labels))
+        # Заменяем -100 на pad_token_id для отображения токенов
+        labels_for_print = [tid if tid != -100 else tokenizer.pad_token_id for tid in labels]
+        print("labels:", tokenizer.convert_ids_to_tokens(labels_for_print))
         print("!! --------------------------------")
 
         results["input_ids"].append(input_ids)
