@@ -8,7 +8,7 @@ export class MistralAdapter implements IModelAdapter {
     console.log('!!prompt', prompt)
     const result = await axios.post(
       OLLAMA_API_URL,
-      { model: 'pretrained-mistral-7b-f16-q4_K_M', prompt, stream: false },
+      { model: 'pretrained-mistral-7b-f16-q4_k_m', prompt, stream: false },
       { headers: { 'Content-Type': 'application/json' } }
     )
 

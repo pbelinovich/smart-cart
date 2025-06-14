@@ -32,8 +32,8 @@ export const initProcesses = ({ app, eventBus }: InitProcessesParams) => {
   const edadealWorkerPool = new WorkerPool({
     taskNames: ['edadeal/collectProducts', 'edadeal/searchCities', 'edadeal/getChercherArea'],
     eventBus,
-    size: 2,
-    proxyList: ['socks5h://user291075:0f3s8i@195.96.150.5:12673'],
+    // size: 2,
+    // proxyList: ['socks5h://user291075:0f3s8i@195.96.150.5:12673'],
   })
 
   const internalWorkerPool = new WorkerPool({

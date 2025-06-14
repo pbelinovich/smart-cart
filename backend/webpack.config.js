@@ -2,6 +2,7 @@ const configs = require('./configs')
 const packageJson = require('./package.json')
 const webpack = require('webpack')
 const path = require('node:path')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 const server = configs.getDefaultConfig({
   module: 'server',
@@ -13,6 +14,11 @@ const server = configs.getDefaultConfig({
   plugins: [
     new webpack.DefinePlugin({
       'process.env.VERSION': JSON.stringify(packageJson.version),
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: path.join(__dirname, './src/shared/parse-products.json'), to: path.join(__dirname, './server/parse-products.json') },
+      ],
     }),
     new webpack.NormalModuleReplacementPlugin(/^xregexp$/, 'xregexp/xregexp-all'),
     new webpack.NormalModuleReplacementPlugin(

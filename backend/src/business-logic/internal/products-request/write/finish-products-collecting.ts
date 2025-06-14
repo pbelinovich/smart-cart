@@ -58,7 +58,7 @@ export const finishProductsCollecting = buildWriteOperation(
     collectedProducts.forEach(collectedProduct => {
       const presentProduct = hashToPresentProductMap[collectedProduct.cachedProductHash]
 
-      if (presentProduct) {
+      if (presentProduct && presentProduct.products.length) {
         const shop = shopIdToShopMap[presentProduct.shopId]
 
         if (!shop) {
