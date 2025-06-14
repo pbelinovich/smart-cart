@@ -121,7 +121,8 @@ def generate_text(input_text, model, tokenizer, device, max_length, temperature,
     # response = tokenizer.decode(outputs[0][prompt_length:])
 
     # Получаем полный ответ
-    decoded = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    seq = outputs.sequences  # shape [1, seq_len]
+    decoded = tokenizer.decode(seq[0], skip_special_tokens=True)
     # response = decoded.split("[/INST]")[1].strip()
     response = decoded.strip()
 
