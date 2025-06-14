@@ -112,7 +112,7 @@ def generate_text(input_text, model, tokenizer, device, max_length, temperature,
                 # max_new_tokens=max_length,
                 pad_token_id=tokenizer.pad_token_id,
                 eos_token_id=tokenizer.eos_token_id,
-                stop_token_ids=[tokenizer.eos_token_id],
+                stop_token="[/INST]",
                 # use_cache=True
             )
 
