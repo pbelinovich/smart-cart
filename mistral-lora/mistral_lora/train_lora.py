@@ -34,7 +34,7 @@ class Config:
     BATCH_SIZE = int(os.getenv('BATCH_SIZE', "4"))
     GRADIENT_ACCUMULATION_STEPS = int(os.getenv('GRADIENT_ACCUMULATION_STEPS', "16"))
     EPOCHS = int(os.getenv('EPOCHS', "3"))
-    LEARNING_RATE = float(os.getenv('LEARNING_RATE', "5e-5"))
+    LEARNING_RATE = float(os.getenv('LEARNING_RATE', "1e-5"))
     MAX_LENGTH = int(os.getenv('MAX_LENGTH', "512"))
     WARMUP_STEPS = int(os.getenv('WARMUP_STEPS', "50"))
     WEIGHT_DECAY = float(os.getenv('WEIGHT_DECAY', "0.01"))
