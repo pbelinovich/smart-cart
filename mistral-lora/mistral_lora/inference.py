@@ -79,7 +79,8 @@ def generate_text(input_text, model, tokenizer, device, max_length, temperature,
         add_generation_prompt=True
     )
 
-    prompt = f"<s>[INST] {prepared_text}[/INST]"
+    # prompt = f"<s>[INST] {prepared_text}[/INST]"
+    prompt = prepared_text
 
     print("--------------------------------")
     print("prompt")
