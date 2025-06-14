@@ -11,11 +11,11 @@ def export_model(
     # Создаем директорию для экспорта
     os.makedirs(output_path, exist_ok=True)
     
-    # Загружаем токенизатор из adapter_path (где он был дообучен и сохранён!)
+    # 1. Загружаем дообученный токенизатор
     print("Loading tokenizer from adapter_path...")
     tokenizer = AutoTokenizer.from_pretrained(adapter_path)
     
-    # Загружаем базовую модель
+    # 2. Загружаем базовую модель
     print("Loading base model...")
     model = AutoModelForCausalLM.from_pretrained(
         base_model_name,
@@ -24,19 +24,19 @@ def export_model(
         low_cpu_mem_usage=True
     )
     
-    # Загружаем LoRA адаптеры
+    # 3. Расширяем эмбеддинги под размер токенизатора
+    print("Resizing model embeddings...")
+    model.resize_token_embeddings(len(tokenizer))
+    
+    # 4. Загружаем LoRA адаптеры
     print("Loading LoRA adapters...")
     model = PeftModel.from_pretrained(model, adapter_path)
     
-    # Объединяем веса адаптеров с базовой моделью
+    # 5. Мержим и сохраняем
     print("Merging adapters with base model...")
-    model = model.merge_and_unload()  # type: ignore
-    
-    # Оптимизация модели для инференса
+    model = model.merge_and_unload()
     print("Optimizing model for inference...")
-    model.eval()  # Переводим модель в режим инференса
-    
-    # Сохраняем объединенную модель
+    model.eval()
     print(f"Saving merged model to {output_path}...")
     model.save_pretrained(
         output_path,
