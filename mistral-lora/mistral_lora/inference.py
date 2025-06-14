@@ -111,8 +111,9 @@ def generate_text(input_text, model, tokenizer, device, max_length, temperature,
                 temperature=temperature,
                 top_p=top_p,
                 # max_new_tokens=max_length,
-                pad_token_id=tokenizer.pad_token_id,
+                pad_token_id=tokenizer.unk_token_id,
                 eos_token_id=tokenizer.eos_token_id,
+                repetition_penalty=1.1,
                 return_dict_in_generate=True,
                 # use_cache=True
             )
@@ -121,13 +122,8 @@ def generate_text(input_text, model, tokenizer, device, max_length, temperature,
     # response = tokenizer.decode(outputs[0][prompt_length:])
 
     # Получаем полный ответ
-    seq = outputs.sequences  # shape [1, seq_len]
-
-    print("seq[0] type:", type(seq[0]))
-    print("seq[0] value:", seq[0])
-    print("seq[0] list:", list(seq[0]))
-
-    decoded = tokenizer.decode(list(seq[0]), skip_special_tokens=True)
+    seq = outputs.sequences[0]
+    decoded = tokenizer.decode(seq[inputs['input_ids'].shape[1]:], skip_special_tokens=True)
     # response = decoded.split("[/INST]")[1].strip()
     response = decoded.strip()
 
