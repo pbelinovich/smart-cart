@@ -11,9 +11,12 @@ def export_model(
     # Создаем директорию для экспорта
     os.makedirs(output_path, exist_ok=True)
     
-    # Загружаем базовую модель и токенизатор
-    print("Loading base model and tokenizer...")
-    tokenizer = AutoTokenizer.from_pretrained(base_model_name)
+    # Загружаем токенизатор из adapter_path (где он был дообучен и сохранён!)
+    print("Loading tokenizer from adapter_path...")
+    tokenizer = AutoTokenizer.from_pretrained(adapter_path)
+    
+    # Загружаем базовую модель
+    print("Loading base model...")
     model = AutoModelForCausalLM.from_pretrained(
         base_model_name,
         torch_dtype=torch.float16,
