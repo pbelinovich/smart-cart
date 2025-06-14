@@ -299,6 +299,11 @@ def tokenize_function(batch):
         # Генерация текста с шаблоном чата (встроенный [INST] … [/INST])
         full_text = tokenizer.apply_chat_template(common_messages, tokenize=False, add_generation_prompt=True)
 
+        print("!! --------------------------------")
+        print("full_text")
+        print(full_text)
+        print("!! --------------------------------")
+
         tokenized = tokenizer(
             full_text,
             return_tensors="pt",
@@ -334,16 +339,6 @@ def tokenize_function(batch):
         if len(labels) < Config.MAX_LENGTH:
             print("cutting labels!", len(labels), Config.MAX_LENGTH)
             labels += [-100] * (Config.MAX_LENGTH - len(labels))
-
-        print("!! --------------------------------")
-        print("pad_token_id:", tokenizer.pad_token_id)
-        print("eos_token_id:", tokenizer.eos_token_id)
-        print("last token id:", input_ids[-1])
-        print("tokens:", tokenizer.convert_ids_to_tokens(input_ids))
-        # Заменяем -100 на pad_token_id для отображения токенов
-        labels_for_print = [tid if tid != -100 else tokenizer.pad_token_id for tid in labels]
-        print("labels:", tokenizer.convert_ids_to_tokens(labels_for_print))
-        print("!! --------------------------------")
 
         results["input_ids"].append(input_ids)
         results["attention_mask"].append(attention_mask)

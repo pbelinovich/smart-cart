@@ -4,7 +4,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
 
 def export_model(
-    base_model_name="mistralai/Mistral-7B-v0.1",
+    base_model_name="mistralai/Mistral-7B-Instruct-v0.3",
     adapter_path="./output",
     output_path="./model"
 ):
