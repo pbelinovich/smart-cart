@@ -365,6 +365,12 @@ if tokenizer.pad_token is None or tokenizer.pad_token_id >= tokenizer.vocab_size
 print("pad_token_id:", tokenizer.pad_token_id)
 print("vocab_size (tokenizer):", tokenizer.vocab_size)
 
+quantization_config = BitsAndBytesConfig(
+    load_in_8bit=True,
+    llm_int8_threshold=6.0,
+    llm_int8_has_fp16_weight=False,
+)
+
 # Загружаем модель
 model = AutoModelForCausalLM.from_pretrained(
     Config.MODEL_NAME,
