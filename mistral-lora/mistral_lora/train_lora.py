@@ -290,6 +290,10 @@ def tokenize_function(batch):
         )
         print(f"full_text (символов): {len(full_text)}")
         print(f"full_text: {full_text}")
+        print("--------------------------------")
+        print("only full text without padding and truncation")
+        print(tokenizer(full_text, add_special_tokens=True))
+        print("--------------------------------")
         tokenized = tokenizer(
             full_text,
             max_length=Config.MAX_LENGTH,
