@@ -111,10 +111,13 @@ def generate_text(input_text, model, tokenizer, device, max_length, temperature,
                 # use_cache=True
             )
 
+    prompt_length = inputs['input_ids'].shape[1]
+    response = tokenizer.decode(outputs[0][prompt_length:])
+
     # Получаем полный ответ
-    decoded = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    # decoded = tokenizer.decode(outputs[0], skip_special_tokens=True)
     # response = decoded.split("[/INST]")[1].strip()
-    response = decoded.strip()
+    # response = decoded.strip()
 
     # Очистка памяти
     del outputs
