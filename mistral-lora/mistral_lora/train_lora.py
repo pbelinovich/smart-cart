@@ -290,15 +290,10 @@ def tokenize_function(batch):
         )
         print(f"full_text (символов): {len(full_text)}")
         print(f"full_text: {full_text}")
-        print("--------------------------------")
-        print("only full text without padding and truncation")
-        print(tokenizer(full_text, add_special_tokens=True))
-        print("--------------------------------")
         tokenized = tokenizer(
             full_text,
             max_length=Config.MAX_LENGTH,
             truncation=True,
-            padding="max_length",
             add_special_tokens=True
         )
         print(f"tokenized input_ids (длина): {len(tokenized['input_ids'])}")
@@ -313,7 +308,6 @@ def tokenize_function(batch):
             full_text_raw,
             max_length=Config.MAX_LENGTH,
             truncation=True,
-            padding="max_length",
             add_special_tokens=False
         )
         print(f"inst_close_tokenized input_ids (длина): {len(inst_close_tokenized['input_ids'])}")
@@ -441,7 +435,8 @@ training_args = TrainingArguments(
 # Data collator
 data_collator = DataCollatorForLanguageModeling(
     tokenizer=tokenizer,
-    mlm=False
+    mlm=False,
+    pad_to_multiple_of=8
 )
 
 # Запуск обучения
