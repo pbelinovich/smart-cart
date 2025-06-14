@@ -65,7 +65,7 @@ def load_model(device="auto"):
     return model, tokenizer, device
 
 
-def generate_text(prompt, model, tokenizer, device, max_length=300, temperature=0.7, top_p=0.9):
+def generate_text(prompt, model, tokenizer, device, max_length, temperature, top_p):
     # prompt теперь приходит уже с промптом, ничего не добавляем
     inputs = tokenizer(
         prompt,
@@ -79,14 +79,14 @@ def generate_text(prompt, model, tokenizer, device, max_length=300, temperature=
         with torch.cuda.amp.autocast(enabled=(device == "cuda")):
             outputs = model.generate(
                 **inputs,
-                num_return_sequences=1,
-                do_sample=False,  # строгий вывод
-                temperature=0.1,
-                top_p=1.0,
+                # num_return_sequences=1,
+                # do_sample=False,  # строгий вывод
+                temperature=temperature,
+                top_p=top_p,
                 max_new_tokens=max_length,
                 pad_token_id=tokenizer.eos_token_id,
                 eos_token_id=tokenizer.eos_token_id,
-                use_cache=True
+                # use_cache=True
             )
 
     # Получаем полный ответ
@@ -134,6 +134,10 @@ TRAINING_PROMPT = load_prompt()
 @app.post("/generate")
 async def generate_api(req: PromptRequest):
     prompt = f"<s>[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{req.prompt.strip()} [/INST]"
+    print("--------------------------------")
+    print("prompt")
+    print(prompt)
+    print("--------------------------------")
     return generate(prompt, req.device, req.max_new_tokens, req.temperature, req.top_p)
 
 @app.on_event("shutdown")
