@@ -59,6 +59,7 @@ def load_model(device="auto"):
 
     model = torch.compile(model)
     model.generation_config.cache_implementation = "static"
+    model.generation_config.stop = ["[/INST]"]
     
     # Перевод модели в режим eval
     # model.eval()
@@ -112,7 +113,7 @@ def generate_text(input_text, model, tokenizer, device, max_length, temperature,
                 # max_new_tokens=max_length,
                 pad_token_id=tokenizer.pad_token_id,
                 eos_token_id=tokenizer.eos_token_id,
-                stop_id=tokenizer.eos_token_id,
+                return_dict_in_generate=True,
                 # use_cache=True
             )
 
