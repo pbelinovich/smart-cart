@@ -282,30 +282,29 @@ def tokenize_function(batch):
         "labels": []
     }
 
-    for input_text, output_obj in zip(batch["input"], batch["output"]):
+    for idx, (input_text, output_obj) in enumerate(zip(batch["input"], batch["output"])):
+        print(f"\n=== Пример {idx+1} ===")
         output_text = json.dumps(output_obj, ensure_ascii=False) + tokenizer.eos_token
+        print(f"output_text: {output_text}")
         full_text = (
             f"<s>[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text} [/INST]{output_text}</s>"
         )
-        print("full_text", len(full_text))
-        print(full_text)
-        print("--------------------------------")
+        print(f"full_text (символов): {len(full_text)}")
+        print(f"full_text: {full_text}")
         tokenized = tokenizer(
             full_text,
             max_length=Config.MAX_LENGTH,
             truncation=True,
             padding="max_length",
         )
-        print("tokenized", len(tokenized["input_ids"]))
-        print(tokenized["input_ids"])
-        print("--------------------------------")
+        print(f"tokenized input_ids (длина): {len(tokenized['input_ids'])}")
+        print(f"tokenized input_ids (первые 30): {tokenized['input_ids'][:30]}")
         # Определяем длину токенизированной части до и включая [/INST]
         full_text_raw = (
             f"<s>[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text} [/INST]"
         )
-        print("full_text_raw", len(full_text_raw))
-        print(full_text_raw)
-        print("--------------------------------")
+        print(f"full_text_raw (символов): {len(full_text_raw)}")
+        print(f"full_text_raw: {full_text_raw}")
         inst_close_tokenized = tokenizer(
             full_text_raw,
             max_length=Config.MAX_LENGTH,
@@ -313,10 +312,10 @@ def tokenize_function(batch):
             padding="max_length",
             add_special_tokens=False
         )
-        print("inst_close_tokenized", len(inst_close_tokenized["input_ids"]))
-        print(inst_close_tokenized["input_ids"])
-        print("--------------------------------")
+        print(f"inst_close_tokenized input_ids (длина): {len(inst_close_tokenized['input_ids'])}")
+        print(f"inst_close_tokenized input_ids (последние 10): {inst_close_tokenized['input_ids'][-10:]}")
         inst_close_len = len(inst_close_tokenized["input_ids"])
+        print(f"inst_close_len: {inst_close_len}")
         # Маскируем всё до и включая [/INST] как -100, остальное — реальные id
         labels = [-100] * inst_close_len + [
             tid if tid != tokenizer.pad_token_id else -100
@@ -325,6 +324,9 @@ def tokenize_function(batch):
         labels = labels[:Config.MAX_LENGTH]
         if len(labels) < Config.MAX_LENGTH:
             labels += [-100] * (Config.MAX_LENGTH - len(labels))
+        print(f"labels (длина): {len(labels)}")
+        print(f"labels (первые 30): {labels[:30]}")
+        print(f"labels (последние 30): {labels[-30:]}")
         results["input_ids"].append(tokenized["input_ids"])
         results["attention_mask"].append(tokenized["attention_mask"])
         results["labels"].append(labels)
@@ -361,8 +363,7 @@ model = AutoModelForCausalLM.from_pretrained(
     quantization_config=quantization_config,
     device_map="auto",
     use_cache=False,
-    low_cpu_mem_usage=True,
-    local_files_only=True
+    low_cpu_mem_usage=True
 )
 
 # Настройка LoRA
@@ -434,9 +435,9 @@ trainer = OptimizedTrainer(
     data_collator=data_collator
 )
 
-# trainer.train()
+trainer.train()
 
 # Сохранение модели
-# print("Saving model...")
-# trainer.save_model()
-# tokenizer.save_pretrained(Config.OUTPUT_DIR)
+print("Saving model...")
+trainer.save_model()
+tokenizer.save_pretrained(Config.OUTPUT_DIR)
