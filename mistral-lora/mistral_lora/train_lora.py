@@ -23,7 +23,7 @@ import glob
 # Конфигурация через переменные окружения
 class Config:
     # Пути
-    MODEL_NAME = os.getenv('MODEL_NAME', "mistralai/Mistral-7B-Instruct-v0.2")
+    MODEL_NAME = os.getenv('MODEL_NAME', "mistralai/Mistral-7B-Instruct-v0.3")
     DATASET_PATH = os.getenv('DATASET_PATH', os.path.join(os.path.dirname(os.path.dirname(__file__)), "data/converted"))
     OUTPUT_DIR = os.getenv('OUTPUT_DIR', os.path.join(os.path.dirname(os.path.dirname(__file__)), "output"))
     PROMPT_PATH = os.getenv('PROMPT_PATH', os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "backend/src/shared/parse-products.json"))
