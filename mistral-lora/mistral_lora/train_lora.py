@@ -24,7 +24,7 @@ import glob
 class Config:
     # Пути
     # MODEL_NAME = os.getenv('MODEL_NAME', "mistralai/Mistral-7B-Instruct-v0.3")
-    MODEL_NAME = os.getenv('MODEL_NAME', os.path.join(os.path.dirname(os.path.dirname(__file__)), "../exported_model"))
+    MODEL_NAME = os.getenv('MODEL_NAME', os.path.join(os.path.dirname(os.path.dirname(__file__)), "../exported_model/model"))
     DATASET_PATH = os.getenv('DATASET_PATH', os.path.join(os.path.dirname(os.path.dirname(__file__)), "data/converted"))
     OUTPUT_DIR = os.getenv('OUTPUT_DIR', os.path.join(os.path.dirname(os.path.dirname(__file__)), "output_new"))
     PROMPT_PATH = os.getenv('PROMPT_PATH', os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "backend/src/shared/parse-products.json"))
