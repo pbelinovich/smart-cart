@@ -23,7 +23,7 @@ import glob
 # Конфигурация через переменные окружения
 class Config:
     # Пути
-    MODEL_NAME = os.getenv('MODEL_NAME', "mistralai/Mistral-7B-v0.1")
+    MODEL_NAME = os.getenv('MODEL_NAME', "mistralai/Mistral-7B-Instruct-v0.2")
     DATASET_PATH = os.getenv('DATASET_PATH', os.path.join(os.path.dirname(os.path.dirname(__file__)), "data/converted"))
     OUTPUT_DIR = os.getenv('OUTPUT_DIR', os.path.join(os.path.dirname(os.path.dirname(__file__)), "output"))
     PROMPT_PATH = os.getenv('PROMPT_PATH', os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "backend/src/shared/parse-products.json"))
@@ -283,10 +283,10 @@ def tokenize_function(batch):
 
     for input_text, output_obj in zip(batch["input"], batch["output"]):
         output_text = json.dumps(output_obj, ensure_ascii=False) + tokenizer.eos_token
-        prompt_input = f"{TRAINING_PROMPT}{input_text}\nОтвет: "
-        # Формируем полный текст: промт + вопрос + ответ
-        full_text = f"{prompt_input}{output_text}"
-
+        # Новый формат инструкции
+        full_text = (
+            f"<s>[INST] ### Инструкция:\n{TRAINING_PROMPT}\n\n### Ввод:\n{input_text} [/INST]{output_text}</s>"
+        )
         # Токенизируем весь текст
         tokenized = tokenizer(
             full_text,
@@ -294,33 +294,8 @@ def tokenize_function(batch):
             truncation=True,
             padding="max_length",
         )
-
-        # Токенизируем только output_text для labels
-        output_tokenized = tokenizer(
-            output_text,
-            max_length=Config.MAX_LENGTH,
-            truncation=True,
-            padding="max_length",
-        )
-        output_token_ids = output_tokenized["input_ids"]
-
-        # Определяем длину prompt_input
-        prompt_input_tokens = tokenizer(
-            prompt_input,
-            max_length=Config.MAX_LENGTH,
-            truncation=True,
-            padding="max_length",
-        )
-        prompt_input_len = sum([1 for id in prompt_input_tokens["input_ids"] if id != tokenizer.pad_token_id])
-
-        # В labels для prompt_input ставим -100, для output — реальные id
-        labels = [-100] * prompt_input_len
-        # Добавляем токены ответа (output_text), обрезая/дополняя до max_length
-        labels += output_token_ids[:Config.MAX_LENGTH - prompt_input_len]
-        labels = labels[:Config.MAX_LENGTH]
-        if len(labels) < Config.MAX_LENGTH:
-            labels += [-100] * (Config.MAX_LENGTH - len(labels))
-
+        # Для labels: все токены кроме <pad> — реальные id
+        labels = [tid if tid != tokenizer.pad_token_id else -100 for tid in tokenized["input_ids"]]
         results["input_ids"].append(tokenized["input_ids"])
         results["attention_mask"].append(tokenized["attention_mask"])
         results["labels"].append(labels)
