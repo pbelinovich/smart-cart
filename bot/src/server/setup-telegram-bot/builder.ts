@@ -41,13 +41,20 @@ export const buildCommandRunner = ({ app, publicHttpApi }: SetupTelegramBotParam
       lastName: ctx.from?.last_name,
     }
 
+    let messageId: number | undefined
+
     const context: IDefaultCommandContext = {
       ...executors,
       chatId,
       tgUser,
       subscriptionManager,
       publicHttpApi,
-      send: (message, options) => messageManager.send(ctx, message, options),
+      send: async (message, options) => {
+        messageId = await messageManager.send(ctx, message, options)
+      },
+      editLastOrSend: async (message, options) => {
+        messageId = await messageManager.send(ctx, message, { ...options, messageId })
+      },
       sendBatch: messagesInfos => messageManager.sendBatch(ctx, messagesInfos),
       log: message => {
         return logInfo(`[${handler.name} | ${tgUser.id}${tgUser.login ? ` (${tgUser.login})` : ''}]: ${message}`)

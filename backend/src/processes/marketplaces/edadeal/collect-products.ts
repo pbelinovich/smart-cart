@@ -19,7 +19,7 @@ import {
   createProductsResponse,
   ICollectedProduct,
   ProductsRequestStatus,
-  IProduct,
+  IMarketplaceProduct,
 } from '../../external'
 
 const MAX_PRODUCTS_COUNT = 10
@@ -149,7 +149,7 @@ export const collectProducts = buildProcessHandler(async ({ readExecutor, writeE
     shops.forEach(shop => {
       const shopItem = shopToItemsMap[shop.marketplaceId] || []
       const hash = shopMarketplaceIdToHashMap[shop.marketplaceId]
-      const products: IProduct[] = []
+      const products: IMarketplaceProduct[] = []
 
       let counter = 0
 
@@ -162,7 +162,7 @@ export const collectProducts = buildProcessHandler(async ({ readExecutor, writeE
         const price = getPrice(item)
 
         if (item.title && price > 0) {
-          products.push({ name: item.title, price })
+          products.push({ id: item.uuid, name: item.title, price })
         }
 
         counter++
@@ -195,7 +195,7 @@ export const collectProducts = buildProcessHandler(async ({ readExecutor, writeE
 
   return shops.map<ICollectedProduct>(shop => {
     return {
-      cachedProductHash: shopMarketplaceIdToHashMap[shop.marketplaceId],
+      hash: shopMarketplaceIdToHashMap[shop.marketplaceId],
       quantity: params.product.quantity,
       priceCategory: params.product.priceCategory,
     }

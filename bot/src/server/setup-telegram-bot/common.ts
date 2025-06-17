@@ -23,10 +23,13 @@ export interface ITgUser {
   lastName: string | undefined
 }
 
-export interface ISendMessageOptions {
-  kind?: 'default' | 'edit'
+export interface ICommandContextSendMessageOptions {
   parseMode?: ParseMode
   markup?: Markup.Markup<any>
+}
+
+export interface ISendMessageOptions extends ICommandContextSendMessageOptions {
+  messageId?: number
 }
 
 export interface IDefaultCommandContext extends IAppExecutors {
@@ -34,7 +37,8 @@ export interface IDefaultCommandContext extends IAppExecutors {
   chatId: number
   tgUser: ITgUser
   subscriptionManager: SubscriptionManager
-  send: (message: string, options?: ISendMessageOptions) => void
+  send: (message: string, options?: ICommandContextSendMessageOptions) => Promise<void>
+  editLastOrSend: (message: string, options?: ICommandContextSendMessageOptions) => Promise<void>
   sendBatch: (messagesInfos: MessageInfo[]) => void
   log: (message: string) => void
 }

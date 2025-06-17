@@ -46,6 +46,10 @@ export const getAppInstance = (): IApp => {
               onGetRepo(readReposFactory.absentProductRepo)
               return readReposFactory.absentProductRepo
             },
+            get cartRepo() {
+              onGetRepo(readReposFactory.cartRepo)
+              return readReposFactory.cartRepo
+            },
             get changeCityRequestRepo() {
               onGetRepo(readReposFactory.changeCityRequestRepo)
               return readReposFactory.changeCityRequestRepo
@@ -98,6 +102,9 @@ export const getAppInstance = (): IApp => {
             readExecutor,
             get absentProductRepo() {
               return writeReposFactory.absentProductRepo
+            },
+            get cartRepo() {
+              return writeReposFactory.cartRepo
             },
             get changeCityRequestRepo() {
               return writeReposFactory.changeCityRequestRepo

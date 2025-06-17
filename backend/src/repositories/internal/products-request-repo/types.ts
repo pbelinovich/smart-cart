@@ -1,5 +1,5 @@
 import { IEntity } from '../../external'
-import { IAIProduct, ICart } from '../../types'
+import { IAIProduct } from '../../types'
 
 export type ProductsRequestStatus = 'created' | 'productsParsing' | 'productsParsed' | 'productsCollecting' | 'productsCollected'
 
@@ -13,5 +13,4 @@ export interface IProductsRequestEntity extends IEntity {
   status: ProductsRequestStatus
   error: boolean
   aiProducts: IAIProduct[]
-  carts: ICart[]
 }

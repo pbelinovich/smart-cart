@@ -7,59 +7,90 @@ export type MessageInfo = {
   options?: ISendMessageOptions
 }
 
+const ROWS_LIMIT = 2000
+
 export class MessageManager {
   private messageQueues = new Map<number, MessageInfo[]>()
   private queueMasters = new Map<number, QueueMaster>()
-  private lastMessageInfos = new Map<number, { messageId: number; hasMarkup: boolean; timestamp: number }>()
-  private lastUserMessageInfos = new Map<number, { messageId: number; timestamp: number }>()
 
-  private sendMessage = (ctx: Context, message: string, { kind = 'default', parseMode = 'HTML', markup }: ISendMessageOptions = {}) => {
-    const chatId = ctx.chat?.id
+  // chatId -> messageId -> { hasMarkup: boolean; timestamp: number }
+  private systemMessagesInfos = new Map<number, Array<{ messageId: number; hasMarkup: boolean; timestamp: number }>>()
+  // chatId -> { messageId: number; timestamp: number }
+  private lastUserMessagesInfos = new Map<number, { messageId: number; timestamp: number }>()
 
-    if (!chatId) {
-      return
+  private addSystemMessage = (chatId: number, messageId: number, hasMarkup: boolean) => {
+    const systemMessagesInfos = (this.systemMessagesInfos.get(chatId) || []).filter(x => x.messageId !== messageId)
+
+    let nextSystemMessagesInfos = systemMessagesInfos.concat({
+      messageId,
+      hasMarkup,
+      timestamp: new Date().getTime(),
+    })
+
+    if (nextSystemMessagesInfos.length > ROWS_LIMIT) {
+      nextSystemMessagesInfos = nextSystemMessagesInfos.slice(1, ROWS_LIMIT)
     }
 
-    if (!this.queueMasters.has(chatId)) {
-      this.queueMasters.set(chatId, new QueueMaster())
-    }
+    this.systemMessagesInfos.set(chatId, nextSystemMessagesInfos)
+  }
 
-    this.queueMasters.get(chatId)!.enqueue(async () => {
-      const lastMessageInfo = this.lastMessageInfos.get(chatId)
-      const lastUserMessageInfo = this.lastUserMessageInfos.get(chatId)
+  private sendMessage = (
+    ctx: Context,
+    message: string,
+    { messageId, parseMode = 'HTML', markup }: ISendMessageOptions = {}
+  ): Promise<number | undefined> => {
+    return new Promise(resolve => {
+      const chatId = ctx.chat?.id
 
-      if (lastMessageInfo?.hasMarkup) {
-        try {
-          await ctx.telegram.editMessageReplyMarkup(chatId, lastMessageInfo.messageId, undefined, undefined)
-        } catch (e) {}
+      if (!chatId) {
+        return resolve(undefined)
       }
 
-      if (kind === 'edit' && lastMessageInfo && (!lastUserMessageInfo || lastMessageInfo.timestamp > lastUserMessageInfo.timestamp)) {
-        try {
-          await ctx.telegram.editMessageText(chatId, lastMessageInfo.messageId, undefined, message, {
-            ...markup,
-            parse_mode: parseMode,
-          })
-
-          this.lastMessageInfos.set(chatId, {
-            messageId: lastMessageInfo.messageId,
-            hasMarkup: Boolean(markup),
-            timestamp: new Date().getTime(),
-          })
-
-          return
-        } catch (e) {}
+      if (!this.queueMasters.has(chatId)) {
+        this.queueMasters.set(chatId, new QueueMaster())
       }
 
-      const mess = await ctx.telegram.sendMessage(chatId, message, {
-        ...markup,
-        parse_mode: parseMode,
-      })
+      this.queueMasters.get(chatId)!.enqueue(async () => {
+        const systemMessagesInfos = this.systemMessagesInfos.get(chatId) || []
+        const lastUserMessageInfo = this.lastUserMessagesInfos.get(chatId)
 
-      this.lastMessageInfos.set(chatId, {
-        messageId: mess.message_id,
-        hasMarkup: Boolean(markup),
-        timestamp: new Date().getTime(),
+        let lastSystemMessageInfo: { messageId: number; hasMarkup: boolean; timestamp: number } | undefined
+
+        if (systemMessagesInfos.length) {
+          lastSystemMessageInfo = systemMessagesInfos[systemMessagesInfos.length - 1]
+        }
+
+        if (lastSystemMessageInfo?.hasMarkup) {
+          try {
+            await ctx.telegram.editMessageReplyMarkup(chatId, messageId, undefined, undefined)
+          } catch (e) {}
+        }
+
+        if (
+          messageId &&
+          lastSystemMessageInfo &&
+          (!lastUserMessageInfo || lastSystemMessageInfo.timestamp > lastUserMessageInfo.timestamp)
+        ) {
+          try {
+            await ctx.telegram.editMessageText(chatId, lastSystemMessageInfo.messageId, undefined, message, {
+              ...markup,
+              parse_mode: parseMode,
+            })
+
+            this.addSystemMessage(chatId, lastSystemMessageInfo.messageId, Boolean(markup))
+
+            return resolve(lastSystemMessageInfo.messageId)
+          } catch (e) {}
+        }
+
+        const mess = await ctx.telegram.sendMessage(chatId, message, {
+          ...markup,
+          parse_mode: parseMode,
+        })
+
+        this.addSystemMessage(chatId, mess.message_id, Boolean(markup))
+
+        return resolve(mess.message_id)
       })
     })
   }
@@ -100,7 +131,7 @@ export class MessageManager {
       return
     }
 
-    this.lastUserMessageInfos.set(chatId, { messageId, timestamp: new Date().getTime() })
+    this.lastUserMessagesInfos.set(chatId, { messageId, timestamp: new Date().getTime() })
   }
 
   handleShowMoreAction = (ctx: Context) => {
@@ -108,7 +139,7 @@ export class MessageManager {
   }
 
   send = (ctx: Context, message: string, options?: ISendMessageOptions) => {
-    this.sendMessage(ctx, message, options)
+    return this.sendMessage(ctx, message, options)
   }
 
   sendBatch = (ctx: Context, messagesInfos: MessageInfo[]) => {

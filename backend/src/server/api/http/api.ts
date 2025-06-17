@@ -1,10 +1,20 @@
 import { buildChannel, buildPublicDomain } from './builder'
+import * as cartHandlers from './cart'
 import * as changeCityRequestHandlers from './change-city-request'
 import * as cityHandlers from './city'
 import * as productsRequestHandlers from './products-request'
 import * as userHandlers from './user'
 
 export const publicHttpApi = buildPublicDomain({
+  cart: {
+    GET: {
+      byId: cartHandlers.getById,
+    },
+    POST: {
+      getPage: cartHandlers.getPage,
+      updateProductInStock: cartHandlers.updateProductInStock,
+    },
+  },
   changeCityRequest: {
     GET: {
       byId: changeCityRequestHandlers.getById,

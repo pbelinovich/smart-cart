@@ -1,19 +1,22 @@
-import { IProductsRequestEntity, ProductsRequestStatus } from '@server'
+import { pathGenerator } from '@shared'
+import { ICartEntity, IProductsRequestEntity, ProductsRequestStatus } from '@server'
 import { buildCommand } from '../builder'
 import { getSessionByTelegramId } from '../../external'
-import { formatCollectedProductsRequest, formatProductsRequest } from '../tools'
+import { ZERO_CARTS_LENGTH_ERROR, formatErrorProductsRequest, formatProductsRequest } from '../tools'
 import { updateSessionCommand } from './update-session-command'
+import { formatCart } from '../tools/format-cart'
 
 export interface IProductsRequestCommandParams {
   message: string
 }
 
 const statusesToUnsub: ProductsRequestStatus[] = ['productsCollected']
+const cartPath = pathGenerator<ICartEntity>()
 
 export const createProductsRequestCommand = buildCommand({
   name: 'createProductsRequestCommand',
   handler: async (
-    { readExecutor, chatId, tgUser, publicHttpApi, send, sendBatch, subscriptionManager },
+    { readExecutor, chatId, tgUser, publicHttpApi, send, editLastOrSend, subscriptionManager },
     params: IProductsRequestCommandParams,
     { runCommand }
   ) => {
@@ -23,19 +26,43 @@ export const createProductsRequestCommand = buildCommand({
       return
     }
 
-    const sendProductsRequestUpdate = (next: IProductsRequestEntity, prev?: IProductsRequestEntity) => {
+    const sendProductsRequestUpdate = async (next: IProductsRequestEntity, prev?: IProductsRequestEntity) => {
       if (prev?.status === next.status && prev.error === next.error) {
         return
       }
 
-      if (next.status === 'productsCollected') {
-        return sendBatch(formatCollectedProductsRequest(next))
+      const sendMessage = next.status === 'created' ? send : editLastOrSend
+
+      if (next.error) {
+        return sendMessage(formatErrorProductsRequest(next))
       }
 
-      const formatted = formatProductsRequest(next)
+      if (next.status === 'productsCollected') {
+        const cartsResponse = await publicHttpApi.cart.POST.getPage({
+          filter: {
+            data: { type: 'condition', field: cartPath('productsRequestId'), predicate: 'eq', value: next.id },
+          },
+          sort: [
+            { field: cartPath('productsInStock', 'total'), direction: 'DESC', numeric: true },
+            { field: cartPath('totalPrice'), direction: 'ASC', numeric: true },
+          ],
+          paging: {
+            offset: 0,
+            limit: 1,
+          },
+        })
 
-      if (formatted) {
-        send(formatted.message, formatted.options)
+        if (!cartsResponse.data.length) {
+          return sendMessage(ZERO_CARTS_LENGTH_ERROR)
+        }
+
+        return sendMessage(formatCart(cartsResponse.data[0]))
+      }
+
+      const message = formatProductsRequest(next)
+
+      if (message) {
+        return sendMessage(message)
       }
     }
 
@@ -44,18 +71,18 @@ export const createProductsRequestCommand = buildCommand({
       query: params.message,
     })
 
-    sendProductsRequestUpdate(productsRequest)
+    await sendProductsRequestUpdate(productsRequest)
 
     const [channel] = await Promise.all([
       publicHttpApi.productsRequest.CHANNEL.getById({ id: productsRequest.id, userId: session.userId }),
       runCommand(updateSessionCommand, { state: 'creatingProductsRequest', activeProductsRequestId: productsRequest.id }),
     ])
 
-    sendProductsRequestUpdate(channel.getValue(), productsRequest)
+    await sendProductsRequestUpdate(channel.getValue(), productsRequest)
 
     subscriptionManager.add(chatId, {
-      unsub: channel.subscribe((next, prev) => {
-        sendProductsRequestUpdate(next, prev)
+      unsub: channel.subscribe(async (next, prev) => {
+        await sendProductsRequestUpdate(next, prev)
 
         if (next.error || statusesToUnsub.includes(next.status)) {
           return subscriptionManager.cleanup(chatId)

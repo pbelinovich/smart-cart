@@ -1,4 +1,5 @@
 export * from './absent-product-repo'
+export * from './cart-repo'
 export * from './change-city-request-repo'
 export * from './city-repo'
 export * from './present-product-repo'

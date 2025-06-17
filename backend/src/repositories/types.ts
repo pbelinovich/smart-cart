@@ -95,30 +95,25 @@ export interface IShop {
 }
 
 export interface ICollectedProduct {
-  cachedProductHash: string
+  hash: string
   quantity: number
   priceCategory: PriceCategory
 }
 
 export type ProductInStock = {
-  name: string
+  hash: string
   quantity: number
   priceCategory: PriceCategory
-  price: number
+  marketplaceId: string
+  marketplaceName: string
+  marketplacePrice: number
 }
 
 export type ProductIsOutOfStock = {
-  name: string
+  hash: string
   quantity: number
   priceCategory: PriceCategory
-}
-
-export interface ICart {
-  shopId: string
-  shopName: string
-  productsInStock: ProductInStock[]
-  productsAreOutOfStock: ProductIsOutOfStock[]
-  totalPrice: number
+  queryName: string
 }
 
 export interface IMarketplaceRepo<TSearchParams, TSearchResult> {

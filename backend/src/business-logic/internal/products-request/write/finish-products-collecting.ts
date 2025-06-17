@@ -1,10 +1,18 @@
 import { buildWriteOperation } from '../../../common/write'
 import { getProductsRequestById } from '../read'
 import { updateProductsRequest } from './update-products-request'
-import { IAbsentProductEntity, ICart, ICollectedProduct, IPresentProductEntity, IShop } from '../../../external'
 import { getPresentProductsByHashes } from '../../present-product'
 import { getAbsentProductsByHashes } from '../../absent-product'
 import { getShopsList } from '../../shop'
+import { createCart } from '../../cart'
+import {
+  IAbsentProductEntity,
+  ICollectedProduct,
+  IPresentProductEntity,
+  IShop,
+  ProductInStock,
+  ProductIsOutOfStock,
+} from '../../../external'
 
 export interface IFinishProductsCollectingParams {
   productsRequestId: string
@@ -29,7 +37,7 @@ export const finishProductsCollecting = buildWriteOperation(
       return false
     }
 
-    const hashes = collectedProducts.map(x => x.cachedProductHash)
+    const hashes = collectedProducts.map(x => x.hash)
     const [shops, presentProducts, absentProducts] = await Promise.all([
       execute(getShopsList, {}),
       execute(getPresentProductsByHashes, { hashes }),
@@ -53,102 +61,79 @@ export const finishProductsCollecting = buildWriteOperation(
       return acc
     }, {})
 
-    const shopIdToCartMap: { [shopId: string]: ICart } = {}
+    const shopIdToProductsMap: { [shopId: string]: { inStock: ProductInStock[]; outOfStock: ProductIsOutOfStock[] } } = {}
 
     collectedProducts.forEach(collectedProduct => {
-      const presentProduct = hashToPresentProductMap[collectedProduct.cachedProductHash]
+      const presentProduct = hashToPresentProductMap[collectedProduct.hash]
 
-      if (presentProduct && presentProduct.products.length) {
+      if (presentProduct && presentProduct.marketplaceProducts.length) {
         const shop = shopIdToShopMap[presentProduct.shopId]
+        const marketplaceProduct = presentProduct.marketplaceProducts[0]
 
         if (!shop) {
           return
         }
 
-        if (!shopIdToCartMap[shop.id]) {
-          shopIdToCartMap[shop.id] = {
-            shopId: shop.id,
-            shopName: shop.name,
-            productsInStock: [],
-            productsAreOutOfStock: [],
-            totalPrice: 0,
-          }
+        if (!shopIdToProductsMap[shop.id]) {
+          shopIdToProductsMap[shop.id] = { inStock: [], outOfStock: [] }
         }
 
-        const cart = shopIdToCartMap[shop.id]
-
-        cart.productsInStock.push({
-          name: presentProduct.products[0].name,
+        shopIdToProductsMap[shop.id].inStock.push({
+          hash: presentProduct.hash,
           quantity: collectedProduct.quantity,
           priceCategory: collectedProduct.priceCategory,
-          price: presentProduct.products[0].price,
+          marketplaceId: marketplaceProduct.id,
+          marketplaceName: marketplaceProduct.name,
+          marketplacePrice: marketplaceProduct.price,
         })
-
-        cart.totalPrice += presentProduct.products[0].price * collectedProduct.quantity
 
         return
       }
 
-      const absentProduct = hashToAbsentProductMap[collectedProduct.cachedProductHash]
+      const absentProduct = hashToAbsentProductMap[collectedProduct.hash]
 
-      if (absentProduct) {
-        const shop = shopIdToShopMap[absentProduct.shopId]
+      if (!absentProduct) {
+        return
+      }
 
-        if (!shop) {
+      const shop = shopIdToShopMap[absentProduct.shopId]
+
+      if (!shop) {
+        return
+      }
+
+      if (!shopIdToProductsMap[shop.id]) {
+        shopIdToProductsMap[shop.id] = { inStock: [], outOfStock: [] }
+      }
+
+      shopIdToProductsMap[shop.id].outOfStock.push({
+        hash: absentProduct.hash,
+        quantity: collectedProduct.quantity,
+        priceCategory: collectedProduct.priceCategory,
+        queryName: absentProduct.queryName,
+      })
+    })
+
+    await Promise.all(
+      Object.keys(shopIdToProductsMap).map(shopId => {
+        const shop = shopIdToShopMap[shopId]
+        const products = shopIdToProductsMap[shopId]
+
+        if (!shop || !products?.inStock.length) {
           return
         }
 
-        if (!shopIdToCartMap[shop.id]) {
-          shopIdToCartMap[shop.id] = {
-            shopId: shop.id,
-            shopName: shop.name,
-            productsInStock: [],
-            productsAreOutOfStock: [],
-            totalPrice: 0,
-          }
-        }
-
-        const cart = shopIdToCartMap[shop.id]
-
-        cart.productsAreOutOfStock.push({
-          name: absentProduct.queryName,
-          quantity: collectedProduct.quantity,
-          priceCategory: collectedProduct.priceCategory,
+        return execute(createCart, {
+          productsRequestId,
+          shopId,
+          shopName: shop.name,
+          productsInStock: products.inStock,
+          productsAreOutOfStock: products.outOfStock,
         })
-      }
-    })
+      })
+    )
 
-    const cartsForPreparing = Object.values(shopIdToCartMap)
-
-    cartsForPreparing.forEach(cart => {
-      if (!cart.productsInStock.length) {
-        delete shopIdToCartMap[cart.shopId]
-      }
-    })
-
-    const carts = Object.values(shopIdToCartMap)
-
-    carts.sort((a, b) => {
-      if (a.productsAreOutOfStock.length < b.productsAreOutOfStock.length) {
-        return -1
-      }
-
-      if (a.productsAreOutOfStock.length > b.productsAreOutOfStock.length) {
-        return 1
-      }
-
-      if (a.totalPrice < b.totalPrice) {
-        return -1
-      }
-
-      if (a.totalPrice > b.totalPrice) {
-        return 1
-      }
-
-      return 0
-    })
-
-    await execute(updateProductsRequest, { id: productsRequest.id, status: 'productsCollected', carts })
+    await execute(updateProductsRequest, { id: productsRequest.id, status: 'productsCollected' })
 
     return true
   }

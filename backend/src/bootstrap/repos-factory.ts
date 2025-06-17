@@ -8,12 +8,14 @@ import {
   ProductsResponseRepo,
   CityRepo,
   ChangeCityRequestRepo,
+  CartRepo,
 } from './external'
 
 export class ReposFactory {
   constructor(private _dbSession: DataBaseSession, private _memorySession: MemorySession) {}
 
   private _absentProductRepo: AbsentProductRepo | undefined
+  private _cartRepo: CartRepo | undefined
   private _changeCityRequestRepo: ChangeCityRequestRepo | undefined
   private _cityRepo: CityRepo | undefined
   private _presentProductRepo: PresentProductRepo | undefined
@@ -27,6 +29,14 @@ export class ReposFactory {
     }
 
     return this._absentProductRepo!
+  }
+
+  get cartRepo() {
+    if (!this._cartRepo) {
+      this._cartRepo = new CartRepo(this._dbSession)
+    }
+
+    return this._cartRepo!
   }
 
   get changeCityRequestRepo() {

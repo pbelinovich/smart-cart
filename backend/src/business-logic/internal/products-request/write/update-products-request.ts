@@ -1,5 +1,5 @@
 import { buildWriteOperation } from '../../../common/write'
-import { ProductsRequestStatus, IAIProduct, ICart } from '../../../external'
+import { ProductsRequestStatus, IAIProduct } from '../../../external'
 import { dateTime } from '@shared'
 
 export interface IUpdateProductsRequestParams {
@@ -7,7 +7,6 @@ export interface IUpdateProductsRequestParams {
   status?: ProductsRequestStatus
   error?: boolean
   aiProducts?: IAIProduct[]
-  carts?: ICart[]
 }
 
 export const updateProductsRequest = buildWriteOperation(async (context, params: IUpdateProductsRequestParams) => {
@@ -19,6 +18,5 @@ export const updateProductsRequest = buildWriteOperation(async (context, params:
     status: params.status || productsRequest.status,
     error: params.error === undefined ? productsRequest.error : params.error,
     aiProducts: params.aiProducts || productsRequest.aiProducts,
-    carts: params.carts || productsRequest.carts,
   })
 }, [])

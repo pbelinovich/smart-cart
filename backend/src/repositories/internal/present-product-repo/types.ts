@@ -1,6 +1,7 @@
 import { IEntity } from '../../external'
 
-export interface IProduct {
+export interface IMarketplaceProduct {
+  id: string
   name: string
   price: number
 }
@@ -12,5 +13,5 @@ export interface IPresentProductEntity extends IEntity {
   expiresAt: number
   queryName: string
   hash: string
-  products: IProduct[]
+  marketplaceProducts: IMarketplaceProduct[]
 }

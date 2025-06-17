@@ -11,6 +11,8 @@ import {
   IAbsentProductEntity,
   ICityEntity,
   IChangeCityRequestEntity,
+  ICartEntity,
+  FilterInfo,
 } from './external'
 
 export {
@@ -28,6 +30,7 @@ export {
 
 export interface IReadOperationContext {
   absentProductRepo: IReadOnlyRepo<IAbsentProductEntity>
+  cartRepo: IReadOnlyRepo<ICartEntity>
   changeCityRequestRepo: IReadOnlyRepo<IChangeCityRequestEntity>
   cityRepo: IReadOnlyRepo<ICityEntity>
   presentProductRepo: IReadOnlyRepo<IPresentProductEntity>
@@ -41,6 +44,7 @@ export interface IReadOperationContext {
 
 export interface IWriteOperationContext {
   absentProductRepo: IUpdatableRepo<IAbsentProductEntity>
+  cartRepo: IUpdatableRepo<ICartEntity>
   changeCityRequestRepo: IUpdatableRepo<IChangeCityRequestEntity>
   cityRepo: IUpdatableRepo<ICityEntity>
   presentProductRepo: IUpdatableRepo<IPresentProductEntity>
@@ -57,3 +61,27 @@ export interface IWriteOperationContext {
 export interface IReadOperation<TParams, TResult> extends IOperation<IReadOperationContext, TParams, TResult> {}
 
 export interface IWriteOperation<TParams, TResult> extends IOperation<IWriteOperationContext, TParams, TResult> {}
+
+export type FiltersByCategories<T extends string> = { [K in T]: FilterInfo | undefined }
+
+export type CountsByCategories<T extends string> = { [K in T]: number }
+
+export interface IGetPageRequestParams {
+  filter?: {
+    data: FilterInfo
+  }
+  sort?: Array<{
+    field: string
+    direction: 'ASC' | 'DESC'
+    numeric?: boolean
+  }>
+  paging?: {
+    offset: number
+    limit: number
+  }
+}
+
+export interface IGetPageResponse<T> {
+  data: T[]
+  total: number
+}
