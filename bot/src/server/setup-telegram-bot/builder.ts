@@ -1,15 +1,19 @@
-import { Context } from 'telegraf'
-import { getSessionByTelegramId, logInfo, updateSession } from '../external'
+import { Context, Telegraf } from 'telegraf'
+import { QueueMaster, getSessionByTelegramId, logInfo, updateSession } from '../external'
 import { SetupTelegramBotParams } from '../types'
 import { BuildCommandHandler, ICommandRunner, IDefaultCommandContext, ITgUser } from './common'
-import { MessageManager } from './message-manager'
 import { SubscriptionManager } from './subscription-manager'
+import { TelegramCommunicator } from './telegram-communicator'
 
 // <tg-emoji emoji-id="5397631056109117802"></tg-emoji>
 
-export const buildCommandRunner = ({ app, publicHttpApi }: SetupTelegramBotParams, messageManager: MessageManager) => {
+export const buildCommandRunner = ({ app, publicHttpApi }: SetupTelegramBotParams, bot: Telegraf) => {
   const executors = app.getExecutors({})
+
   const subscriptionManager = new SubscriptionManager()
+  const telegramCommunicators = new Map<number, TelegramCommunicator>()
+  const queueMasters = new Map<number, QueueMaster>()
+
   const runners = new Map<
     number,
     (
@@ -34,6 +38,20 @@ export const buildCommandRunner = ({ app, publicHttpApi }: SetupTelegramBotParam
       return
     }
 
+    let telegramCommunicator = telegramCommunicators.get(chatId)
+
+    if (!telegramCommunicator) {
+      telegramCommunicator = new TelegramCommunicator(bot, chatId)
+      telegramCommunicators.set(chatId, telegramCommunicator)
+    }
+
+    let queueMaster = queueMasters.get(chatId)
+
+    if (!queueMaster) {
+      queueMaster = new QueueMaster()
+      queueMasters.set(chatId, queueMaster)
+    }
+
     const tgUser: ITgUser = {
       id: telegramId,
       login: ctx.from?.username,
@@ -41,21 +59,14 @@ export const buildCommandRunner = ({ app, publicHttpApi }: SetupTelegramBotParam
       lastName: ctx.from?.last_name,
     }
 
-    let messageId: number | undefined
-
     const context: IDefaultCommandContext = {
       ...executors,
       chatId,
       tgUser,
-      subscriptionManager,
       publicHttpApi,
-      send: async (message, options) => {
-        messageId = await messageManager.send(ctx, message, options)
-      },
-      editLastOrSend: async (message, options) => {
-        messageId = await messageManager.send(ctx, message, { ...options, messageId })
-      },
-      sendBatch: messagesInfos => messageManager.sendBatch(ctx, messagesInfos),
+      subscriptionManager,
+      telegram: telegramCommunicator,
+      queueMaster,
       log: message => {
         return logInfo(`[${handler.name} | ${tgUser.id}${tgUser.login ? ` (${tgUser.login})` : ''}]: ${message}`)
       },

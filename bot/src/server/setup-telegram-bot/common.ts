@@ -1,9 +1,10 @@
-import { IAppExecutors } from '../external'
+import { IAppExecutors, QueueMaster } from '../external'
 import { SetupTelegramBotParams } from '../types'
 import { Markup } from 'telegraf'
+import { InlineKeyboardMarkup } from '@telegraf/types'
 import { ParseMode } from '@telegraf/types/message'
-import { MessageInfo } from './message-manager'
 import { SubscriptionManager } from './subscription-manager'
+import { TelegramCommunicator } from './telegram-communicator'
 
 export type StartCommandName = 'start'
 export type CityCommandName = 'city'
@@ -12,9 +13,8 @@ export type CancelCommandName = 'cancel'
 
 export type CommandName = StartCommandName | CityCommandName | ChangeCityCommandName | CancelCommandName
 
-export type ShowMoreActionName = 'showMore'
 export type CancelActionName = 'cancel'
-export type ActionName = ShowMoreActionName | CancelActionName
+export type ActionName = CancelActionName
 
 export interface ITgUser {
   id: number
@@ -23,13 +23,10 @@ export interface ITgUser {
   lastName: string | undefined
 }
 
-export interface ICommandContextSendMessageOptions {
+export interface ISendMessageParams {
+  message: string
   parseMode?: ParseMode
-  markup?: Markup.Markup<any>
-}
-
-export interface ISendMessageOptions extends ICommandContextSendMessageOptions {
-  messageId?: number
+  markup?: Markup.Markup<InlineKeyboardMarkup>
 }
 
 export interface IDefaultCommandContext extends IAppExecutors {
@@ -37,9 +34,8 @@ export interface IDefaultCommandContext extends IAppExecutors {
   chatId: number
   tgUser: ITgUser
   subscriptionManager: SubscriptionManager
-  send: (message: string, options?: ICommandContextSendMessageOptions) => Promise<void>
-  editLastOrSend: (message: string, options?: ICommandContextSendMessageOptions) => Promise<void>
-  sendBatch: (messagesInfos: MessageInfo[]) => void
+  telegram: TelegramCommunicator
+  queueMaster: QueueMaster
   log: (message: string) => void
 }
 
@@ -78,6 +74,18 @@ export const COMMANDS_MAP: { [key in CommandName]: string } = {
 
 export const COMMANDS = Object.keys(COMMANDS_MAP) as CommandName[]
 
-export const SHOW_MORE_ACTION: ShowMoreActionName = 'showMore'
 export const CANCEL_ACTION: CancelActionName = 'cancel'
-export const SELECT_CITY_ACTION = /^selectCity\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/
+
+export const SELECT_CITY_ACTION_LABEL = 'sc'
+export const SWAP_PRODUCT_ACTION_LABEL = 'sp'
+
+export const SELECT_CITY_ACTION = new RegExp(`^${SELECT_CITY_ACTION_LABEL}\\|([a-f0-9/\\-]+)$`, 'i')
+export const SWAP_PRODUCT_ACTION = new RegExp(`^${SWAP_PRODUCT_ACTION_LABEL}\\|([0-9a-zA-Z/\\-]+)\\|([0-9]+)$`, 'i')
+
+export const getSelectCityAction = (cityId: string) => {
+  return `${SELECT_CITY_ACTION_LABEL}|${cityId}`
+}
+
+export const getSwapProductAction = (productsRequestId: string, offset: number) => {
+  return `${SWAP_PRODUCT_ACTION_LABEL}|${productsRequestId}|${offset}`
+}

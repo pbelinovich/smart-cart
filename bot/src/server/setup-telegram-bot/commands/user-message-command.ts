@@ -13,9 +13,9 @@ const MAX_MSG_LENGTH = 300
 
 export const userMessageCommand = buildCommand({
   name: 'userMessageCommand',
-  handler: async ({ readExecutor, tgUser, send }, params: IUserMessageCommandParams, { runCommand }) => {
+  handler: async ({ readExecutor, tgUser, telegram }, params: IUserMessageCommandParams, { runCommand }) => {
     if (params.message.length > MAX_MSG_LENGTH) {
-      return send('Слишком длинное сообщение. Сократи до 300 символов, пж')
+      return telegram.sendMessage({ message: 'Слишком длинное сообщение. Сократи до 300 символов, пж' })
     }
 
     let session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
@@ -43,7 +43,7 @@ export const userMessageCommand = buildCommand({
       return runCommand(createProductsRequestCommand, { message: params.message })
     }
   },
-  errorHandler: ({ send }) => {
-    send('Произошла ошибка при обработке вашего сообщения. Попробуй позже, пж')
+  errorHandler: ({ telegram }) => {
+    telegram.sendMessage({ message: 'Произошла ошибка при обработке вашего сообщения. Попробуй позже, пж' })
   },
 })

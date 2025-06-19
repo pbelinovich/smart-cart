@@ -8,8 +8,11 @@ const priceCategoryEmoji: Record<PriceCategory, string> = {
   mostExpensive: '💰',
 }
 
-export const formatCart = (cart: ICartEntity) => {
+export const formatCart = (cart: ICartEntity, cheapest?: boolean) => {
+  const cheapestBlock = cheapest ? html.italic('🤑 самый выгодный') + '\n\n' : ''
+
   const header = ['🛒 ', html.bold(cart.shopName), '\n💵 ', html.italic('Итого:'), ' ', html.bold(formatPrice(cart.totalPrice))].join('')
+
   const inStock = cart.productsInStock.data
     .map(p =>
       [
@@ -29,5 +32,5 @@ export const formatCart = (cart: ICartEntity) => {
   const stockBlock = ['🧾 ', html.bold('Найдено:'), '\n', inStock || html.italic('— Нет доступных товаров.')].join('')
   const outOfStockBlock = outOfStock ? ['\n\n❗️ ', html.bold('Нет в наличии:'), '\n', outOfStock].join('') : ''
 
-  return [header, '\n\n', stockBlock, outOfStockBlock].join('')
+  return [cheapestBlock, header, '\n\n', stockBlock, outOfStockBlock].join('')
 }

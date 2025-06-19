@@ -31,7 +31,7 @@ const getPriceFromPriceValue = (priceValue?: EdadealPriceValue) => {
     }
 
     if (priceValue.type === 'range') {
-      return priceValue.from
+      return priceValue.to
     }
   }
 

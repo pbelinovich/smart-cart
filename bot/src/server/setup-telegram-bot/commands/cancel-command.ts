@@ -6,7 +6,7 @@ import { updateSessionCommand } from './update-session-command'
 
 export const cancelCommand = buildCommand({
   name: 'cancelCommand',
-  handler: async ({ readExecutor, tgUser, publicHttpApi, send }, _, { runCommand }) => {
+  handler: async ({ readExecutor, tgUser, publicHttpApi, telegram }, _, { runCommand }) => {
     const session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
 
     if (session) {
@@ -15,7 +15,7 @@ export const cancelCommand = buildCommand({
       }
 
       if (session.state === 'creatingProductsRequest') {
-        send('❌ Запрос на поиск продуктов отменен')
+        telegram.sendMessage({ message: '❌ Запрос на поиск продуктов отменен' })
       }
 
       if (session.state === 'creatingChangeCityRequest' || session.state === 'choosingCity' || session.state === 'confirmingCity') {
@@ -26,13 +26,15 @@ export const cancelCommand = buildCommand({
           })
         }
 
-        send('❌ Выбор города отменен')
+        telegram.sendMessage({ message: '❌ Выбор города отменен' })
       }
     }
 
     await runCommand(updateSessionCommand, { state: 'idle' })
   },
-  errorHandler: ({ send }) => {
-    send(`Произошла ошибка при выполнении команды ${formatCommand(CITY_COMMAND)}. Попробуйте позже, пж`)
+  errorHandler: ({ telegram }) => {
+    telegram.sendMessage({
+      message: `Произошла ошибка при выполнении команды ${formatCommand(CITY_COMMAND)}. Попробуйте позже, пж`,
+    })
   },
 })

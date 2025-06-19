@@ -27,7 +27,7 @@ export const updateSessionCommand = buildCommand({
       telegramId: tgUser.id,
     })
   },
-  errorHandler: ({ send }) => {
-    send('Произошла ошибка при регистрации. Попробуйте позже.')
+  errorHandler: ({ telegram }) => {
+    telegram.sendMessage({ message: 'Произошла ошибка при регистрации. Попробуйте позже.' })
   },
 })

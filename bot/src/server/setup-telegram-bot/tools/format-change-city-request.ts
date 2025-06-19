@@ -1,85 +1,45 @@
 import { IChangeCityRequestEntity, ChangeCityRequestStatus } from '@server'
 import { html } from 'teleform'
-import { Markup } from 'telegraf'
-import { chunkArray } from './chunk-array'
 import { formatError } from './format-error'
-import { MessageInfo } from '../message-manager'
 
-type StatusToFormatterMap = { [key in ChangeCityRequestStatus]?: (changeCityRequest: IChangeCityRequestEntity) => MessageInfo | string }
+type StatusToFormatterMap = { [key in ChangeCityRequestStatus]?: ((changeCityRequest: IChangeCityRequestEntity) => string) | string }
+
+const errorStatusToFormatterMap: StatusToFormatterMap = {
+  created: 'Произошла ошибка во время создания запроса на смену города',
+  citiesSearching: 'Произошла ошибка во время поиска городов',
+  citiesFound: 'Произошла ошибка во время выбора города',
+  citySelected: 'Произошла ошибка во время выбора города',
+  chercherAreaGetting: 'Произошла ошибка после того, как был выбран город',
+  userCityUpdated: 'Произошла ошибка на финальной стадии выбора города',
+}
 
 const statusToFormatterMap: StatusToFormatterMap = {
-  created: changeCityRequest => {
-    if (changeCityRequest.error) {
-      return formatError('Произошла ошибка во время создания запроса на смену города')
-    }
-
-    return '☑️ Создал запрос на смену города. Ожидай, бро'
-  },
-  citiesSearching: changeCityRequest => {
-    if (changeCityRequest.error) {
-      return formatError('Произошла ошибка во время поиска городов')
-    }
-
-    return { message: '🕓 Ищу города...', options: { kind: 'edit' } }
-  },
-  citiesFound: changeCityRequest => {
-    if (!changeCityRequest.cities.length) {
-      return '🤖 Я не нашел ни одного города, попробуй по-другому'
-    }
-
-    if (changeCityRequest.error) {
-      return formatError('Произошла ошибка во время выбора города')
-    }
-
-    const cities = chunkArray(changeCityRequest.cities, 2)
-    const toMarkup = cities.map(item => item.map(city => Markup.button.callback(city.name, `selectCity/${city.id}`)))
-
-    toMarkup.push([Markup.button.callback('❌ Отменить', 'cancel')])
-
-    return {
-      message: '⬇ Выбери город',
-      options: {
-        kind: 'edit',
-        markup: Markup.inlineKeyboard(toMarkup),
-      },
-    }
-  },
-  citySelected: changeCityRequest => {
-    if (changeCityRequest.error) {
-      return formatError('Произошла ошибка во время выбора города')
-    }
-
-    return { message: '🕓 Запоминаю...', options: { kind: 'edit' } }
-  },
-  chercherAreaGetting: changeCityRequest => {
-    if (changeCityRequest.error) {
-      return formatError('Произошла ошибка после того, как был выбран город')
-    }
-
-    return { message: '🕓 Еще запрашиваю пару метаданных...', options: { kind: 'edit' } }
-  },
+  created: '☑️ Создал запрос на смену города. Ожидай, бро',
+  citiesSearching: '🕓 Ищу города...',
+  citySelected: '🕓 Запоминаю...',
+  chercherAreaGetting: '🕓 Еще запрашиваю пару метаданных...',
   userCityUpdated: changeCityRequest => {
-    if (changeCityRequest.error) {
-      return formatError('Произошла ошибка на финальной стадии выбора города')
-    }
-
     const selectedCity = changeCityRequest.cities.find(city => city.id === changeCityRequest.selectedCityId)
-
-    return {
-      message: `✅ Установил город${selectedCity ? ` ${html.bold(selectedCity.name)}` : ''}`,
-      options: { kind: 'edit' },
-    }
+    return `✅ Установил город${selectedCity ? ` ${html.bold(selectedCity.name)}` : ''}`
   },
 }
 
-export const formatChangeCityRequest = (changeCityRequest: IChangeCityRequestEntity): MessageInfo | undefined => {
-  const format = statusToFormatterMap[changeCityRequest.status]
+export const formatErrorChangeCityRequest = (changeCityRequest: IChangeCityRequestEntity) => {
+  const formatter = errorStatusToFormatterMap[changeCityRequest.status]
 
-  if (!format) {
+  if (!formatter) {
     return
   }
 
-  const result = format(changeCityRequest)
+  return formatError(typeof formatter === 'function' ? formatter(changeCityRequest) : formatter)
+}
 
-  return typeof result === 'string' ? { message: result } : result
+export const formatChangeCityRequest = (changeCityRequest: IChangeCityRequestEntity) => {
+  const formatter = statusToFormatterMap[changeCityRequest.status]
+
+  if (!formatter) {
+    return
+  }
+
+  return typeof formatter === 'function' ? formatter(changeCityRequest) : formatter
 }

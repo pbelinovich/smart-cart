@@ -6,7 +6,7 @@ import { cancelCommand } from './cancel-command'
 
 export const cityCommand = buildCommand({
   name: 'cityCommand',
-  handler: async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, send }, _, { runCommand }) => {
+  handler: async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, telegram }, _, { runCommand }) => {
     const session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
 
     if (!session || session.state !== 'idle') {
@@ -34,9 +34,11 @@ export const cityCommand = buildCommand({
 
     const city = await publicHttpApi.city.GET.byTelegramId({ telegramId: tgUser.id })
 
-    send(`🏙️ Твой текущий город: ${city.name}`)
+    telegram.sendMessage({ message: `🏙️ Твой текущий город: ${city.name}` })
   },
-  errorHandler: ({ send }) => {
-    send(`Произошла ошибка при выполнении команды ${formatCommand(CITY_COMMAND)}. Попробуйте позже, пж`)
+  errorHandler: ({ telegram }) => {
+    telegram.sendMessage({
+      message: `Произошла ошибка при выполнении команды ${formatCommand(CITY_COMMAND)}. Попробуйте позже, пж`,
+    })
   },
 })

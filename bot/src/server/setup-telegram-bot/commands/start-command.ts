@@ -9,7 +9,7 @@ const cityCommand = formatCommand(CITY_COMMAND)
 
 export const startCommand = buildCommand({
   name: 'startCommand',
-  handler: async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, send }, _, { runCommand }) => {
+  handler: async ({ readExecutor, writeExecutor, tgUser, publicHttpApi, telegram }, _, { runCommand }) => {
     const session = await readExecutor.execute(getSessionByTelegramId, { telegramId: tgUser.id })
 
     if (session && session.state !== 'idle') {
@@ -35,7 +35,9 @@ export const startCommand = buildCommand({
 
         const userName = formatUser(user)
 
-        return send(`Привет${userName ? `, ${html.bold(userName)}` : ''}! Напиши список продуктов или выбери город через ${cityCommand}`)
+        return telegram.sendMessage({
+          message: `Привет${userName ? `, ${html.bold(userName)}` : ''}! Напиши список продуктов или выбери город через ${cityCommand}`,
+        })
       }
 
       await writeExecutor.execute(createSession, {
@@ -45,9 +47,9 @@ export const startCommand = buildCommand({
       })
     }
 
-    send(`Ты уже зарегистрирован. Напиши список продуктов или выбери город через ${cityCommand}`)
+    telegram.sendMessage({ message: `Ты уже зарегистрирован. Напиши список продуктов или выбери город через ${cityCommand}` })
   },
-  errorHandler: ({ send }) => {
-    send('Произошла ошибка при регистрации. Попробуйте позже.')
+  errorHandler: ({ telegram }) => {
+    telegram.sendMessage({ message: 'Произошла ошибка при регистрации. Попробуйте позже.' })
   },
 })

@@ -25,6 +25,7 @@ export const getPageParamsSchema = joi.object<IGetPageRequestParams>({
     joi.object<ArrayElement<IGetPageRequestParams['sort']>>({
       field: joi.string().required(),
       direction: joi.string().valid('ASC', 'DESC').required(),
+      numeric: joi.boolean(),
     })
   ),
   paging: joi.object<IGetPageRequestParams['paging']>({ offset: joi.number().required(), limit: joi.number().required() }),

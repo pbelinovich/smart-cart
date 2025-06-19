@@ -1,10 +1,17 @@
 import { Telegraf } from 'telegraf'
 import { SetupTelegramBotParams } from '../types'
 import { message } from 'telegraf/filters'
-import { cancelCommand, changeCityCommand, cityCommand, selectCityCommand, startCommand, userMessageCommand } from './commands'
 import { logInfo, ShutdownManager } from '../external'
 import { buildCommandRunner } from './builder'
-import { MessageManager } from './message-manager'
+import {
+  cancelCommand,
+  changeCityCommand,
+  cityCommand,
+  swapProductCommand,
+  selectCityCommand,
+  startCommand,
+  userMessageCommand,
+} from './commands'
 import {
   CANCEL_COMMAND,
   CHANGE_COMMAND,
@@ -12,16 +19,14 @@ import {
   COMMANDS,
   COMMANDS_MAP,
   START_COMMAND,
-  SHOW_MORE_ACTION,
   CANCEL_ACTION,
   CITY_COMMAND,
+  SWAP_PRODUCT_ACTION,
 } from './common'
 
 export const setupTelegramBot = (params: SetupTelegramBotParams) => {
   const bot = new Telegraf(params.telegramBotToken)
-  const messageManager = new MessageManager()
-
-  const { runCommand, runCommandOnce } = buildCommandRunner(params, messageManager)
+  const { runCommand, runCommandOnce } = buildCommandRunner(params, bot)
 
   bot.command(START_COMMAND, ctx => {
     runCommandOnce(ctx, startCommand, {})
@@ -40,13 +45,23 @@ export const setupTelegramBot = (params: SetupTelegramBotParams) => {
   })
 
   bot.on(message('text'), ctx => {
-    messageManager.handleUserMessage(ctx)
+    // messageManager.handleUserMessage(ctx)
     runCommandOnce(ctx, userMessageCommand, { message: ctx.message.text.trim() })
   })
 
-  bot.action(SHOW_MORE_ACTION, async ctx => {
+  bot.action(SWAP_PRODUCT_ACTION, async ctx => {
     await ctx.answerCbQuery()
-    messageManager.handleShowMoreAction(ctx)
+    const messageId = ctx.callbackQuery?.message?.message_id
+    const productsRequestId = ctx.match?.[1]
+    const offset = ctx.match?.[2]
+
+    if (messageId && productsRequestId && offset !== undefined) {
+      runCommandOnce(ctx, swapProductCommand, {
+        messageId,
+        productsRequestId,
+        offset: parseInt(offset),
+      })
+    }
   })
 
   bot.action(CANCEL_ACTION, async ctx => {
