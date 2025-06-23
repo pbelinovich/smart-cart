@@ -3,7 +3,6 @@ import {
   getProductsRequestById,
   ICollectProductsParams,
   getUserById,
-  getPresentProductsByHashes,
   getCityById,
   getShopsList,
   IPresentProductEntity,
@@ -13,13 +12,14 @@ import {
   searchEdadealProducts,
   EdadealPriceValue,
   generateProductHash,
-  getAbsentProductsByHashes,
   IAbsentProductEntity,
   createAbsentProduct,
   createProductsResponse,
   ICollectedProduct,
   ProductsRequestStatus,
   IMarketplaceProduct,
+  getValidPresentProductsByHashes,
+  getValidAbsentProductsByHashes,
 } from '../../external'
 
 const MAX_PRODUCTS_COUNT = 10
@@ -70,8 +70,8 @@ export const collectProducts = buildProcessHandler(async ({ readExecutor, writeE
 
   const shopsHashes = shops.map(shop => shopMarketplaceIdToHashMap[shop.marketplaceId])
   const [presentProducts, absentProducts] = await Promise.all([
-    readExecutor.execute(getPresentProductsByHashes, { hashes: shopsHashes }),
-    readExecutor.execute(getAbsentProductsByHashes, { hashes: shopsHashes }),
+    readExecutor.execute(getValidPresentProductsByHashes, { hashes: shopsHashes }),
+    readExecutor.execute(getValidAbsentProductsByHashes, { hashes: shopsHashes }),
   ])
 
   const presentProductsMap = presentProducts.reduce<{ [x: string]: IPresentProductEntity }>((acc, x) => {

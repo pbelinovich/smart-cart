@@ -13,6 +13,7 @@ import {
   IChangeCityRequestEntity,
   ICartEntity,
   FilterInfo,
+  ICartProductInStockHashEntity,
 } from './external'
 
 export {
@@ -30,6 +31,7 @@ export {
 
 export interface IReadOperationContext {
   absentProductRepo: IReadOnlyRepo<IAbsentProductEntity>
+  cartProductInStockHashRepo: IReadOnlyRepo<ICartProductInStockHashEntity>
   cartRepo: IReadOnlyRepo<ICartEntity>
   changeCityRequestRepo: IReadOnlyRepo<IChangeCityRequestEntity>
   cityRepo: IReadOnlyRepo<ICityEntity>
@@ -44,6 +46,7 @@ export interface IReadOperationContext {
 
 export interface IWriteOperationContext {
   absentProductRepo: IUpdatableRepo<IAbsentProductEntity>
+  cartProductInStockHashRepo: IUpdatableRepo<ICartProductInStockHashEntity>
   cartRepo: IUpdatableRepo<ICartEntity>
   changeCityRequestRepo: IUpdatableRepo<IChangeCityRequestEntity>
   cityRepo: IUpdatableRepo<ICityEntity>

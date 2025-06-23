@@ -84,8 +84,8 @@ export const buildCommandRunner = ({ app, publicHttpApi }: SetupTelegramBotParam
       }
 
       context.log(logMessage)
-
-      return handler.handler(context, params, commandRunner)
+      const result = await handler.handler(context, params, commandRunner)
+      return result
     } catch (e) {
       subscriptionManager.cleanup(chatId)
 

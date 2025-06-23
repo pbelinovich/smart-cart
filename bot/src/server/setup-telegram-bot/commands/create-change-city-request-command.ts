@@ -1,6 +1,6 @@
 import { ChangeCityRequestStatus, IChangeCityRequestEntity } from '@server'
 import { buildCommand } from '../builder'
-import { getSessionByTelegramId } from '../../external'
+import { getSessionByTelegramId, logError } from '../../external'
 import { formatChangeCityRequest, formatErrorChangeCityRequest } from '../tools'
 import { updateSessionCommand } from './update-session-command'
 import { ISendMessageParams } from '../common'
@@ -36,36 +36,41 @@ export const createChangeCityRequestCommand = buildCommand({
       messageId = await telegram.sendMessage(params)
     }
 
-    const handleChangeCityRequestUpdate = (next: IChangeCityRequestEntity, prev?: IChangeCityRequestEntity) => {
-      if (prev?.status === next.status && prev.error === next.error) {
-        return
-      }
-
-      if (next.error) {
-        const message = formatErrorChangeCityRequest(next)
-        return message ? sendMessage({ message }) : undefined
-      }
-
-      if (next.status === 'citiesFound') {
-        if (!next.cities.length) {
-          return sendMessage({ message: '🤖 Я не нашел ни одного города, попробуй по-другому' })
+    const handleChangeCityRequestUpdate = async (next: IChangeCityRequestEntity, prev?: IChangeCityRequestEntity) => {
+      try {
+        if (prev?.status === next.status && prev.error === next.error) {
+          return
         }
 
-        const cities = chunkArray(next.cities, 2)
-        const toMarkup = cities.map(item => item.map(city => Markup.button.callback(city.name, `selectCity/${city.id}`)))
+        if (next.error) {
+          const message = formatErrorChangeCityRequest(next)
+          return message ? sendMessage({ message }) : undefined
+        }
 
-        toMarkup.push([Markup.button.callback('❌ Отменить', 'cancel')])
+        if (next.status === 'citiesFound') {
+          if (!next.cities.length) {
+            return sendMessage({ message: '🤖 Я не нашел ни одного города, попробуй по-другому' })
+          }
 
-        return Promise.all([
-          sendMessage({ message: '⬇ Выбери город', markup: Markup.inlineKeyboard(toMarkup) }),
-          runCommand(updateSessionCommand, { state: 'choosingCity', activeChangeCityRequestId: next.id }),
-        ])
-      }
+          const cities = chunkArray(next.cities)
+          const toMarkup = cities.map(item => item.map(city => Markup.button.callback(city.name, `selectCity/${city.id}`)))
 
-      const message = formatChangeCityRequest(next)
+          toMarkup.push([Markup.button.callback('❌ Отменить', 'cancel')])
 
-      if (message) {
-        return sendMessage({ message })
+          return Promise.all([
+            sendMessage({ message: '⬇ Выбери город', markup: Markup.inlineKeyboard(toMarkup) }),
+            runCommand(updateSessionCommand, { state: 'choosingCity', activeChangeCityRequestId: next.id }),
+          ])
+        }
+
+        const message = formatChangeCityRequest(next)
+
+        if (message) {
+          return sendMessage({ message })
+        }
+      } catch (e) {
+        logError(e)
+        await telegram.sendMessage({ message: 'Произошла ошибка при попытке получить список городов. Попробуй позже, пж' })
       }
     }
 
@@ -74,7 +79,7 @@ export const createChangeCityRequestCommand = buildCommand({
       query: params.message,
     })
 
-    handleChangeCityRequestUpdate(changeCityRequest)
+    await handleChangeCityRequestUpdate(changeCityRequest)
 
     const [channel] = await Promise.all([
       publicHttpApi.changeCityRequest.CHANNEL.getById({
@@ -84,7 +89,7 @@ export const createChangeCityRequestCommand = buildCommand({
       runCommand(updateSessionCommand, { state: 'creatingChangeCityRequest', activeChangeCityRequestId: changeCityRequest.id }),
     ])
 
-    handleChangeCityRequestUpdate(channel.getValue(), changeCityRequest)
+    await handleChangeCityRequestUpdate(channel.getValue(), changeCityRequest)
 
     subscriptionManager.add(chatId, {
       unsub: channel.subscribe(async (next, prev) => {
@@ -92,14 +97,14 @@ export const createChangeCityRequestCommand = buildCommand({
           await subscriptionManager.cleanup(chatId)
         }
 
-        return handleChangeCityRequestUpdate(next, prev)
+        await handleChangeCityRequestUpdate(next, prev)
       }),
       destroy: () => {
         return Promise.all([channel.destroy(), runCommand(updateSessionCommand, { state: 'idle' })])
       },
     })
   },
-  errorHandler: ({ telegram }) => {
-    telegram.sendMessage({ message: 'Произошла ошибка при попытке получить список городов. Попробуй позже, пж' })
+  errorHandler: async ({ telegram }) => {
+    await telegram.sendMessage({ message: 'Произошла ошибка при попытке получить список городов. Попробуй позже, пж' })
   },
 })

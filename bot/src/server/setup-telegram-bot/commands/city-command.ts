@@ -36,9 +36,7 @@ export const cityCommand = buildCommand({
 
     telegram.sendMessage({ message: `🏙️ Твой текущий город: ${city.name}` })
   },
-  errorHandler: ({ telegram }) => {
-    telegram.sendMessage({
-      message: `Произошла ошибка при выполнении команды ${formatCommand(CITY_COMMAND)}. Попробуйте позже, пж`,
-    })
+  errorHandler: async ({ telegram }) => {
+    await telegram.sendMessage({ message: `Произошла ошибка при выполнении команды ${formatCommand(CITY_COMMAND)}. Попробуйте позже, пж` })
   },
 })

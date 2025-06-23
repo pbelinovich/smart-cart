@@ -49,7 +49,7 @@ export const startCommand = buildCommand({
 
     telegram.sendMessage({ message: `Ты уже зарегистрирован. Напиши список продуктов или выбери город через ${cityCommand}` })
   },
-  errorHandler: ({ telegram }) => {
-    telegram.sendMessage({ message: 'Произошла ошибка при регистрации. Попробуйте позже.' })
+  errorHandler: async ({ telegram }) => {
+    await telegram.sendMessage({ message: 'Произошла ошибка при регистрации. Попробуйте позже.' })
   },
 })

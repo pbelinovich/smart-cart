@@ -1,6 +1,6 @@
 import { buildCommand } from '../builder'
 import { getSessionByTelegramId } from '../../external'
-import { CITY_COMMAND } from '../common'
+import { CANCEL_COMMAND } from '../common'
 import { formatCommand } from '../tools'
 import { updateSessionCommand } from './update-session-command'
 
@@ -32,9 +32,9 @@ export const cancelCommand = buildCommand({
 
     await runCommand(updateSessionCommand, { state: 'idle' })
   },
-  errorHandler: ({ telegram }) => {
-    telegram.sendMessage({
-      message: `Произошла ошибка при выполнении команды ${formatCommand(CITY_COMMAND)}. Попробуйте позже, пж`,
+  errorHandler: async ({ telegram }) => {
+    await telegram.sendMessage({
+      message: `Произошла ошибка при выполнении команды ${formatCommand(CANCEL_COMMAND)}. Попробуйте позже, пж`,
     })
   },
 })

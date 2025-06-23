@@ -1,3 +1,5 @@
+import { logInfo } from '../external'
+
 export class SubscriptionManager {
   private subscriptions = new Map<
     number,
@@ -17,8 +19,12 @@ export class SubscriptionManager {
 
     await Promise.all(
       subs.map(async sub => {
-        await sub.unsub()
-        await sub.destroy()
+        try {
+          await sub.unsub()
+          await sub.destroy()
+        } catch (e) {
+          logInfo(e)
+        }
       })
     )
 

@@ -24,7 +24,7 @@ export interface ITgUser {
 }
 
 export interface ISendMessageParams {
-  message: string
+  message?: string
   parseMode?: ParseMode
   markup?: Markup.Markup<InlineKeyboardMarkup>
 }
@@ -76,16 +76,47 @@ export const COMMANDS = Object.keys(COMMANDS_MAP) as CommandName[]
 
 export const CANCEL_ACTION: CancelActionName = 'cancel'
 
-export const SELECT_CITY_ACTION_LABEL = 'sc'
-export const SWAP_PRODUCT_ACTION_LABEL = 'sp'
+export const SELECT_CITY_ACTION_LABEL = 'se'
+export const SHOW_CART_ACTION_LABEL = 'sh'
+export const SWAP_PRODUCT_ACTION_LABEL = 'sw'
+export const SWAP_PRESENT_PRODUCT_ACTION_LABEL = 'swp'
+export const SWAP_ABSENT_PRODUCT_ACTION_LABEL = 'swa'
+export const CHOOSE_PRESENT_PRODUCT_ACTION_LABEL = 'chp'
 
-export const SELECT_CITY_ACTION = new RegExp(`^${SELECT_CITY_ACTION_LABEL}\\|([a-f0-9/\\-]+)$`, 'i')
-export const SWAP_PRODUCT_ACTION = new RegExp(`^${SWAP_PRODUCT_ACTION_LABEL}\\|([0-9a-zA-Z/\\-]+)\\|([0-9]+)$`, 'i')
+const ENTITY_ID = '[0-9a-zA-Z/\\-]+'
+const HASH = '[0-9a-zA-Z+/]+={0,2}'
+const INDEX = '[0-9]+'
+
+export const SELECT_CITY_ACTION = new RegExp(`^${SELECT_CITY_ACTION_LABEL}\\|(${ENTITY_ID})$`, 'i')
+export const SHOW_CART_ACTION = new RegExp(`^${SHOW_CART_ACTION_LABEL}\\|(${ENTITY_ID})$`, 'i')
+export const SWAP_PRODUCT_ACTION = new RegExp(`^${SWAP_PRODUCT_ACTION_LABEL}\\|(${ENTITY_ID})$`, 'i')
+export const SWAP_PRESENT_PRODUCT_ACTION = new RegExp(
+  `^${SWAP_PRESENT_PRODUCT_ACTION_LABEL}\\|(${ENTITY_ID})\\|(${INDEX})\\|(${INDEX})$`,
+  'i'
+)
+export const SWAP_ABSENT_PRODUCT_ACTION = new RegExp(`^${SWAP_ABSENT_PRODUCT_ACTION_LABEL}\\|(${ENTITY_ID})\\|(${INDEX})$`, 'i')
+export const CHOOSE_PRESENT_PRODUCT_ACTION = new RegExp(`^${CHOOSE_PRESENT_PRODUCT_ACTION_LABEL}\\|(${HASH})$`, 'i')
 
 export const getSelectCityAction = (cityId: string) => {
   return `${SELECT_CITY_ACTION_LABEL}|${cityId}`
 }
 
-export const getSwapProductAction = (productsRequestId: string, offset: number) => {
-  return `${SWAP_PRODUCT_ACTION_LABEL}|${productsRequestId}|${offset}`
+export const getShowCartAction = (cartId: string) => {
+  return `${SHOW_CART_ACTION_LABEL}|${cartId}`
+}
+
+export const getSwapProductAction = (cartId: string) => {
+  return `${SWAP_PRODUCT_ACTION_LABEL}|${cartId}`
+}
+
+export const getSwapPresentProductAction = (cartId: string, cartProductInStockIndex: number, presentProductIndex: number) => {
+  return `${SWAP_PRESENT_PRODUCT_ACTION_LABEL}|${cartId}|${cartProductInStockIndex}|${presentProductIndex}`
+}
+
+export const getSwapAbsentProductAction = (cartId: string, index: number) => {
+  return `${SWAP_ABSENT_PRODUCT_ACTION_LABEL}|${cartId}|${index}`
+}
+
+export const getChoosePresentProductAction = (hash: string) => {
+  return `${CHOOSE_PRESENT_PRODUCT_ACTION_LABEL}|${hash}`
 }

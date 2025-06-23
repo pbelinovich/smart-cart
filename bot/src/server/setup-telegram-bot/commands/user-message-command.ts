@@ -43,7 +43,7 @@ export const userMessageCommand = buildCommand({
       return runCommand(createProductsRequestCommand, { message: params.message })
     }
   },
-  errorHandler: ({ telegram }) => {
-    telegram.sendMessage({ message: 'Произошла ошибка при обработке вашего сообщения. Попробуй позже, пж' })
+  errorHandler: async ({ telegram }) => {
+    await telegram.sendMessage({ message: 'Произошла ошибка при обработке вашего сообщения. Попробуй позже, пж' })
   },
 })

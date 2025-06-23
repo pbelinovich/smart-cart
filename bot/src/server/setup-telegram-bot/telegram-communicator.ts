@@ -26,16 +26,23 @@ export class TelegramCommunicator {
 
   editMessage = async (messageId: number, params: ISendMessageParams) => {
     const { message, markup, parseMode = 'HTML' } = params
-    await this.bot.telegram.editMessageText(this.chatId, messageId, undefined, message, {
-      ...markup,
-      parse_mode: parseMode,
-    })
+
+    if (message) {
+      await this.bot.telegram.editMessageText(this.chatId, messageId, undefined, message, { ...markup, parse_mode: parseMode })
+    } else {
+      await this.bot.telegram.editMessageReplyMarkup(this.chatId, messageId, undefined, markup?.reply_markup)
+    }
 
     this.addSystemMessage(messageId, params)
   }
 
   sendMessage = async (params: ISendMessageParams) => {
     const { message, markup, parseMode = 'HTML' } = params
+
+    if (!message) {
+      return
+    }
+
     const telegramMessage = await this.bot.telegram.sendMessage(this.chatId, message, {
       ...markup,
       parse_mode: parseMode,

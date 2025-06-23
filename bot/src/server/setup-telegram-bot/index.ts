@@ -8,9 +8,12 @@ import {
   changeCityCommand,
   cityCommand,
   swapProductCommand,
+  showCartCommand,
   selectCityCommand,
   startCommand,
   userMessageCommand,
+  swapPresentProductCommand,
+  choosePresentProductCommand,
 } from './commands'
 import {
   CANCEL_COMMAND,
@@ -22,6 +25,10 @@ import {
   CANCEL_ACTION,
   CITY_COMMAND,
   SWAP_PRODUCT_ACTION,
+  SHOW_CART_ACTION,
+  SWAP_PRESENT_PRODUCT_ACTION,
+  SWAP_ABSENT_PRODUCT_ACTION,
+  CHOOSE_PRESENT_PRODUCT_ACTION,
 } from './common'
 
 export const setupTelegramBot = (params: SetupTelegramBotParams) => {
@@ -49,30 +56,77 @@ export const setupTelegramBot = (params: SetupTelegramBotParams) => {
     runCommandOnce(ctx, userMessageCommand, { message: ctx.message.text.trim() })
   })
 
-  bot.action(SWAP_PRODUCT_ACTION, async ctx => {
-    await ctx.answerCbQuery()
+  bot.action(SHOW_CART_ACTION, async ctx => {
     const messageId = ctx.callbackQuery?.message?.message_id
-    const productsRequestId = ctx.match?.[1]
-    const offset = ctx.match?.[2]
+    const cartId = ctx.match?.[1]
 
-    if (messageId && productsRequestId && offset !== undefined) {
-      runCommandOnce(ctx, swapProductCommand, {
-        messageId,
-        productsRequestId,
-        offset: parseInt(offset),
-      })
+    if (messageId && cartId) {
+      await runCommandOnce(ctx, showCartCommand, { messageId, cartId })
     }
+
+    await ctx.answerCbQuery()
+  })
+
+  bot.action(SWAP_PRODUCT_ACTION, async ctx => {
+    const messageId = ctx.callbackQuery?.message?.message_id
+    const cartId = ctx.match?.[1]
+
+    if (messageId && cartId) {
+      await runCommandOnce(ctx, swapProductCommand, { messageId, cartId })
+    }
+
+    await ctx.answerCbQuery()
+  })
+
+  bot.action(SWAP_PRESENT_PRODUCT_ACTION, async ctx => {
+    const messageId = ctx.callbackQuery?.message?.message_id
+    const cartId = ctx.match?.[1]
+    const cartProductInStockIndex = parseInt(ctx.match?.[2])
+    const marketplaceProductIndex = parseInt(ctx.match?.[3])
+
+    if (messageId && cartId && cartProductInStockIndex !== undefined && marketplaceProductIndex !== undefined) {
+      await runCommandOnce(ctx, swapPresentProductCommand, { messageId, cartId, cartProductInStockIndex, marketplaceProductIndex })
+    }
+
+    await ctx.answerCbQuery()
+  })
+
+  bot.action(SWAP_ABSENT_PRODUCT_ACTION, async ctx => {
+    const messageId = ctx.callbackQuery?.message?.message_id
+    const cartId = ctx.match?.[1]
+    const index = parseInt(ctx.match?.[2])
+
+    if (messageId && cartId && index !== undefined) {
+      // runCommandOnce(ctx, swapAbsentProductCommand, { messageId, cartId, index })
+    }
+
+    await ctx.answerCbQuery()
+  })
+
+  bot.action(CHOOSE_PRESENT_PRODUCT_ACTION, async ctx => {
+    const messageId = ctx.callbackQuery?.message?.message_id
+    const hash = ctx.match?.[1]
+
+    if (messageId && hash) {
+      await runCommandOnce(ctx, choosePresentProductCommand, { messageId, hash })
+    }
+
+    await ctx.answerCbQuery()
   })
 
   bot.action(CANCEL_ACTION, async ctx => {
+    await runCommand(ctx, cancelCommand, {})
     await ctx.answerCbQuery()
-    runCommand(ctx, cancelCommand, {})
   })
 
   bot.action(SELECT_CITY_ACTION, async ctx => {
-    await ctx.answerCbQuery()
     const selectedCityId = ctx.match?.[1]
-    if (selectedCityId) runCommandOnce(ctx, selectCityCommand, { selectedCityId })
+
+    if (selectedCityId) {
+      await runCommandOnce(ctx, selectCityCommand, { selectedCityId })
+    }
+
+    await ctx.answerCbQuery()
   })
 
   Promise.resolve()

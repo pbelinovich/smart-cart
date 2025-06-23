@@ -1,7 +1,5 @@
 import { buildCommand } from '../builder'
 import { getSessionByTelegramId } from '../../external'
-import { CITY_COMMAND } from '../common'
-import { formatCommand } from '../tools'
 import { updateSessionCommand } from './update-session-command'
 import { cancelCommand } from './cancel-command'
 
@@ -17,9 +15,7 @@ export const changeCityCommand = buildCommand({
     await runCommand(updateSessionCommand, { state: 'creatingChangeCityRequest' })
     telegram.sendMessage({ message: '⬇ Введи свой город в свободном формате, я поищу' })
   },
-  errorHandler: ({ telegram }) => {
-    telegram.sendMessage({
-      message: `Произошла ошибка при выполнении команды ${formatCommand(CITY_COMMAND)}. Попробуйте позже, пж`,
-    })
+  errorHandler: async ({ telegram }) => {
+    await telegram.sendMessage({ message: `Произошла ошибка во время смены города. Попробуй позже, пж` })
   },
 })

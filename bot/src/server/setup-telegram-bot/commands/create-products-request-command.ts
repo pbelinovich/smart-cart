@@ -1,13 +1,11 @@
-import { pathGenerator } from '@shared'
 import { ICartEntity, IProductsRequestEntity, ProductsRequestStatus } from '@server'
 import { buildCommand } from '../builder'
-import { getSessionByTelegramId } from '../../external'
+import { getSessionByTelegramId, logError } from '../../external'
 import { formatProductsRequestError, formatProductsParsed } from '../tools'
 import { updateSessionCommand } from './update-session-command'
-import { formatCart } from '../tools/format-cart'
-import { getSwapProductAction, ISendMessageParams } from '../common'
-import { Markup } from 'telegraf'
-import { InlineKeyboardMarkup } from 'telegraf/typings/core/types/typegram'
+import { ISendMessageParams } from '../common'
+import { showCartCommand } from './show-cart-command'
+import { pathGenerator } from '@shared'
 
 export interface IProductsRequestCommandParams {
   message: string
@@ -45,69 +43,67 @@ export const createProductsRequestCommand = buildCommand({
 
     const handleProductsRequestUpdate = (next: IProductsRequestEntity, prev?: IProductsRequestEntity) => {
       queueMaster.enqueue(async () => {
-        if (prev?.status === next.status && prev.error === next.error) {
-          return
-        }
-
-        if (next.error) {
-          const message = formatProductsRequestError(next)
-
-          if (messageId) {
-            await telegram.editMessage(messageId, { message })
+        try {
+          if (prev?.status === next.status && prev.error === next.error) {
             return
           }
 
-          await telegram.sendMessage({ message })
-          return
-        }
+          if (next.error) {
+            const message = formatProductsRequestError(next)
 
-        if (next.status === 'created') {
-          return send({ message: '☑️ Создал запрос на сбор корзин. Ожидай, бро' })
-        }
+            if (messageId) {
+              await telegram.editMessage(messageId, { message })
+              return
+            }
 
-        if (next.status === 'productsParsing') {
-          return edit({ message: '🕓 Анализирую твой список...' })
-        }
-
-        if (next.status === 'productsParsed') {
-          return edit({ message: formatProductsParsed(next) })
-        }
-
-        if (next.status === 'productsCollecting') {
-          return edit({ message: '🕓 Собираю корзины...' })
-        }
-
-        if (next.status === 'productsCollected') {
-          const cartsResponse = await publicHttpApi.cart.POST.getPage({
-            filter: {
-              data: { type: 'condition', field: cartPath('productsRequestId'), predicate: 'eq', value: next.id },
-            },
-            sort: [
-              { field: cartPath('productsInStock', 'total'), direction: 'DESC', numeric: true },
-              { field: cartPath('totalPrice'), direction: 'ASC', numeric: true },
-            ],
-            paging: {
-              offset: 0,
-              limit: 1,
-            },
-          })
-
-          if (!cartsResponse.data.length) {
-            return edit({ message: '❌ Не получилось ничего найти' })
+            await telegram.sendMessage({ message })
+            return
           }
 
-          let markup: Markup.Markup<InlineKeyboardMarkup> | undefined
+          if (next.status === 'created') {
+            return send({ message: '☑️ Создал запрос на сбор корзин. Ожидай, бро' })
+          }
 
-          if (cartsResponse.total > 1) {
-            markup = Markup.inlineKeyboard([
-              [
-                Markup.button.callback('⬅️ Предыдущий', getSwapProductAction(next.id, cartsResponse.total - 1)),
-                Markup.button.callback('➡️ Следующий', getSwapProductAction(next.id, 1)),
+          if (next.status === 'productsParsing') {
+            return edit({ message: '🕓 Анализирую твой список...' })
+          }
+
+          if (next.status === 'productsParsed') {
+            return edit({ message: formatProductsParsed(next) })
+          }
+
+          if (next.status === 'productsCollecting') {
+            return send({ message: '🕓 Собираю корзины...' })
+          }
+
+          if (next.status === 'productsCollected') {
+            if (!messageId) {
+              return
+            }
+
+            const cartsResponse = await publicHttpApi.cart.POST.getPage({
+              filter: {
+                data: { type: 'condition', field: cartPath('productsRequestId'), predicate: 'eq', value: next.id },
+              },
+              sort: [
+                { field: cartPath('productsInStock', 'total'), direction: 'DESC', numeric: true },
+                { field: cartPath('totalPrice'), direction: 'ASC', numeric: true },
               ],
-            ])
-          }
+              paging: {
+                offset: 0,
+                limit: 1,
+              },
+            })
 
-          return edit({ message: formatCart(cartsResponse.data[0], true), markup })
+            if (!cartsResponse.data.length) {
+              return telegram.editMessage(messageId, { message: '❌ Не получилось найти собранную корзину. Попробуй запросить заново, пж' })
+            }
+
+            return runCommand(showCartCommand, { messageId, cartId: cartsResponse.data[0].id })
+          }
+        } catch (e) {
+          logError(e)
+          await telegram.sendMessage({ message: 'Произошла ошибка при попытке получить список продуктов. Попробуй позже, пж' })
         }
       })
     }
@@ -139,7 +135,7 @@ export const createProductsRequestCommand = buildCommand({
       },
     })
   },
-  errorHandler: ({ telegram }) => {
-    telegram.sendMessage({ message: 'Произошла ошибка при попытке получить список продуктов. Попробуй позже, пж' })
+  errorHandler: async ({ telegram }) => {
+    await telegram.sendMessage({ message: 'Произошла ошибка при попытке получить список продуктов. Попробуй позже, пж' })
   },
 })

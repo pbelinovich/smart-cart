@@ -1,7 +1,9 @@
 import { buildChannel, buildPublicDomain } from './builder'
 import * as cartHandlers from './cart'
+import * as cartProductInStockHashHandlers from './cart-product-in-stock-hash'
 import * as changeCityRequestHandlers from './change-city-request'
 import * as cityHandlers from './city'
+import * as presentProductHandlers from './present-product'
 import * as productsRequestHandlers from './products-request'
 import * as userHandlers from './user'
 
@@ -13,6 +15,14 @@ export const publicHttpApi = buildPublicDomain({
     POST: {
       getPage: cartHandlers.getPage,
       updateProductInStock: cartHandlers.updateProductInStock,
+    },
+  },
+  cartProductInStockHash: {
+    GET: {
+      byHash: cartProductInStockHashHandlers.getByHash,
+    },
+    POST: {
+      create: cartProductInStockHashHandlers.create,
     },
   },
   changeCityRequest: {
@@ -31,6 +41,11 @@ export const publicHttpApi = buildPublicDomain({
   city: {
     GET: {
       byTelegramId: cityHandlers.getByTelegramId,
+    },
+  },
+  presentProduct: {
+    GET: {
+      byHash: presentProductHandlers.getByHash,
     },
   },
   productsRequest: {

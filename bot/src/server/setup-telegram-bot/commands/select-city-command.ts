@@ -26,7 +26,7 @@ export const selectCityCommand = buildCommand({
 
     return runCommand(updateSessionCommand, { state: 'idle' })
   },
-  errorHandler: ({ telegram }) => {
-    telegram.sendMessage({ message: 'Произошла ошибка при попытке получить список городов. Попробуй позже, пж' })
+  errorHandler: async ({ telegram }) => {
+    await telegram.sendMessage({ message: 'Произошла ошибка при попытке получить список городов. Попробуй позже, пж' })
   },
 })

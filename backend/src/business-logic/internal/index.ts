@@ -1,4 +1,5 @@
 export * from './absent-product'
+export * from './cart-product-in-stock-hash'
 export * from './cart'
 export * from './change-city-request'
 export * from './city'
