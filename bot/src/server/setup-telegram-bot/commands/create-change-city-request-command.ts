@@ -3,7 +3,7 @@ import { buildCommand } from '../builder'
 import { getSessionByTelegramId, logError } from '../../external'
 import { formatChangeCityRequest, formatErrorChangeCityRequest } from '../tools'
 import { updateSessionCommand } from './update-session-command'
-import { ISendMessageParams } from '../common'
+import { getSelectCityAction, ISendMessageParams } from '../common'
 import { Markup } from 'telegraf'
 import { chunkArray } from '../tools/chunk-array'
 
@@ -53,12 +53,12 @@ export const createChangeCityRequestCommand = buildCommand({
           }
 
           const cities = chunkArray(next.cities)
-          const toMarkup = cities.map(item => item.map(city => Markup.button.callback(city.name, `selectCity/${city.id}`)))
+          const buttonsLines = cities.map(item => item.map(city => Markup.button.callback(city.name, getSelectCityAction(city.id))))
 
-          toMarkup.push([Markup.button.callback('❌ Отменить', 'cancel')])
+          buttonsLines.push([Markup.button.callback('❌ Отменить', 'cancel')])
 
           return Promise.all([
-            sendMessage({ message: '⬇ Выбери город', markup: Markup.inlineKeyboard(toMarkup) }),
+            sendMessage({ message: '⬇ Выбери город', markup: Markup.inlineKeyboard(buttonsLines) }),
             runCommand(updateSessionCommand, { state: 'choosingCity', activeChangeCityRequestId: next.id }),
           ])
         }

@@ -3,13 +3,14 @@ import { Worker } from 'node:worker_threads'
 import { lightGuid, MessagesBasedCommunicator } from '@shared'
 import { DataBaseEvent, IEventBus, logInfo, ProcessInitData, ProcessMessages, ProcessNames } from '../external'
 import { Task, TaskExtra, TaskResult, WorkerData, WorkerPoolParams } from './types'
+import { Queue } from './queue'
 
 export class WorkerPool<TProcess extends ProcessNames> {
   private readonly eventBus: IEventBus<DataBaseEvent>
   private readonly taskNames: TProcess[]
   private readonly taskTimeout: number
 
-  private queue: Task<TProcess, any, any>[] = []
+  private queue: Queue<Task<TProcess, any, any>> = new Queue()
   private workers: { [workerId: string]: WorkerData } = {}
 
   constructor({ taskNames, eventBus, size = 1, proxyList = [], taskTimeout = 30000 }: WorkerPoolParams<TProcess>) {
@@ -61,7 +62,7 @@ export class WorkerPool<TProcess extends ProcessNames> {
   }
 
   private tryNext = () => {
-    if (!this.queue.length) {
+    if (this.queue.isEmpty()) {
       return
     }
 
@@ -71,12 +72,12 @@ export class WorkerPool<TProcess extends ProcessNames> {
       return
     }
 
-    const [task, ...restTasks] = this.queue
+    const task = this.queue.dequeue()!
 
     this.workers[freeWorkerId].busy = true
-    this.queue = restTasks
 
     let destroyed = false
+
     const timeoutId = setTimeout(async () => {
       task.resolve({ kind: 'error', error: new Error(`Task timeout of process ${freeWorkerId}`) })
       destroyed = true
@@ -108,13 +109,9 @@ export class WorkerPool<TProcess extends ProcessNames> {
   }
 
   runTask = <TData, TResult>(name: TProcess, data: TData, extra?: TaskExtra) => {
-    let promiseResolve: (result: TaskResult<TResult>) => void = () => undefined
-
-    this.queue.push({ name, data, extra, resolve: result => promiseResolve(result) })
-    this.tryNext()
-
     return new Promise<TaskResult<TResult>>(resolve => {
-      promiseResolve = result => resolve(result)
+      this.queue.enqueue({ name, data, extra, resolve })
+      this.tryNext()
     })
   }
 }
